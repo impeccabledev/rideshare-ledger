@@ -214,3 +214,95 @@
     max-width: 520px;
   }
 }
+
+/* =========================
+   Splash animation
+   ========================= */
+   .splashOverlay {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    background: rgba(16, 24, 40, 0.45);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    backdrop-filter: blur(6px);
+  }
+  
+  .splashCard {
+    width: min(460px, 92vw);
+    border-radius: 18px;
+    background: #ffffff;
+    border: 1px solid #eef0f6;
+    box-shadow: 0 20px 60px rgba(16, 24, 40, 0.25);
+    padding: 18px;
+    text-align: center;
+  }
+  
+  .splashTitle {
+    font-weight: 950;
+    font-size: 18px;
+    color: #101828;
+  }
+  
+  .splashSub {
+    margin-top: 10px;
+    font-size: 12px;
+    font-weight: 800;
+    color: #667085;
+  }
+  
+  /* Road + moving car */
+  .road {
+    position: relative;
+    margin: 14px auto 0;
+    width: 100%;
+    max-width: 360px;
+    height: 52px;
+    border-radius: 14px;
+    background: linear-gradient(180deg, #f8fafc 0%, #ffffff 100%);
+    border: 1px solid #eef0f6;
+    overflow: hidden;
+  }
+  
+  .road::after {
+    content: "";
+    position: absolute;
+    left: -30%;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 160%;
+    height: 2px;
+    background: repeating-linear-gradient(
+      90deg,
+      #cbd5e1 0px,
+      #cbd5e1 18px,
+      transparent 18px,
+      transparent 34px
+    );
+    opacity: 0.75;
+    animation: roadMove 0.6s linear infinite;
+  }
+  
+  .car {
+    position: absolute;
+    left: -40px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 28px;
+    animation: carDrive 1.05s ease-in-out forwards;
+  }
+  
+  @keyframes carDrive {
+    0%   { left: -40px; transform: translateY(-50%) scale(1); opacity: 0.0; }
+    10%  { opacity: 1; }
+    70%  { left: calc(100% - 40px); transform: translateY(-50%) scale(1.02); }
+    100% { left: calc(100% + 10px); opacity: 0.0; }
+  }
+  
+  @keyframes roadMove {
+    0% { transform: translateY(-50%) translateX(0); }
+    100% { transform: translateY(-50%) translateX(-80px); }
+  }
+  
