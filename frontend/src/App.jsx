@@ -414,7 +414,7 @@ export default function App() {
 
               <div style={{ marginTop: 10 }}>
                 <label style={styles.label}>Driver rates (used for split)</label>
-                <div className="twoColInputs rateRow" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+                <div className="rateRow">
                   <input
                     className="rateInput"
                     style={styles.input}
@@ -435,7 +435,7 @@ export default function App() {
                   />
                 </div>
 
-                <div style={{ marginTop: 8 }}>
+                <div style={{ marginTop: 10 }}>
                   <button
                     style={styles.btn}
                     onClick={async () => {
@@ -506,7 +506,7 @@ export default function App() {
 
             <div style={styles.formRow}>
               <label style={styles.label}>Notes</label>
-              <input style={styles.input} value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Optional" />
+              <input className="notesInput" style={styles.input} value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Optional" />
             </div>
 
             <div style={{ display: "flex", gap: 10, marginTop: 12 }}>

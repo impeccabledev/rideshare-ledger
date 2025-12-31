@@ -1,141 +1,172 @@
 /* frontend/src/App.css */
 
-/* -----------------------------
+/* =========================
    Base helpers
------------------------------- */
-
-.topbar {
-  box-sizing: border-box;
-}
-
-.calendarCell {
-  position: relative;
-  overflow: hidden;
-}
-
-.amountTag {
-  display: inline-block;
-  font-weight: 900;
-  white-space: nowrap;
-}
-
-.dayTop {
-  align-items: center;
-}
-
-/* Smaller inputs specifically for driver-rate fields */
-.rateInput {
-  padding: 8px !important;
-  font-size: 14px !important;
-  height: 40px;
-}
-
-/* -----------------------------
-   Mobile-first layout (phones)
------------------------------- */
-@media (max-width: 640px) {
-  /* Top bar becomes stacked */
+   ========================= */
+   * {
+    box-sizing: border-box;
+  }
+  
   .topbar {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 10px;
+    box-sizing: border-box;
   }
-
-  .topbarRow {
-    display: flex;
-    width: 100%;
-    justify-content: space-between;
-    gap: 8px;
-  }
-
-  .topbarButtons {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 8px;
-    width: 100%;
-  }
-
-  .ratesPill {
-    width: 100%;
-    text-align: center;
-  }
-
-  /* Calendar: show summary-only in each cell */
+  
   .calendarCell {
-    min-height: 64px !important;
-    padding: 8px !important;
+    position: relative;
+    overflow: hidden;
   }
-
-  /* Hide the noisy per-cell detail text */
-  .cellDetails,
-  .clickToAdd {
-    display: none !important;
-  }
-
-  /* Amount becomes a small badge in the top-right */
+  
   .amountTag {
-    position: absolute;
-    top: 8px;
-    right: 8px;
-    padding: 2px 8px;
-    border-radius: 999px;
-    border: 1px solid #dbeafe;
-    background: #eff6ff;
-    font-size: 12px !important;
+    display: inline-block;
+    font-weight: 900;
+    white-space: nowrap;
   }
-
-  .dayNum {
-    font-size: 14px !important;
+  
+  .dayTop {
+    align-items: center;
   }
-
-  /* Holiday chip: smaller + keep it inside the cell */
-  .holidayTag {
-    left: 8px !important;
-    bottom: 8px !important;
-    font-size: 10px !important;
-    padding: 2px 6px !important;
-    max-width: calc(100% - 16px) !important;
-  }
-
-  /* Bottom cards stack */
-  .bottomGrid {
-    grid-template-columns: 1fr !important;
-  }
-
-  /* Modal fills most of the screen */
-  .modal {
-    width: 100% !important;
-    height: 92vh;
-    overflow: auto;
-    border-radius: 16px;
-  }
-
-  /* Rate inputs stack on phones */
-  .twoColInputs {
-    grid-template-columns: 1fr !important;
-  }
-}
-
-/* -----------------------------
-   Tablet tweaks
------------------------------- */
-@media (min-width: 641px) and (max-width: 1024px) {
-  .calendarCell {
-    min-height: 90px !important;
-  }
-
-  .cellDetails {
-    font-size: 12px;
-    line-height: 1.2;
-  }
-}
-
-/* -----------------------------
-   Desktop tweaks
------------------------------- */
-@media (min-width: 1025px) {
-  /* keep the driver-rate row from stretching too wide */
+  
+  /* =========================
+     Rate inputs (driver rates)
+     ========================= */
   .rateRow {
-    max-width: 460px;
+    display: grid;
+    gap: 10px; /* ensures separation always */
+    align-items: center;
   }
-}
+  
+  .rateInput {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 10px !important;
+    font-size: 14px !important;
+    height: 42px;
+    min-width: 0; /* prevents overflow in grid */
+  }
+  
+  /* Notes input: keep consistent sizing */
+  .notesInput {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 10px !important;
+    height: 42px;
+    font-size: 14px;
+  }
+  
+  /* =========================
+     Mobile-first (phones)
+     ========================= */
+  @media (max-width: 640px) {
+    /* Top bar becomes stacked */
+    .topbar {
+      flex-direction: column;
+      align-items: stretch;
+      gap: 10px;
+    }
+  
+    .topbarRow {
+      display: flex;
+      width: 100%;
+      justify-content: space-between;
+      gap: 8px;
+    }
+  
+    .topbarButtons {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      width: 100%;
+    }
+  
+    .ratesPill {
+      width: 100%;
+      text-align: center;
+    }
+  
+    /* Calendar: summary-only in each cell */
+    .calendarCell {
+      min-height: 64px !important;
+      padding: 8px !important;
+    }
+  
+    /* Hide noisy per-cell details */
+    .cellDetails,
+    .clickToAdd {
+      display: none !important;
+    }
+  
+    /* Amount becomes a badge top-right */
+    .amountTag {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      padding: 2px 8px;
+      border-radius: 999px;
+      border: 1px solid #dbeafe;
+      background: #eff6ff;
+      font-size: 12px !important;
+    }
+  
+    .dayNum {
+      font-size: 14px !important;
+    }
+  
+    /* Holiday chip: smaller + ellipsis */
+    .holidayTag {
+      left: 8px !important;
+      bottom: 8px !important;
+      font-size: 10px !important;
+      padding: 2px 6px !important;
+      max-width: calc(100% - 16px) !important;
+    }
+  
+    /* Bottom cards stack */
+    .bottomGrid {
+      grid-template-columns: 1fr !important;
+    }
+  
+    /* Modal fills most of the screen */
+    .modal {
+      width: 100% !important;
+      height: 92vh;
+      overflow: auto;
+      border-radius: 16px;
+    }
+  
+    /* Rate inputs stack on phones */
+    .rateRow {
+      grid-template-columns: 1fr;
+    }
+  }
+  
+  /* =========================
+     Tablet tweaks
+     ========================= */
+  @media (min-width: 641px) and (max-width: 1024px) {
+    .calendarCell {
+      min-height: 90px !important;
+    }
+  
+    .cellDetails {
+      font-size: 12px;
+      line-height: 1.2;
+    }
+  
+    /* Rate inputs: 2 columns */
+    .rateRow {
+      grid-template-columns: 1fr 1fr;
+      max-width: 520px;
+    }
+  }
+  
+  /* =========================
+     Desktop tweaks
+     ========================= */
+  @media (min-width: 1025px) {
+    /* Rate inputs: 2 columns and not too wide */
+    .rateRow {
+      grid-template-columns: 1fr 1fr;
+      max-width: 520px;
+    }
+  }
+  
