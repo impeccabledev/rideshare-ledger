@@ -130,6 +130,14 @@
   overflow: auto;
 }
 
+/* Center modal on all screens */
+.modalBackdrop {
+  display: flex;
+  align-items: center !important;
+  justify-content: center;
+  padding: 16px;
+}
+
 .modal .formRowTight {
   margin-top: 10px;
 }
@@ -262,15 +270,9 @@
     grid-template-columns: 1fr !important;
   }
 
-  /* Modal as bottom sheet */
-  .modalBackdrop {
-    align-items: flex-end !important;
-    padding: 10px !important;
-  }
-
   .modal {
-    width: 100% !important;
-    height: 82vh !important;
+    width: min(520px, 94vw) !important;
+    max-height: 85vh !important;
     border-radius: 18px;
   }
 
