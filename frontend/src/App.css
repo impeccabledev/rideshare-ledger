@@ -4,9 +4,12 @@
   box-sizing: border-box;
 }
 
-/* =========================
-   Calendar helpers
-   ========================= */
+/* Force: mobile summary OFF by default (desktop/tablet) */
+.mobileSummary {
+  display: none !important;
+}
+
+/* Calendar cell basics */
 .calendarCell {
   position: relative;
   overflow: hidden;
@@ -16,20 +19,13 @@
   align-items: center;
 }
 
-.amountTag {
-  display: inline-block;
+.dayNum {
   font-weight: 900;
-  white-space: nowrap;
 }
 
-/* Desktop/tablet details hidden on mobile via CSS */
-.cellDetails {
-  margin-top: 8px;
-}
-
-/* Mobile summary block */
-.mobileSummary {
-  display: none; /* enabled on mobile */
+/* Hide amount everywhere (we removed it from JSX anyway) */
+.amountTag {
+  display: none !important;
 }
 
 /* =========================
@@ -43,7 +39,6 @@
 
 .rateInput {
   width: 100%;
-  box-sizing: border-box;
   padding: 10px !important;
   font-size: 14px !important;
   height: 42px;
@@ -53,7 +48,6 @@
 /* Notes input consistent sizing */
 .notesInput {
   width: 100%;
-  box-sizing: border-box;
   padding: 10px !important;
   height: 42px;
   font-size: 14px;
@@ -124,24 +118,13 @@
 
   /* Calendar: tighter cells */
   .calendarCell {
-    min-height: 72px !important;
+    min-height: 74px !important;
     padding: 8px !important;
-  }
-
-  /* Remove amount from calendar on mobile */
-  .amountTag {
-    display: none !important;
-  }
-
-  /* Hide noisy desktop details & click text */
-  .cellDetails,
-  .clickToAdd {
-    display: none !important;
   }
 
   /* Show mobile summary */
   .mobileSummary {
-    display: block;
+    display: block !important;
     margin-top: 6px;
     font-size: 12px;
     color: #344054;
@@ -160,10 +143,6 @@
     margin-top: 2px;
     color: #667085;
     font-weight: 700;
-  }
-
-  .dayNum {
-    font-size: 14px !important;
   }
 
   /* Holiday chip tighter */
@@ -198,53 +177,10 @@
   }
 }
 
-/* =========================
-   Tablet tweaks
-   ========================= */
-@media (min-width: 641px) and (max-width: 1024px) {
-  .calendarCell {
-    min-height: 90px !important;
-  }
-
-  .cellDetails {
-    font-size: 12px;
-    line-height: 1.2;
-  }
-
-  .rateRow {
-    grid-template-columns: 1fr 1fr;
-    max-width: 520px;
-  }
-}
-
-/* =========================
-   Desktop tweaks
-   ========================= */
-@media (min-width: 1025px) {
-  .rateRow {
-    grid-template-columns: 1fr 1fr;
-    max-width: 520px;
-  }
-}
-/* Force: mobile summary ONLY on phones */
-.mobileSummary {
-  display: none !important;
-}
-
-@media (max-width: 640px) {
-  .mobileSummary {
-    display: block !important;
-  }
-
-  /* And desktop details should stay hidden on mobile */
-  .cellDetails {
-    display: none !important;
-  }
-}
-
-/* Force: desktop details ONLY on tablet/desktop */
+/* Tablet/desktop: rate inputs 2-column */
 @media (min-width: 641px) {
-  .cellDetails {
-    display: block !important;
+  .rateRow {
+    grid-template-columns: 1fr 1fr;
+    max-width: 520px;
   }
 }

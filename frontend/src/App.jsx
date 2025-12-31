@@ -8,21 +8,44 @@ const fmtMonth = (d) => `${d.getFullYear()}-${pad2(d.getMonth() + 1)}`;
 const fmtDate = (d) => `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
 const round2 = (x) => Math.round(Number(x) * 100) / 100;
 
-function monthGrid(year, monthIdx0) {
+/**
+ * Build a Mon–Fri month grid.
+ * Each week row has 5 cells. Cells can be null (empty) at the month edges.
+ */
+function weekdayGrid(year, monthIdx0) {
   const first = new Date(year, monthIdx0, 1);
-  const startDay = first.getDay(); // 0 Sun
-  const gridStart = new Date(year, monthIdx0, 1 - startDay);
+  const last = new Date(year, monthIdx0 + 1, 0);
+
+  // Start from the first day of the month, but move forward to first weekday if it lands on weekend
+  let cur = new Date(first);
+  while (cur.getDay() === 0 || cur.getDay() === 6) cur.setDate(cur.getDate() + 1);
 
   const weeks = [];
-  let cur = new Date(gridStart);
-  for (let w = 0; w < 6; w++) {
-    const week = [];
-    for (let i = 0; i < 7; i++) {
-      week.push(new Date(cur));
-      cur.setDate(cur.getDate() + 1);
+
+  while (cur <= last) {
+    // Row base = Monday of this week
+    const rowBase = new Date(cur);
+    const jsDay = rowBase.getDay(); // Mon=1..Fri=5
+    const deltaToMon = jsDay - 1;
+    rowBase.setDate(rowBase.getDate() - deltaToMon);
+
+    const row = new Array(5).fill(null);
+    for (let i = 0; i < 5; i++) {
+      const d = new Date(rowBase);
+      d.setDate(rowBase.getDate() + i);
+
+      // Only include dates that are inside the month
+      if (d.getMonth() === monthIdx0) row[i] = d;
     }
-    weeks.push(week);
+
+    weeks.push(row);
+
+    // Next week
+    cur = new Date(rowBase);
+    cur.setDate(rowBase.getDate() + 7);
+    while (cur.getDay() === 0 || cur.getDay() === 6) cur.setDate(cur.getDate() + 1);
   }
+
   return weeks;
 }
 
@@ -147,7 +170,11 @@ export default function App() {
 
   const balances = useMemo(() => computeMonthBalances(members, entries), [members, entries]);
   const transfers = useMemo(() => suggestTransfers(balances), [balances]);
-  const weeks = useMemo(() => monthGrid(monthDate.getFullYear(), monthDate.getMonth()), [monthDate]);
+
+  const weeks = useMemo(
+    () => weekdayGrid(monthDate.getFullYear(), monthDate.getMonth()),
+    [monthDate]
+  );
 
   function prevMonth() {
     const d = new Date(monthDate);
@@ -262,19 +289,13 @@ export default function App() {
     <div style={styles.page}>
       <div className="topbar" style={styles.topbar}>
         <div className="topbarRow" style={{ display: "flex", gap: 8, alignItems: "center" }}>
-          <button style={styles.btn} onClick={prevMonth}>
-            Prev
-          </button>
+          <button style={styles.btn} onClick={prevMonth}>Prev</button>
           <div style={styles.monthTitle}>{month}</div>
-          <button style={styles.btn} onClick={nextMonth}>
-            Next
-          </button>
+          <button style={styles.btn} onClick={nextMonth}>Next</button>
         </div>
 
         <div className="topbarButtons" style={{ display: "flex", gap: 10, alignItems: "center" }}>
-          <div className="ratesPill" style={styles.rates}>
-            Driver rates apply when selected in a day
-          </div>
+          <div className="ratesPill" style={styles.rates}>Office view: Mon–Fri only</div>
           <button style={styles.btn} onClick={loadAll} disabled={loading}>
             {loading ? "Refreshing…" : "Refresh"}
           </button>
@@ -285,32 +306,30 @@ export default function App() {
 
       <div style={styles.calendar}>
         <div style={styles.weekHeader}>
-          {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((label, i) => (
-            <div
-              key={label}
-              style={{
-                ...styles.weekHeaderCell,
-                ...(i === 0 || i === 6 ? styles.weekHeaderWeekend : {}),
-              }}
-            >
-              {label}
-            </div>
+          {["Mon", "Tue", "Wed", "Thu", "Fri"].map((label) => (
+            <div key={label} style={styles.weekHeaderCell}>{label}</div>
           ))}
         </div>
 
         {weeks.map((week, wi) => (
           <div key={wi} style={styles.weekRow}>
-            {week.map((d) => {
-              const dateStr = fmtDate(d);
-              const inMonth = d.getMonth() === monthDate.getMonth();
-              const e = entryByDate.get(dateStr);
+            {week.map((d, idx) => {
+              if (!d) {
+                return (
+                  <div
+                    key={`empty-${wi}-${idx}`}
+                    className="calendarCell"
+                    style={{ ...styles.dayCell, background: "#ffffff" }}
+                  />
+                );
+              }
 
-              const dow = d.getDay();
-              const isWeekend = dow === 0 || dow === 6;
-              const isToday = dateStr === todayStr;
+              const dateStr = fmtDate(d);
+              const e = entryByDate.get(dateStr);
 
               const holidayName = holidayByDate.get(dateStr);
               const isHoliday = !!holidayName;
+              const isToday = dateStr === todayStr;
 
               return (
                 <div
@@ -318,51 +337,28 @@ export default function App() {
                   className="calendarCell"
                   style={{
                     ...styles.dayCell,
-                    ...(isWeekend ? styles.dayCellWeekend : {}),
                     ...(e ? styles.dayCellHasEntry : {}),
                     ...(isHoliday ? styles.dayCellHoliday : {}),
                     ...(isToday ? styles.dayCellToday : {}),
-                    opacity: inMonth ? 1 : 0.45,
                   }}
                   onClick={() => openDay(d)}
                 >
                   <div className="dayTop" style={styles.dayTop}>
-                    <div className="dayNum" style={styles.dayNum}>
-                      {d.getDate()}
-                    </div>
-
-                    {/* Amount still rendered for desktop/tablet, hidden on mobile by CSS */}
-                    {e ? (
-                      <div className="amountTag" style={styles.amount}>
-                        ${Number(e.total_amount || 0).toFixed(2)}
-                      </div>
-                    ) : (
-                      <div />
-                    )}
+                    <div className="dayNum" style={styles.dayNum}>{d.getDate()}</div>
                   </div>
 
                   {e ? (
-                    <>
-                      {/* Desktop/tablet detail (hidden on mobile) */}
-                      <div className="cellDetails" style={styles.dayInfo}>
-                        <div style={styles.small}>Driver: {nameById[e.driver_id] || e.driver_id}</div>
-                        <div style={styles.small}>Day: {e.day_type}</div>
-                        <div style={styles.small}>Riders: {e.riders?.length || 0}</div>
-                      </div>
+                    <div className="mobileSummary">
+                      <div className="mobileDriver">{nameById[e.driver_id] || e.driver_id}</div>
+                      <div className="mobileRiders">Riders: {e.riders?.length || 0}</div>
+                    </div>
+                  ) : null}
 
-                      {/* Mobile summary (shown only on mobile) */}
-                      <div className="mobileSummary">
-                        <div className="mobileDriver">{nameById[e.driver_id] || e.driver_id}</div>
-                        <div className="mobileRiders">Riders: {e.riders?.length || 0}</div>
-                      </div>
-                    </>
-                  ) : (
-                    <div className="clickToAdd" style={styles.placeholder}>
-                      Click to add
+                  {isHoliday && (
+                    <div className="holidayTag" style={styles.holidayTag}>
+                      {holidayName}
                     </div>
                   )}
-
-                  {isHoliday && <div className="holidayTag" style={styles.holidayTag}>{holidayName}</div>}
                 </div>
               );
             })}
@@ -394,9 +390,7 @@ export default function App() {
           ) : (
             transfers.map((t, i) => (
               <div key={i} style={styles.rowBetween}>
-                <div>
-                  {nameById[t.from]} → {nameById[t.to]}
-                </div>
+                <div>{nameById[t.from]} → {nameById[t.to]}</div>
                 <div style={{ fontWeight: 900 }}>${t.amount.toFixed(2)}</div>
               </div>
             ))
@@ -433,16 +427,13 @@ export default function App() {
                 }}
               >
                 {members.map((m) => (
-                  <option key={m.member_id} value={m.member_id}>
-                    {m.name}
-                  </option>
+                  <option key={m.member_id} value={m.member_id}>{m.name}</option>
                 ))}
               </select>
 
               {/* Driver rates */}
               <div style={{ marginTop: 10 }}>
                 <label className="labelTight" style={styles.label}>Driver rates (used for split)</label>
-
                 <div className="rateRow">
                   <input
                     className="rateInput"
@@ -487,7 +478,12 @@ export default function App() {
             {/* Day type */}
             <div className="formRowTight" style={styles.formRow}>
               <label className="labelTight" style={styles.label}>Day type</label>
-              <select className="inputTight" style={styles.input} value={dayType} onChange={(e) => setDayType(e.target.value)}>
+              <select
+                className="inputTight"
+                style={styles.input}
+                value={dayType}
+                onChange={(e) => setDayType(e.target.value)}
+              >
                 <option value="one_way">Use driver's one_way_total</option>
                 <option value="two_way">Use driver's two_way_total</option>
               </select>
@@ -502,7 +498,12 @@ export default function App() {
                   return (
                     <div key={m.member_id} style={styles.riderRow}>
                       <div style={{ fontWeight: 800 }}>{m.name}</div>
-                      <select className="inputTight" style={styles.riderSelect} value={t} onChange={(e) => setTrip(m.member_id, e.target.value)}>
+                      <select
+                        className="inputTight"
+                        style={styles.riderSelect}
+                        value={t}
+                        onChange={(e) => setTrip(m.member_id, e.target.value)}
+                      >
                         <option value="none">Not riding</option>
                         <option value="one_way">One-way</option>
                         <option value="two_way">Two-way</option>
@@ -522,9 +523,7 @@ export default function App() {
                 ) : (
                   computedPreview.riders.map((r) => (
                     <div key={r.member_id} style={styles.rowBetween}>
-                      <div>
-                        {r.name} ({r.trip_type === "one_way" ? "1-way" : "2-way"})
-                      </div>
+                      <div>{r.name} ({r.trip_type === "one_way" ? "1-way" : "2-way"})</div>
                       <div style={{ fontWeight: 900 }}>${r.charge.toFixed(2)}</div>
                     </div>
                   ))
@@ -549,12 +548,8 @@ export default function App() {
             </div>
 
             <div style={{ display: "flex", gap: 10, marginTop: 12 }}>
-              <button style={styles.primary} onClick={onSave}>
-                Save day
-              </button>
-              <button style={styles.btn} onClick={() => setOpen(false)}>
-                Cancel
-              </button>
+              <button style={styles.primary} onClick={onSave}>Save day</button>
+              <button style={styles.btn} onClick={() => setOpen(false)}>Cancel</button>
             </div>
 
             <div style={styles.help}>Split uses units: one-way=1, two-way=2. Rounding drift goes to driver.</div>
@@ -640,7 +635,7 @@ const styles = {
 
   weekHeader: {
     display: "grid",
-    gridTemplateColumns: "repeat(7, 1fr)",
+    gridTemplateColumns: "repeat(5, 1fr)",
     background: "#f8fafc",
     borderBottom: "1px solid #eef0f6",
   },
@@ -650,11 +645,10 @@ const styles = {
     fontSize: 12,
     color: "#344054",
     fontWeight: 800,
+    textAlign: "center",
   },
 
-  weekHeaderWeekend: { color: "#b54708" },
-
-  weekRow: { display: "grid", gridTemplateColumns: "repeat(7, 1fr)" },
+  weekRow: { display: "grid", gridTemplateColumns: "repeat(5, 1fr)" },
 
   dayCell: {
     minHeight: 110,
@@ -664,10 +658,6 @@ const styles = {
     cursor: "pointer",
     background: "#ffffff",
     position: "relative",
-  },
-
-  dayCellWeekend: {
-    background: "linear-gradient(180deg, #fff7ed 0%, #ffffff 70%)",
   },
 
   dayCellHasEntry: {
@@ -705,10 +695,6 @@ const styles = {
 
   dayTop: { display: "flex", justifyContent: "space-between", alignItems: "baseline" },
   dayNum: { fontWeight: 900, color: "#101828" },
-  amount: { fontSize: 12, fontWeight: 900, color: "#155eef" },
-  dayInfo: { marginTop: 8, display: "flex", flexDirection: "column", gap: 4 },
-  small: { fontSize: 12, color: "#344054" },
-  placeholder: { marginTop: 10, fontSize: 12, color: "#98a2b3" },
 
   bottomGrid: { marginTop: 16, display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 },
 
