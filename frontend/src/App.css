@@ -5,6 +5,40 @@
 }
 
 /* =========================
+   App header (persistent)
+   ========================= */
+.appHeader {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 12px;
+}
+
+.appBrand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.appIcon {
+  font-size: 22px;
+  background: linear-gradient(135deg, #155eef, #4f46e5);
+  color: white;
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.appTitle {
+  font-size: 20px;
+  font-weight: 950;
+  color: #101828;
+  letter-spacing: 0.4px;
+}
+
+/* =========================
    Calendar cells + details
    ========================= */
 .calendarCell {
@@ -42,6 +76,7 @@
   margin-top: 2px;
   color: #667085;
   font-weight: 800;
+  padding: 4px;
 }
 
 /* Mobile summary block */
@@ -105,6 +140,7 @@
 .modal .ridersBoxTight {
   max-height: 240px;
   overflow: auto;
+  padding: 4px;
 }
 
 .modal .previewBoxTight {
@@ -116,6 +152,20 @@
    Mobile layout
    ========================= */
 @media (max-width: 640px) {
+  .appHeader {
+    margin-bottom: 8px;
+  }
+
+  .appTitle {
+    font-size: 18px;
+  }
+
+  .appIcon {
+    width: 34px;
+    height: 34px;
+    font-size: 20px;
+  }
+
   /* Top bar stack */
   .topbar {
     flex-direction: column;
@@ -173,6 +223,7 @@
     margin-top: 2px;
     color: #667085;
     font-weight: 800;
+    padding: 4px;
   }
 
   /* Holiday chip tighter */
@@ -217,101 +268,121 @@
 /* =========================
    Splash screen animation
    ========================= */
-   .splashOverlay {
-    position: fixed;
-    inset: 0;
-    z-index: 9999;
-    background: rgba(16, 24, 40, 0.45);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    backdrop-filter: blur(6px);
-  }
-  
-  .splashCard {
-    width: min(420px, 90vw);
-    background: #ffffff;
-    border-radius: 18px;
-    padding: 18px;
-    text-align: center;
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
-    border: 1px solid #eef0f6;
-  }
-  
-  .splashTitle {
-    font-size: 18px;
-    font-weight: 900;
-    color: #101828;
-  }
-  
-  .splashSub {
-    margin-top: 10px;
-    font-size: 12px;
-    font-weight: 700;
-    color: #667085;
-  }
-  
-  /* Road + car animation */
-  .road {
-    position: relative;
-    margin: 16px auto 0;
-    width: 100%;
-    max-width: 320px;
-    height: 46px;
-    background: linear-gradient(180deg, #f8fafc, #ffffff);
-    border-radius: 12px;
-    overflow: hidden;
-    border: 1px solid #eef0f6;
-  }
-  
-  .road::after {
-    content: "";
-    position: absolute;
-    top: 50%;
-    left: -50%;
-    width: 200%;
-    height: 2px;
-    background: repeating-linear-gradient(
-      90deg,
-      #cbd5e1 0px,
-      #cbd5e1 16px,
-      transparent 16px,
-      transparent 28px
-    );
-    transform: translateY(-50%);
-    animation: roadMove 1s linear infinite;
-  }
-  
-  .car {
-    position: absolute;
-    top: 50%;
-    right: -40px;          /* start off-screen on the right */
-    transform: translateY(-50%);
-    font-size: 26px;
-    animation: carDrive 1s ease-in-out forwards; /* slower */
-  }  
-  
-  @keyframes carDrive {
-    0% {
-      right: -40px;
-      opacity: 0;
-    }
-    15% {
-      opacity: 1;
-    }
-    85% {
-      right: calc(100% - 30px);
-    }
-    100% {
-      right: calc(100% + 10px);
-      opacity: 0;
-    }
-  }
-  
-  
-  @keyframes roadMove {
-    from { transform: translateY(-50%) translateX(0); }
-    to   { transform: translateY(-50%) translateX(-80px); }
-  }  
+.splashHeader {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
 
-  
+.splashIcon {
+  font-size: 32px;
+  line-height: 1;
+}
+
+.splashTitle {
+  font-weight: 950;
+  font-size: 20px;
+  color: #101828;
+  letter-spacing: 0.4px;
+}
+.splashOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: rgba(16, 24, 40, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(6px);
+}
+
+.splashCard {
+  width: min(420px, 90vw);
+  background: #ffffff;
+  border-radius: 18px;
+  padding: 18px;
+  text-align: center;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
+  border: 1px solid #eef0f6;
+}
+
+.splashTitle {
+  font-size: 18px;
+  font-weight: 900;
+  color: #101828;
+}
+
+.splashSub {
+  margin-top: 10px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #667085;
+}
+
+/* Road + car animation */
+.road {
+  position: relative;
+  margin: 16px auto 0;
+  width: 100%;
+  max-width: 320px;
+  height: 46px;
+  background: linear-gradient(180deg, #f8fafc, #ffffff);
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid #eef0f6;
+}
+
+.road::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: -50%;
+  width: 200%;
+  height: 2px;
+  background: repeating-linear-gradient(
+    90deg,
+    #cbd5e1 0px,
+    #cbd5e1 16px,
+    transparent 16px,
+    transparent 28px
+  );
+  transform: translateY(-50%);
+  animation: roadMove 1s linear infinite;
+}
+
+.car {
+  position: absolute;
+  top: 50%;
+  right: -40px; /* start off-screen on the right */
+  transform: translateY(-50%);
+  font-size: 26px;
+  animation: carDrive 1s ease-in-out forwards; /* slower */
+}
+
+@keyframes carDrive {
+  0% {
+    right: -40px;
+    opacity: 0;
+  }
+  15% {
+    opacity: 1;
+  }
+  85% {
+    right: calc(100% - 30px);
+  }
+  100% {
+    right: calc(100% + 10px);
+    opacity: 0;
+  }
+}
+
+@keyframes roadMove {
+  from {
+    transform: translateY(-50%) translateX(0);
+  }
+  to {
+    transform: translateY(-50%) translateX(-80px);
+  }
+}
