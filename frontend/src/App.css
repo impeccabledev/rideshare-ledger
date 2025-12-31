@@ -143,7 +143,7 @@
 
   /* Calendar: tighter cells */
   .calendarCell {
-    min-height: 74px !important;
+    min-height: 66px !important;
     padding: 4px !important;
   }
 

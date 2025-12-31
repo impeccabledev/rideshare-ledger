@@ -632,7 +632,7 @@ const styles = {
     overflow: "hidden",
     background: "#ffffff",
     boxShadow: "0 10px 24px rgba(20, 20, 40, 0.06)",
-    paddingBottom: 10,
+    paddingBottom: 6,
   },
 
   weekHeader: {
@@ -643,7 +643,7 @@ const styles = {
   },
 
   weekHeaderCell: {
-    padding: 10,
+    padding: 6,
     fontSize: 12,
     color: "#344054",
     fontWeight: 800,
@@ -653,8 +653,8 @@ const styles = {
   weekRow: {
     display: "grid",
     gridTemplateColumns: "repeat(5, 1fr)",
-    gap: 10,
-    padding: 10,
+    gap: 4,
+    padding: 4,
   },
 
   dayCell: {
