@@ -10,29 +10,15 @@
 .calendarCell {
   position: relative;
   overflow: hidden;
-  border-radius: 0;
+  border-radius: 12px; /* round every cell */
 }
 
-/* Outer corner rounding (only corners of the whole grid) */
-.calendarCell.firstCell {
-  border-top-left-radius: 14px;
-}
-.calendarCell.lastCell {
-  border-top-right-radius: 14px;
-}
-.calendarCell.bottomFirstCell {
-  border-bottom-left-radius: 14px;
-}
-.calendarCell.bottomLastCell {
-  border-bottom-right-radius: 14px;
-}
-
-.dayTop {
-  align-items: center;
-}
-
-.dayNum {
-  font-weight: 900;
+/* Icons */
+.icon {
+  display: inline-block;
+  margin-right: 6px;
+  width: 16px;
+  text-align: center;
 }
 
 /* Desktop/tablet details inside calendar cells */
@@ -54,7 +40,7 @@
 .pcRiders {
   margin-top: 2px;
   color: #667085;
-  font-weight: 700;
+  font-weight: 800;
 }
 
 /* Mobile summary block */
@@ -185,7 +171,7 @@
   .mobileRiders {
     margin-top: 2px;
     color: #667085;
-    font-weight: 700;
+    font-weight: 800;
   }
 
   /* Holiday chip tighter */
