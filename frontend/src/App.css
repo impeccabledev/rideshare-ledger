@@ -166,6 +166,12 @@
     font-size: 30px;
   }
 
+  .appBrand {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+
   /* Top bar stack */
   .topbar {
     flex-direction: column;
