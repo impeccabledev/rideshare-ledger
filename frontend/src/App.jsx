@@ -202,7 +202,7 @@ export default function App() {
       await loadAll();
   
       // ✅ hide splash after a short delay (so it feels intentional)
-      setTimeout(() => setShowSplash(false), 1200);
+      setTimeout(() => setShowSplash(false), 2000);
     } catch (err) {
       setGroupOk(false);
       setAuthErr(err.message || "Invalid group");
@@ -433,9 +433,9 @@ export default function App() {
             </div>
           </div>
 
-          <div className="joinTitle">Join your group</div>
+          {/* <div className="joinTitle">Join your group</div> */}
           <div className="joinSub">
-            Enter the group id + join code shared by your friends.
+            Enter group ID & join code shared by your friends.
           </div>
 
           {authErr && <div className="joinError">{authErr}</div>}
@@ -445,7 +445,7 @@ export default function App() {
               className="joinInput"
               value={groupId}
               onChange={(e) => setGroupId(e.target.value)}
-              placeholder="Group ID (ex: g1)"
+              placeholder="Group ID"
               autoComplete="off"
             />
             <input
