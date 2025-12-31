@@ -144,7 +144,7 @@
   /* Calendar: tighter cells */
   .calendarCell {
     min-height: 74px !important;
-    padding: 8px !important;
+    padding: 4px !important;
   }
 
   /* Use mobile summary instead of desktop details */
