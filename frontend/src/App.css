@@ -232,7 +232,7 @@
     white-space: nowrap;
     display: flex;
     align-items: center;   /* 👈 vertical alignment */
-    gap: 3px;              /* space between icon + text */
+    gap: 1.5px;              /* space between icon + text */
     line-height: 1.1;
   }
 
@@ -244,7 +244,7 @@
     white-space: nowrap;
     display: flex;
     align-items: center;   /* 👈 vertical alignment */
-    gap: 3px;              /* space between icon + text */
+    gap: 1.5px;              /* space between icon + text */
     line-height: 1.1;
   }
 
