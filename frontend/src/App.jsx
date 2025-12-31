@@ -179,25 +179,38 @@ export default function App() {
   async function handleJoin(e) {
     e.preventDefault();
     setAuthErr("");
+  
     const gid = groupId.trim();
     const jcode = joinCode.trim();
+  
     if (!gid || !jcode) {
       setAuthErr("Enter group id + join code");
       return;
     }
-
+  
+    // save credentials
     localStorage.setItem("group_id", gid);
     localStorage.setItem("join_code", jcode);
-
+  
+    // ✅ show splash every time user joins
+    setShowSplash(true);
+  
     try {
       await groupCheck();
       setGroupOk(true);
-      await loadAll(); // immediately load data
-    } catch (e2) {
+  
+      await loadAll();
+  
+      // ✅ hide splash after a short delay (so it feels intentional)
+      setTimeout(() => setShowSplash(false), 1200);
+    } catch (err) {
       setGroupOk(false);
-      setAuthErr(e2.message || "Invalid group");
+      setAuthErr(err.message || "Invalid group");
+  
+      // ✅ don’t keep splash stuck if join fails
+      setShowSplash(false);
     }
-  }
+  }  
 
   function logoutGroup() {
     localStorage.removeItem("group_id");
@@ -235,9 +248,11 @@ export default function App() {
   }
 
   useEffect(() => {
+    if (!showSplash) return;
     const timer = setTimeout(() => setShowSplash(false), 2000);
     return () => clearTimeout(timer);
-  }, []);
+  }, [showSplash]);
+  
 
   useEffect(() => {
     // on mount, verify group from localStorage
