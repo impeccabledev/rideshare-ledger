@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
-import { getEntries, getMembers, getSettings, saveEntry, updateSettings, getHolidays } from "./api";
+import "./App.css";
+import { getEntries, getMembers, getHolidays, saveEntry, updateMemberRates } from "./api";
 
 // ---------- date helpers ----------
 const pad2 = (n) => String(n).padStart(2, "0");
@@ -81,7 +82,6 @@ export default function App() {
   const month = useMemo(() => fmtMonth(monthDate), [monthDate]);
 
   const [members, setMembers] = useState([]);
-  const [settings, setSettings] = useState(null);
   const [entries, setEntries] = useState([]);
   const [holidays, setHolidays] = useState([]);
 
@@ -96,13 +96,18 @@ export default function App() {
   const [riderTrip, setRiderTrip] = useState({});
   const [notes, setNotes] = useState("");
 
-  // totals modal state
-  const [ratesOpen, setRatesOpen] = useState(false);
-  const [rateForm, setRateForm] = useState({ one_way_total: "", two_way_total: "" });
+  // driver rates form (per-driver)
+  const [driverRatesForm, setDriverRatesForm] = useState({ one_way_total: "", two_way_total: "" });
 
   const nameById = useMemo(() => {
     const m = {};
     for (const x of members) m[x.member_id] = x.name;
+    return m;
+  }, [members]);
+
+  const memberById = useMemo(() => {
+    const m = new Map();
+    for (const x of members) m.set(x.member_id, x);
     return m;
   }, [members]);
 
@@ -116,18 +121,12 @@ export default function App() {
     setLoading(true);
     setErr("");
     try {
-      const [m, s, e, h] = await Promise.all([
-        getMembers(),
-        getSettings(),
-        getEntries(month),
-        getHolidays(month),
-      ]);
-      setMembers(m.filter((x) => x.active));
-      setSettings(s);
+      const [m, e, h] = await Promise.all([getMembers(), getEntries(month), getHolidays(month)]);
+      const active = m.filter((x) => x.active);
+      setMembers(active);
       setEntries(e);
       setHolidays(h);
-
-      if (!driverId && m.length) setDriverId(m[0].member_id);
+      if (!driverId && active.length) setDriverId(active[0].member_id);
     } catch (e) {
       setErr(e.message || "Failed to load");
     } finally {
@@ -167,7 +166,9 @@ export default function App() {
 
     setActiveDay(d);
     setNotes(existing?.notes || "");
-    setDriverId(existing?.driver_id || members[0]?.member_id || "");
+
+    const defaultDriver = existing?.driver_id || members[0]?.member_id || "";
+    setDriverId(defaultDriver);
     setDayType(existing?.day_type || "two_way");
 
     const next = {};
@@ -175,12 +176,18 @@ export default function App() {
 
     if (existing?.riders?.length) {
       for (const r of existing.riders) next[r.member_id] = r.trip_type;
-    } else {
-      const dId = existing?.driver_id || members[0]?.member_id;
-      if (dId) next[dId] = "two_way";
+    } else if (defaultDriver) {
+      next[defaultDriver] = "two_way";
     }
 
     setRiderTrip(next);
+
+    const dObj = memberById.get(defaultDriver);
+    setDriverRatesForm({
+      one_way_total: String(dObj?.one_way_total ?? ""),
+      two_way_total: String(dObj?.two_way_total ?? ""),
+    });
+
     setOpen(true);
   }
 
@@ -188,13 +195,12 @@ export default function App() {
     setRiderTrip((p) => ({ ...p, [member_id]: trip_type }));
   }
 
-  const computedPreview = useMemo(() => {
-    if (!settings) return { riders: [], total: 0 };
+  const driverObj = memberById.get(driverId);
+  const driverOne = Number(driverObj?.one_way_total || 0);
+  const driverTwo = Number(driverObj?.two_way_total || 0);
 
-    const dayTotal =
-      dayType === "one_way"
-        ? Number(settings.one_way_total || 0)
-        : Number(settings.two_way_total || 0);
+  const computedPreview = useMemo(() => {
+    const dayTotal = dayType === "one_way" ? driverOne : driverTwo;
 
     const riders = [];
     for (const m of members) {
@@ -220,7 +226,7 @@ export default function App() {
     }
 
     return { riders: computed, total: round2(computed.reduce((s, r) => s + r.charge, 0)) };
-  }, [settings, dayType, members, riderTrip, driverId]);
+  }, [dayType, driverOne, driverTwo, members, riderTrip, driverId]);
 
   async function onSave() {
     setErr("");
@@ -249,54 +255,21 @@ export default function App() {
     }
   }
 
-  function openTotalsModal() {
-    if (!settings) return;
-    setRateForm({
-      one_way_total: String(settings.one_way_total ?? ""),
-      two_way_total: String(settings.two_way_total ?? ""),
-    });
-    setRatesOpen(true);
-  }
-
-  async function saveTotals() {
-    setErr("");
-    const one = Number(rateForm.one_way_total);
-    const two = Number(rateForm.two_way_total);
-
-    if (!Number.isFinite(one) || one <= 0) return setErr("one_way_total must be a positive number.");
-    if (!Number.isFinite(two) || two <= 0) return setErr("two_way_total must be a positive number.");
-    if (two < one) return setErr("two_way_total should be >= one_way_total.");
-
-    try {
-      await updateSettings({ one_way_total: one, two_way_total: two });
-      const s = await getSettings();
-      setSettings(s);
-      setRatesOpen(false);
-    } catch (e) {
-      setErr(e.message || "Failed to update totals");
-    }
-  }
-
   const todayStr = fmtDate(new Date());
 
   return (
     <div style={styles.page}>
-      <div style={styles.topbar}>
-        <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+      <div className="topbar" style={styles.topbar}>
+        <div className="topbarRow" style={{ display: "flex", gap: 8, alignItems: "center" }}>
           <button style={styles.btn} onClick={prevMonth}>Prev</button>
           <div style={styles.monthTitle}>{month}</div>
           <button style={styles.btn} onClick={nextMonth}>Next</button>
         </div>
 
-        <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
-          {settings && (
-            <div style={styles.rates}>
-              1-way day: ${settings.one_way_total} | 2-way day: ${settings.two_way_total}
-            </div>
-          )}
-          <button style={styles.btn} onClick={openTotalsModal} disabled={!settings}>
-            Edit totals
-          </button>
+        <div className="topbarButtons" style={{ display: "flex", gap: 10, alignItems: "center" }}>
+          <div className="ratesPill" style={styles.rates}>
+            Driver rates apply when selected in a day
+          </div>
           <button style={styles.btn} onClick={loadAll} disabled={loading}>
             {loading ? "Refreshing…" : "Refresh"}
           </button>
@@ -307,7 +280,7 @@ export default function App() {
 
       <div style={styles.calendar}>
         <div style={styles.weekHeader}>
-          {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((label, i) => (
+          {["Sun","Mon","Tue","Wed","Thu","Fri","Sat"].map((label, i) => (
             <div
               key={label}
               style={{
@@ -338,6 +311,7 @@ export default function App() {
               return (
                 <div
                   key={dateStr}
+                  className="calendarCell"
                   style={{
                     ...styles.dayCell,
                     ...(isWeekend ? styles.dayCellWeekend : {}),
@@ -347,32 +321,24 @@ export default function App() {
                     opacity: inMonth ? 1 : 0.45,
                   }}
                   onClick={() => openDay(d)}
-                  onMouseEnter={(ev) => {
-                    ev.currentTarget.style.transform = "translateY(-1px)";
-                    ev.currentTarget.style.boxShadow = "0 10px 18px rgba(16,24,40,0.08)";
-                  }}
-                  onMouseLeave={(ev) => {
-                    ev.currentTarget.style.transform = "translateY(0px)";
-                    ev.currentTarget.style.boxShadow = "none";
-                  }}
                 >
                   <div style={styles.dayTop}>
                     <div style={styles.dayNum}>{d.getDate()}</div>
                     {e ? (
-                      <div style={styles.amount}>${Number(e.total_amount || 0).toFixed(2)}</div>
+                      <div className="amountTag" style={styles.amount}>${Number(e.total_amount || 0).toFixed(2)}</div>
                     ) : (
                       <div />
                     )}
                   </div>
 
                   {e ? (
-                    <div style={styles.dayInfo}>
+                    <div className="cellDetails" style={styles.dayInfo}>
                       <div style={styles.small}>Driver: {nameById[e.driver_id] || e.driver_id}</div>
                       <div style={styles.small}>Day: {e.day_type}</div>
                       <div style={styles.small}>Riders: {e.riders?.length || 0}</div>
                     </div>
                   ) : (
-                    <div style={styles.placeholder}>Click to add</div>
+                    <div className="clickToAdd" style={styles.placeholder}>Click to add</div>
                   )}
 
                   {isHoliday && <div style={styles.holidayTag}>{holidayName}</div>}
@@ -383,22 +349,7 @@ export default function App() {
         ))}
       </div>
 
-      <div style={styles.legend}>
-        <div>
-          <span style={{ ...styles.legendSwatch, background: "#fff7ed" }} /> Weekend
-        </div>
-        <div>
-          <span style={{ ...styles.legendSwatch, background: "#eef6ff" }} /> Has entry
-        </div>
-        <div>
-          <span style={{ ...styles.legendSwatch, background: "#f0f9ff", border: "1px dashed #0ea5e9" }} /> Federal holiday
-        </div>
-        <div>
-          <span style={{ ...styles.legendSwatch, background: "#e8efff", border: "1px solid #155eef" }} /> Today
-        </div>
-      </div>
-
-      <div style={styles.bottomGrid}>
+      <div className="bottomGrid" style={styles.bottomGrid}>
         <div style={styles.card}>
           <div style={styles.cardTitle}>Balances ({month})</div>
           {members.map((m) => {
@@ -422,9 +373,7 @@ export default function App() {
           ) : (
             transfers.map((t, i) => (
               <div key={i} style={styles.rowBetween}>
-                <div>
-                  {nameById[t.from]} → {nameById[t.to]}
-                </div>
+                <div>{nameById[t.from]} → {nameById[t.to]}</div>
                 <div style={{ fontWeight: 900 }}>${t.amount.toFixed(2)}</div>
               </div>
             ))
@@ -432,10 +381,9 @@ export default function App() {
         </div>
       </div>
 
-      {/* Day Modal */}
       {open && (
         <div style={styles.modalBackdrop} onClick={() => setOpen(false)}>
-          <div style={styles.modal} onClick={(e) => e.stopPropagation()}>
+          <div className="modal" style={styles.modal} onClick={(e) => e.stopPropagation()}>
             <div style={styles.modalTitle}>{activeDay ? fmtDate(activeDay) : ""}</div>
 
             <div style={styles.formRow}>
@@ -446,6 +394,13 @@ export default function App() {
                 onChange={(e) => {
                   const v = e.target.value;
                   setDriverId(v);
+
+                  const dObj = memberById.get(v);
+                  setDriverRatesForm({
+                    one_way_total: String(dObj?.one_way_total ?? ""),
+                    two_way_total: String(dObj?.two_way_total ?? ""),
+                  });
+
                   setRiderTrip((p) => ({
                     ...p,
                     [v]: p[v] && p[v] !== "none" ? p[v] : "two_way",
@@ -453,18 +408,58 @@ export default function App() {
                 }}
               >
                 {members.map((m) => (
-                  <option key={m.member_id} value={m.member_id}>
-                    {m.name}
-                  </option>
+                  <option key={m.member_id} value={m.member_id}>{m.name}</option>
                 ))}
               </select>
+
+              <div style={{ marginTop: 10 }}>
+                <label style={styles.label}>Driver rates (used for split)</label>
+                <div className="twoColInputs" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+                  <input
+                    style={styles.input}
+                    type="number"
+                    step="0.01"
+                    placeholder="one_way_total"
+                    value={driverRatesForm.one_way_total}
+                    onChange={(e) => setDriverRatesForm(p => ({ ...p, one_way_total: e.target.value }))}
+                  />
+                  <input
+                    style={styles.input}
+                    type="number"
+                    step="0.01"
+                    placeholder="two_way_total"
+                    value={driverRatesForm.two_way_total}
+                    onChange={(e) => setDriverRatesForm(p => ({ ...p, two_way_total: e.target.value }))}
+                  />
+                </div>
+
+                <div style={{ marginTop: 8 }}>
+                  <button
+                    style={styles.btn}
+                    onClick={async () => {
+                      await updateMemberRates({
+                        member_id: driverId,
+                        one_way_total: Number(driverRatesForm.one_way_total),
+                        two_way_total: Number(driverRatesForm.two_way_total),
+                      });
+                      await loadAll();
+                    }}
+                  >
+                    Save driver rates
+                  </button>
+                </div>
+
+                <div style={styles.help}>
+                  Current: 1-way ${driverOne || 0} | 2-way ${driverTwo || 0}
+                </div>
+              </div>
             </div>
 
             <div style={styles.formRow}>
-              <label style={styles.label}>Day total type</label>
+              <label style={styles.label}>Day type (select which total to use)</label>
               <select style={styles.input} value={dayType} onChange={(e) => setDayType(e.target.value)}>
-                <option value="one_way">One-way day (uses one_way_total)</option>
-                <option value="two_way">Two-way day (uses two_way_total)</option>
+                <option value="one_way">Use driver's one_way_total</option>
+                <option value="two_way">Use driver's two_way_total</option>
               </select>
             </div>
 
@@ -491,13 +486,11 @@ export default function App() {
               <label style={styles.label}>Preview</label>
               <div style={styles.previewBox}>
                 {computedPreview.riders.length === 0 ? (
-                  <div style={styles.muted}>No riders selected.</div>
+                  <div style={styles.muted}>No riders selected (or driver rate is 0).</div>
                 ) : (
                   computedPreview.riders.map((r) => (
                     <div key={r.member_id} style={styles.rowBetween}>
-                      <div>
-                        {r.name} ({r.trip_type === "one_way" ? "1-way" : "2-way"})
-                      </div>
+                      <div>{r.name} ({r.trip_type === "one_way" ? "1-way" : "2-way"})</div>
                       <div style={{ fontWeight: 900 }}>${r.charge.toFixed(2)}</div>
                     </div>
                   ))
@@ -511,70 +504,17 @@ export default function App() {
 
             <div style={styles.formRow}>
               <label style={styles.label}>Notes</label>
-              <input
-                style={styles.input}
-                value={notes}
-                onChange={(e) => setNotes(e.target.value)}
-                placeholder="Optional"
-              />
+              <input style={styles.input} value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Optional" />
             </div>
 
             <div style={{ display: "flex", gap: 10, marginTop: 12 }}>
-              <button style={styles.primary} onClick={onSave}>
-                Save
-              </button>
-              <button style={styles.btn} onClick={() => setOpen(false)}>
-                Cancel
-              </button>
+              <button style={styles.primary} onClick={onSave}>Save day</button>
+              <button style={styles.btn} onClick={() => setOpen(false)}>Cancel</button>
             </div>
 
             <div style={styles.help}>
-              Fixed day total is split by units: one-way=1, two-way=2. Rounding drift goes to driver.
+              Split uses units: one-way=1, two-way=2. Rounding drift goes to driver.
             </div>
-          </div>
-        </div>
-      )}
-
-      {/* Totals Modal */}
-      {ratesOpen && (
-        <div style={styles.modalBackdrop} onClick={() => setRatesOpen(false)}>
-          <div style={styles.modal} onClick={(e) => e.stopPropagation()}>
-            <div style={styles.modalTitle}>Edit daily totals</div>
-
-            <div style={styles.formRow}>
-              <label style={styles.label}>one_way_total</label>
-              <input
-                style={styles.input}
-                type="number"
-                min="0"
-                step="0.01"
-                value={rateForm.one_way_total}
-                onChange={(e) => setRateForm((p) => ({ ...p, one_way_total: e.target.value }))}
-              />
-            </div>
-
-            <div style={styles.formRow}>
-              <label style={styles.label}>two_way_total</label>
-              <input
-                style={styles.input}
-                type="number"
-                min="0"
-                step="0.01"
-                value={rateForm.two_way_total}
-                onChange={(e) => setRateForm((p) => ({ ...p, two_way_total: e.target.value }))}
-              />
-            </div>
-
-            <div style={{ display: "flex", gap: 10, marginTop: 12 }}>
-              <button style={styles.primary} onClick={saveTotals}>
-                Save
-              </button>
-              <button style={styles.btn} onClick={() => setRatesOpen(false)}>
-                Cancel
-              </button>
-            </div>
-
-            <div style={styles.help}>This affects new saves only. Old days keep stored charges.</div>
           </div>
         </div>
       )}
@@ -680,7 +620,6 @@ const styles = {
     padding: 10,
     cursor: "pointer",
     background: "#ffffff",
-    transition: "transform 120ms ease, box-shadow 120ms ease",
     position: "relative",
   },
 
@@ -727,25 +666,6 @@ const styles = {
   dayInfo: { marginTop: 8, display: "flex", flexDirection: "column", gap: 4 },
   small: { fontSize: 12, color: "#344054" },
   placeholder: { marginTop: 10, fontSize: 12, color: "#98a2b3" },
-
-  legend: {
-    marginTop: 10,
-    display: "flex",
-    gap: 14,
-    flexWrap: "wrap",
-    color: "#344054",
-    fontSize: 12,
-    alignItems: "center",
-  },
-  legendSwatch: {
-    display: "inline-block",
-    width: 14,
-    height: 10,
-    borderRadius: 4,
-    marginRight: 6,
-    border: "1px solid #e6eaf2",
-    verticalAlign: "middle",
-  },
 
   bottomGrid: { marginTop: 16, display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 },
 
@@ -832,4 +752,3 @@ const styles = {
   riderSelect: { padding: 8, borderRadius: 12, border: "1px solid #d0d5dd", background: "#ffffff" },
   previewBox: { border: "1px solid #eef0f6", borderRadius: 12, padding: 10, background: "#ffffff" },
 };
-

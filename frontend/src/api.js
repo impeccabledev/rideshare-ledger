@@ -12,21 +12,6 @@ export async function getMembers() {
   return data.members;
 }
 
-export async function getSettings() {
-  const res = await fetch(`${API_BASE}/settings`);
-  const data = await handle(res);
-  return data.settings;
-}
-
-export async function updateSettings(payload) {
-  const res = await fetch(`${API_BASE}/settings`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload),
-  });
-  return handle(res);
-}
-
 export async function getEntries(month) {
   const res = await fetch(`${API_BASE}/entries?month=${month}`);
   const data = await handle(res);
@@ -49,3 +34,11 @@ export async function getHolidays(month) {
   return data.holidays;
 }
 
+export async function updateMemberRates(payload) {
+  const res = await fetch(`${API_BASE}/member_rates`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+  return handle(res);
+}

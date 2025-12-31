@@ -6,7 +6,7 @@ import { google } from "googleapis";
 dotenv.config();
 
 const app = express();
-app.use(cors());
+app.use(cors()); // tighten later to your Vercel domain
 app.use(express.json());
 
 const {
@@ -17,7 +17,7 @@ const {
 } = process.env;
 
 if (!GOOGLE_SHEET_ID || !GOOGLE_SERVICE_ACCOUNT_EMAIL || !GOOGLE_PRIVATE_KEY) {
-  throw new Error("Missing env vars. Check SHEET_ID / EMAIL / PRIVATE_KEY.");
+  throw new Error("Missing env vars: GOOGLE_SHEET_ID / GOOGLE_SERVICE_ACCOUNT_EMAIL / GOOGLE_PRIVATE_KEY");
 }
 
 const auth = new google.auth.JWT({
@@ -29,7 +29,6 @@ const auth = new google.auth.JWT({
 const sheets = google.sheets({ version: "v4", auth });
 
 const TAB_MEMBERS = "members";
-const TAB_SETTINGS = "settings";
 const TAB_DAY_ENTRIES = "day_entries";
 const TAB_DAY_RIDERS = "day_riders";
 
@@ -59,16 +58,8 @@ async function appendValues(range, values) {
   });
 }
 
-async function loadSettings() {
-  const rows = await getValues(`${TAB_SETTINGS}!A:B`);
-  const m = {};
-  for (const r of rows.slice(1)) {
-    if (r[0]) m[r[0]] = r[1];
-  }
-  return {
-    one_way_total: Number(m.one_way_total ?? 0),
-    two_way_total: Number(m.two_way_total ?? 0),
-  };
+function round2(x) {
+  return Math.round(Number(x) * 100) / 100;
 }
 
 function unitsForTrip(trip_type) {
@@ -77,17 +68,11 @@ function unitsForTrip(trip_type) {
   return 0;
 }
 
-function round2(x) {
-  return Math.round(Number(x) * 100) / 100;
-}
-
 // ---------------- US Federal holidays (observed) ----------------
-
 const pad2 = (n) => String(n).padStart(2, "0");
 const fmtDate = (d) => `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
 
 function nthWeekdayOfMonth(year, monthIdx0, weekday0Sun, nth) {
-  // nth: 1..5
   const first = new Date(year, monthIdx0, 1);
   const offset = (weekday0Sun - first.getDay() + 7) % 7;
   const day = 1 + offset + (nth - 1) * 7;
@@ -95,21 +80,20 @@ function nthWeekdayOfMonth(year, monthIdx0, weekday0Sun, nth) {
 }
 
 function lastWeekdayOfMonth(year, monthIdx0, weekday0Sun) {
-  const last = new Date(year, monthIdx0 + 1, 0); // last day of month
+  const last = new Date(year, monthIdx0 + 1, 0);
   const offset = (last.getDay() - weekday0Sun + 7) % 7;
   return new Date(year, monthIdx0, last.getDate() - offset);
 }
 
 function observedFixedDateHoliday(year, monthIdx0, day) {
-  // Observed rule: if Sat -> Fri, if Sun -> Mon, else same day
   const d = new Date(year, monthIdx0, day);
   const dow = d.getDay();
-  if (dow === 6) { // Saturday
+  if (dow === 6) { // Sat -> Fri
     const obs = new Date(d);
     obs.setDate(d.getDate() - 1);
     return obs;
   }
-  if (dow === 0) { // Sunday
+  if (dow === 0) { // Sun -> Mon
     const obs = new Date(d);
     obs.setDate(d.getDate() + 1);
     return obs;
@@ -118,26 +102,19 @@ function observedFixedDateHoliday(year, monthIdx0, day) {
 }
 
 function usFederalHolidaysObservedForYear(year) {
-  // Note: Inauguration Day is NOT included. It's not a federal holiday nationwide.
-  // This list matches the standard US federal holidays.
   const holidays = [];
-
-  // Fixed-date (observed)
   holidays.push({ date: observedFixedDateHoliday(year, 0, 1), name: "New Year's Day" });
+  holidays.push({ date: nthWeekdayOfMonth(year, 0, 1, 3), name: "Birthday of Martin Luther King, Jr." });
+  holidays.push({ date: nthWeekdayOfMonth(year, 1, 1, 3), name: "Washington's Birthday" });
+  holidays.push({ date: lastWeekdayOfMonth(year, 4, 1), name: "Memorial Day" });
   holidays.push({ date: observedFixedDateHoliday(year, 5, 19), name: "Juneteenth National Independence Day" });
   holidays.push({ date: observedFixedDateHoliday(year, 6, 4), name: "Independence Day" });
+  holidays.push({ date: nthWeekdayOfMonth(year, 8, 1, 1), name: "Labor Day" });
+  holidays.push({ date: nthWeekdayOfMonth(year, 9, 1, 2), name: "Columbus Day" });
   holidays.push({ date: observedFixedDateHoliday(year, 10, 11), name: "Veterans Day" });
+  holidays.push({ date: nthWeekdayOfMonth(year, 10, 4, 4), name: "Thanksgiving Day" });
   holidays.push({ date: observedFixedDateHoliday(year, 11, 25), name: "Christmas Day" });
 
-  // Monday/Thursday-based (already on a weekday, no observed shift needed)
-  holidays.push({ date: nthWeekdayOfMonth(year, 0, 1, 3), name: "Birthday of Martin Luther King, Jr." }); // 3rd Mon Jan
-  holidays.push({ date: nthWeekdayOfMonth(year, 1, 1, 3), name: "Washington's Birthday" }); // 3rd Mon Feb
-  holidays.push({ date: lastWeekdayOfMonth(year, 4, 1), name: "Memorial Day" }); // last Mon May
-  holidays.push({ date: nthWeekdayOfMonth(year, 8, 1, 1), name: "Labor Day" }); // 1st Mon Sep
-  holidays.push({ date: nthWeekdayOfMonth(year, 9, 1, 2), name: "Columbus Day" }); // 2nd Mon Oct
-  holidays.push({ date: nthWeekdayOfMonth(year, 10, 4, 4), name: "Thanksgiving Day" }); // 4th Thu Nov
-
-  // Return as YYYY-MM-DD strings
   return holidays.map((h) => ({ date: fmtDate(h.date), name: h.name }));
 }
 
@@ -146,7 +123,7 @@ app.get("/health", (_req, res) => res.json({ ok: true }));
 // ---- MEMBERS ----
 app.get("/members", async (_req, res) => {
   try {
-    const rows = await getValues(`${TAB_MEMBERS}!A:C`);
+    const rows = await getValues(`${TAB_MEMBERS}!A:Z`);
     if (rows.length <= 1) return res.json({ members: [] });
 
     const header = rows[0];
@@ -160,6 +137,8 @@ app.get("/members", async (_req, res) => {
         member_id: r[idx["member_id"]] ?? "",
         name: r[idx["name"]] ?? "",
         active: String(r[idx["active"]] ?? "TRUE").toUpperCase() === "TRUE",
+        one_way_total: Number(r[idx["one_way_total"]] ?? 0),
+        two_way_total: Number(r[idx["two_way_total"]] ?? 0),
       }))
       .filter((m) => m.member_id && m.name);
 
@@ -170,56 +149,62 @@ app.get("/members", async (_req, res) => {
   }
 });
 
-// ---- SETTINGS ----
-app.get("/settings", async (_req, res) => {
+// Update a member's rates
+app.post("/member_rates", async (req, res) => {
   try {
-    const s = await loadSettings();
-    res.json({ settings: s });
-  } catch (e) {
-    console.error(e);
-    res.status(500).json({ error: "Failed to read settings" });
-  }
-});
+    const { member_id, one_way_total, two_way_total } = req.body || {};
+    if (!member_id) return res.status(400).json({ error: "member_id required" });
 
-app.post("/settings", async (req, res) => {
-  try {
-    const { one_way_total, two_way_total } = req.body || {};
     const one = Number(one_way_total);
     const two = Number(two_way_total);
 
-    if (!Number.isFinite(one) || one <= 0) return res.status(400).json({ error: "one_way_total must be a positive number" });
-    if (!Number.isFinite(two) || two <= 0) return res.status(400).json({ error: "two_way_total must be a positive number" });
+    if (!Number.isFinite(one) || one <= 0) return res.status(400).json({ error: "one_way_total must be positive" });
+    if (!Number.isFinite(two) || two <= 0) return res.status(400).json({ error: "two_way_total must be positive" });
     if (two < one) return res.status(400).json({ error: "two_way_total should be >= one_way_total" });
 
-    const rows = await getValues(`${TAB_SETTINGS}!A:B`);
-    const data = rows.length ? rows : [["key", "value"]];
+    const rows = await getValues(`${TAB_MEMBERS}!A:Z`);
+    if (rows.length <= 1) return res.status(400).json({ error: "members sheet empty" });
 
-    const upsert = (key, value) => {
-      const i = data.findIndex((r, idx) => idx > 0 && r[0] === key);
-      if (i >= 0) data[i] = [key, String(value)];
-      else data.push([key, String(value)]);
+    const header = rows[0];
+    const idx = {};
+    header.forEach((h, i) => (idx[h] = i));
+
+    // Ensure columns exist (in case your sheet was old)
+    const ensureCol = (col) => {
+      if (idx[col] == null) {
+        header.push(col);
+        idx[col] = header.length - 1;
+      }
     };
+    ensureCol("one_way_total");
+    ensureCol("two_way_total");
 
-    upsert("one_way_total", one);
-    upsert("two_way_total", two);
+    const rowIndex = rows.findIndex((r, i) => i > 0 && String(r[idx["member_id"]] ?? "") === member_id);
+    if (rowIndex < 0) return res.status(404).json({ error: "member not found" });
 
-    await setValues(`${TAB_SETTINGS}!A1:B${data.length}`, data);
+    while (rows[rowIndex].length < header.length) rows[rowIndex].push("");
+
+    rows[rowIndex][idx["one_way_total"]] = String(one);
+    rows[rowIndex][idx["two_way_total"]] = String(two);
+
+    // write full updated range (A:Z safe for now)
+    await setValues(`${TAB_MEMBERS}!A1:Z${rows.length}`, rows);
+
     res.json({ ok: true });
   } catch (e) {
     console.error(e);
-    res.status(500).json({ error: "Failed to update settings" });
+    res.status(500).json({ error: "Failed to update member rates" });
   }
 });
 
-// ---- HOLIDAYS (US federal, observed) ----
+// ---- HOLIDAYS ----
 app.get("/holidays", async (req, res) => {
   try {
     const { month } = req.query;
     if (!month || !/^\d{4}-\d{2}$/.test(String(month))) {
       return res.status(400).json({ error: "month required as YYYY-MM" });
     }
-    const [yStr, mStr] = String(month).split("-");
-    const year = Number(yStr);
+    const year = Number(String(month).slice(0, 4));
     const list = usFederalHolidaysObservedForYear(year).filter((h) => h.date.startsWith(month));
     res.json({ holidays: list });
   } catch (e) {
@@ -247,7 +232,7 @@ app.get("/entries", async (req, res) => {
 
       for (const r of entryRows.slice(1)) {
         const date = r[idx["date"]] ?? "";
-        if (!date.startsWith(month)) continue;
+        if (!String(date).startsWith(month)) continue;
 
         entries.push({
           entry_id: r[idx["entry_id"]] ?? "",
@@ -291,7 +276,7 @@ app.get("/entries", async (req, res) => {
   }
 });
 
-// ---- UPSERT ENTRY (fixed total + weighted split) ----
+// ---- UPSERT ENTRY (per-driver total + weighted split) ----
 app.post("/entries", async (req, res) => {
   try {
     const { date, driver_id, day_type, riders, notes = "" } = req.body || {};
@@ -310,11 +295,23 @@ app.post("/entries", async (req, res) => {
       return res.status(400).json({ error: "Driver must be included in riders" });
     }
 
-    const totals = await loadSettings();
-    const day_total_used = day_type === "one_way" ? totals.one_way_total : totals.two_way_total;
+    // Load driver totals from members tab
+    const membersRows = await getValues(`${TAB_MEMBERS}!A:Z`);
+    if (membersRows.length <= 1) return res.status(400).json({ error: "members sheet empty" });
 
+    const mh = membersRows[0];
+    const midx = {};
+    mh.forEach((h, i) => (midx[h] = i));
+
+    const driverRow = membersRows.find((r, i) => i > 0 && String(r[midx["member_id"]] ?? "") === driver_id);
+    if (!driverRow) return res.status(400).json({ error: "Driver not found in members" });
+
+    const driverOne = Number(driverRow[midx["one_way_total"]] ?? 0);
+    const driverTwo = Number(driverRow[midx["two_way_total"]] ?? 0);
+
+    const day_total_used = day_type === "one_way" ? driverOne : driverTwo;
     if (!Number.isFinite(day_total_used) || day_total_used <= 0) {
-      return res.status(400).json({ error: "Day total not set in settings" });
+      return res.status(400).json({ error: "Driver rates not set (one_way_total/two_way_total)" });
     }
 
     const riderUnits = riders.map((x) => {
@@ -336,6 +333,7 @@ app.post("/entries", async (req, res) => {
       charge: round2(day_total_used * (r.units / total_units)),
     }));
 
+    // correct rounding drift to driver
     const sumCharges = computed.reduce((s, r) => s + r.charge, 0);
     const drift = round2(day_total_used - sumCharges);
     if (Math.abs(drift) >= 0.01) {
@@ -350,7 +348,7 @@ app.post("/entries", async (req, res) => {
     const entryRows = await getValues(`${TAB_DAY_ENTRIES}!A:H`);
     const entryData = entryRows.length ? entryRows : [entryHeader];
 
-    const existingIdx = entryData.findIndex((r, i) => i > 0 && r[1] === date);
+    const existingIdx = entryData.findIndex((r, i) => i > 0 && String(r[1] ?? "") === date);
     const entryRow = [
       date,
       date,
@@ -373,7 +371,7 @@ app.post("/entries", async (req, res) => {
     const riderRows = await getValues(`${TAB_DAY_RIDERS}!A:E`);
     const riderData = riderRows.length ? riderRows : [riderHeader];
 
-    const kept = [riderHeader, ...riderData.slice(1).filter((r) => (r[0] ?? "") !== date)];
+    const kept = [riderHeader, ...riderData.slice(1).filter((r) => String(r[0] ?? "") !== date)];
     for (const c of computed) {
       kept.push([c.entry_id, c.member_id, c.trip_type, String(c.units), String(c.charge)]);
     }
@@ -402,5 +400,6 @@ app.post("/entries", async (req, res) => {
   }
 });
 
-app.listen(PORT, () => console.log(`Backend running on http://localhost:${PORT}`));
-
+app.listen(PORT, "0.0.0.0", () => {
+  console.log(`Backend running on port ${PORT}`);
+});
