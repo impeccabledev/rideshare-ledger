@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import "./App.css";
 import { getEntries, getMembers, getHolidays, saveEntry, updateMemberRates } from "./api";
 
@@ -97,6 +97,7 @@ function suggestTransfers(balances) {
 }
 
 export default function App() {
+  const [showSplash, setShowSplash] = useState(true);
   const [monthDate, setMonthDate] = useState(() => new Date());
   const month = useMemo(() => fmtMonth(monthDate), [monthDate]);
 
@@ -155,6 +156,15 @@ export default function App() {
       setLoading(false);
     }
   }
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setShowSplash(false);
+    }, 900); // 0.9s animation
+  
+    return () => clearTimeout(timer);
+  }, []);
+  
 
   useEffect(() => {
     loadAll();
@@ -283,6 +293,19 @@ export default function App() {
 
   return (
     <div style={styles.page}>
+        {showSplash && (
+        <div className="splashOverlay">
+          <div className="splashCard">
+            <div className="splashTitle">RideShare Ledger</div>
+
+            <div className="road">
+              <div className="car">🚗</div>
+            </div>
+
+            <div className="splashSub">Getting things ready…</div>
+          </div>
+        </div>
+      )}
       <div className="topbar" style={styles.topbar}>
         <div className="topbarRow" style={{ display: "flex", gap: 8, alignItems: "center" }}>
           <button style={styles.btn} onClick={prevMonth}>Prev</button>
