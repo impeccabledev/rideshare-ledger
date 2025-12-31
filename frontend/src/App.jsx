@@ -173,7 +173,7 @@ export default function App() {
   useEffect(() => {
     const timer = setTimeout(() => {
       setShowSplash(false);
-    }, 900); // 0.9s animation
+    }, 2000); // 0.9s animation
 
     return () => clearTimeout(timer);
   }, []);

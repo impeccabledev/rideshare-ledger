@@ -20,8 +20,8 @@
 }
 
 .appIcon {
-  font-size: 50px;
-  /* background: linear-gradient(135deg, #155eef, #4f46e5); */
+  font-size: 30px;
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
   color: white;
   width: 38px;
   height: 38px;
@@ -170,7 +170,7 @@
   .appIcon {
     width: 34px;
     height: 34px;
-    font-size: 30px;
+    font-size: 22px;
   }
 
   .appBrand {
@@ -321,14 +321,21 @@
 }
 
 .splashCard {
-  width: min(420px, 90vw);
+  width: 240px;
+  height: 240px;              /* 👈 must match width */
   background: #ffffff;
-  border-radius: 18px;
-  padding: 18px;
+  border-radius: 50%;         /* 👈 this makes it a circle */
+  padding: 20px;
   text-align: center;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
   border: 1px solid #eef0f6;
+  display: flex;              /* center content */
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  opacity: 75%;
 }
+
 
 .splashTitle {
   font-size: 18px;
@@ -350,7 +357,7 @@
   width: 100%;
   max-width: 320px;
   height: 46px;
-  background: linear-gradient(180deg, #f8fafc, #ffffff);
+  background: linear-gradient(180deg, #3c434a, #3c434a);
   border-radius: 12px;
   overflow: hidden;
   border: 1px solid #eef0f6;
@@ -380,7 +387,7 @@
   right: -40px; /* start off-screen on the right */
   transform: translateY(-50%);
   font-size: 26px;
-  animation: carDrive 1s ease-in-out forwards; /* slower */
+  animation: carDrive 2s ease-in-out forwards; /* slower */
 }
 
 @keyframes carDrive {
@@ -396,7 +403,7 @@
   }
   100% {
     right: calc(100% + 10px);
-    opacity: 0;
+    opacity: 1;
   }
 }
 
@@ -405,6 +412,6 @@
     transform: translateY(-50%) translateX(0);
   }
   to {
-    transform: translateY(-50%) translateX(-80px);
+    transform: translateY(-50%) translateX(80px);
   }
 }
