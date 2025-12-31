@@ -1,11 +1,13 @@
 import React, { useEffect, useMemo, useState } from "react";
 import "./App.css";
 import {
+  groupCheck,
   getEntries,
   getMembers,
   getHolidays,
   saveEntry,
   updateMemberRates,
+  createMember,
 } from "./api";
 
 // ---------- date helpers ----------
@@ -25,8 +27,7 @@ function weekdayGrid(year, monthIdx0) {
 
   // Move to first weekday if month starts on weekend
   let cur = new Date(first);
-  while (cur.getDay() === 0 || cur.getDay() === 6)
-    cur.setDate(cur.getDate() + 1);
+  while (cur.getDay() === 0 || cur.getDay() === 6) cur.setDate(cur.getDate() + 1);
 
   const weeks = [];
   while (cur <= last) {
@@ -48,8 +49,7 @@ function weekdayGrid(year, monthIdx0) {
     // Next week
     cur = new Date(rowBase);
     cur.setDate(rowBase.getDate() + 7);
-    while (cur.getDay() === 0 || cur.getDay() === 6)
-      cur.setDate(cur.getDate() + 1);
+    while (cur.getDay() === 0 || cur.getDay() === 6) cur.setDate(cur.getDate() + 1);
   }
   return weeks;
 }
@@ -106,6 +106,12 @@ function suggestTransfers(balances) {
 }
 
 export default function App() {
+  // ---- group auth (localStorage) ----
+  const [groupId, setGroupId] = useState(localStorage.getItem("group_id") || "");
+  const [joinCode, setJoinCode] = useState(localStorage.getItem("join_code") || "");
+  const [groupOk, setGroupOk] = useState(false);
+  const [authErr, setAuthErr] = useState("");
+
   const [showSplash, setShowSplash] = useState(true);
   const [monthDate, setMonthDate] = useState(() => new Date());
   const month = useMemo(() => fmtMonth(monthDate), [monthDate]);
@@ -131,6 +137,10 @@ export default function App() {
     two_way_total: "",
   });
 
+  // add member
+  const [newMemberName, setNewMemberName] = useState("");
+  const [addingMember, setAddingMember] = useState(false);
+
   const nameById = useMemo(() => {
     const m = {};
     for (const x of members) m[x.member_id] = x.name;
@@ -149,7 +159,61 @@ export default function App() {
     return map;
   }, [holidays]);
 
+  async function verifyGroupOrShowJoin() {
+    const gid = (localStorage.getItem("group_id") || "").trim();
+    const jcode = (localStorage.getItem("join_code") || "").trim();
+    if (!gid || !jcode) {
+      setGroupOk(false);
+      return;
+    }
+    try {
+      setAuthErr("");
+      await groupCheck();
+      setGroupOk(true);
+    } catch (e) {
+      setGroupOk(false);
+      setAuthErr(e.message || "Invalid group");
+    }
+  }
+
+  async function handleJoin(e) {
+    e.preventDefault();
+    setAuthErr("");
+    const gid = groupId.trim();
+    const jcode = joinCode.trim();
+    if (!gid || !jcode) {
+      setAuthErr("Enter group id + join code");
+      return;
+    }
+
+    localStorage.setItem("group_id", gid);
+    localStorage.setItem("join_code", jcode);
+
+    try {
+      await groupCheck();
+      setGroupOk(true);
+      await loadAll(); // immediately load data
+    } catch (e2) {
+      setGroupOk(false);
+      setAuthErr(e2.message || "Invalid group");
+    }
+  }
+
+  function logoutGroup() {
+    localStorage.removeItem("group_id");
+    localStorage.removeItem("join_code");
+    setGroupId("");
+    setJoinCode("");
+    setGroupOk(false);
+    setMembers([]);
+    setEntries([]);
+    setHolidays([]);
+    setErr("");
+    setAuthErr("");
+  }
+
   async function loadAll() {
+    if (!groupOk) return;
     setLoading(true);
     setErr("");
     try {
@@ -171,17 +235,20 @@ export default function App() {
   }
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setShowSplash(false);
-    }, 2000); // 0.9s animation
-
+    const timer = setTimeout(() => setShowSplash(false), 2000);
     return () => clearTimeout(timer);
+  }, []);
+
+  useEffect(() => {
+    // on mount, verify group from localStorage
+    verifyGroupOrShowJoin();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
     loadAll();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [month]);
+  }, [month, groupOk]);
 
   const entryByDate = useMemo(() => {
     const map = new Map();
@@ -189,10 +256,7 @@ export default function App() {
     return map;
   }, [entries]);
 
-  const balances = useMemo(
-    () => computeMonthBalances(members, entries),
-    [members, entries]
-  );
+  const balances = useMemo(() => computeMonthBalances(members, entries), [members, entries]);
   const transfers = useMemo(() => suggestTransfers(balances), [balances]);
 
   const weeks = useMemo(
@@ -323,7 +387,67 @@ export default function App() {
     }
   }
 
+  async function onAddMember() {
+    const name = newMemberName.trim();
+    if (!name) return;
+
+    setAddingMember(true);
+    setErr("");
+    try {
+      await createMember(name);
+      setNewMemberName("");
+      await loadAll();
+    } catch (e) {
+      setErr(e.message || "Failed to add member");
+    } finally {
+      setAddingMember(false);
+    }
+  }
+
   const todayStr = fmtDate(new Date());
+
+  // ---- Join screen gate ----
+  if (!groupOk) {
+    return (
+      <div className="joinPage">
+        <div className="joinCard">
+          <div className="appHeader">
+            <div className="appBrand">
+              <div className="appIcon">🚘</div>
+              <div className="appTitle">RideShare</div>
+            </div>
+          </div>
+
+          <div className="joinTitle">Join your group</div>
+          <div className="joinSub">
+            Enter the group id + join code shared by your friends.
+          </div>
+
+          {authErr && <div className="joinError">{authErr}</div>}
+
+          <form onSubmit={handleJoin} className="joinForm">
+            <input
+              className="joinInput"
+              value={groupId}
+              onChange={(e) => setGroupId(e.target.value)}
+              placeholder="Group ID (ex: g1)"
+              autoComplete="off"
+            />
+            <input
+              className="joinInput"
+              value={joinCode}
+              onChange={(e) => setJoinCode(e.target.value)}
+              placeholder="Join code"
+              autoComplete="off"
+            />
+            <button className="joinBtn" type="submit">
+              Enter
+            </button>
+          </form>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div style={styles.page}>
@@ -337,52 +461,65 @@ export default function App() {
             <div className="road">
               <div className="car">🚗</div>
             </div>
-
             <div className="splashSub">Getting things ready…</div>
           </div>
         </div>
       )}
+
       <div className="appHeader">
         <div className="appBrand">
           <div className="appIcon">🚘</div>
           <div className="appTitle">RideShare</div>
         </div>
       </div>
+
       <div className="topbar" style={styles.topbar}>
-        <div
-          className="topbarRow"
-          style={{ display: "flex", gap: 8, alignItems: "center" }}
-        >
-          <button style={styles.btn} onClick={prevMonth}>
-            Prev
-          </button>
+        <div className="topbarRow" style={{ display: "flex", gap: 8, alignItems: "center" }}>
+          <button style={styles.btn} onClick={prevMonth}>Prev</button>
           <div style={styles.monthTitle}>{month}</div>
-          <button style={styles.btn} onClick={nextMonth}>
-            Next
-          </button>
+          <button style={styles.btn} onClick={nextMonth}>Next</button>
         </div>
 
-        <div
-          className="topbarButtons"
-          style={{ display: "flex", gap: 10, alignItems: "center" }}
-        >
-          <div className="ratesPill" style={styles.rates}>
-            Office view: Mon–Fri only
-          </div>
+        <div className="topbarButtons" style={{ display: "flex", gap: 10, alignItems: "center" }}>
+          <div className="ratesPill" style={styles.rates}>Office view: Mon–Fri only</div>
           <button style={styles.btn} onClick={loadAll} disabled={loading}>
             {loading ? "Refreshing…" : "Refresh"}
+          </button>
+          <button style={styles.btn} onClick={logoutGroup} title="Switch group">
+            Logout
           </button>
         </div>
       </div>
 
       {err && <div style={styles.error}>{err}</div>}
 
+      {/* Add Member */}
+      <div style={{ ...styles.card, marginTop: 12 }}>
+        <div style={styles.cardTitle}>Members</div>
+        <div style={{ display: "flex", gap: 8, alignItems: "center", marginBottom: 10 }}>
+          <input
+            value={newMemberName}
+            onChange={(e) => setNewMemberName(e.target.value)}
+            placeholder="Add member name (ex: Arun)"
+            style={{ ...styles.input, marginBottom: 0 }}
+          />
+          <button
+            style={styles.primary}
+            onClick={onAddMember}
+            disabled={addingMember || !newMemberName.trim()}
+          >
+            {addingMember ? "Adding…" : "Add"}
+          </button>
+        </div>
+        <div style={styles.help}>
+          Everyone in this group will see members added here.
+        </div>
+      </div>
+
       <div style={styles.calendar}>
         <div style={styles.weekHeader}>
           {["Mon", "Tue", "Wed", "Thu", "Fri"].map((label) => (
-            <div key={label} style={styles.weekHeaderCell}>
-              {label}
-            </div>
+            <div key={label} style={styles.weekHeaderCell}>{label}</div>
           ))}
         </div>
 
@@ -419,14 +556,11 @@ export default function App() {
                   onClick={() => openDay(d)}
                 >
                   <div className="dayTop" style={styles.dayTop}>
-                    <div className="dayNum" style={styles.dayNum}>
-                      {d.getDate()}
-                    </div>
+                    <div className="dayNum" style={styles.dayNum}>{d.getDate()}</div>
                   </div>
 
                   {e ? (
                     <>
-                      {/* Desktop/tablet */}
                       <div className="cellDetails">
                         <div className="pcDriver">
                           <span className="icon">🚗</span>
@@ -438,7 +572,6 @@ export default function App() {
                         </div>
                       </div>
 
-                      {/* Mobile */}
                       <div className="mobileSummary">
                         <div className="mobileDriver">
                           <span className="icon">🚗</span>
@@ -517,9 +650,7 @@ export default function App() {
 
             {/* Driver */}
             <div className="formRowTight" style={styles.formRow}>
-              <label className="labelTight" style={styles.label}>
-                Driver
-              </label>
+              <label className="labelTight" style={styles.label}>Driver</label>
               <select
                 className="inputTight"
                 style={styles.input}
@@ -607,9 +738,7 @@ export default function App() {
 
             {/* Day type */}
             <div className="formRowTight" style={styles.formRow}>
-              <label className="labelTight" style={styles.label}>
-                Day type
-              </label>
+              <label className="labelTight" style={styles.label}>Day type</label>
               <select
                 className="inputTight"
                 style={styles.input}
@@ -623,9 +752,7 @@ export default function App() {
 
             {/* Riders */}
             <div className="formRowTight" style={styles.formRow}>
-              <label className="labelTight" style={styles.label}>
-                Who rode today?
-              </label>
+              <label className="labelTight" style={styles.label}>Who rode today?</label>
               <div className="ridersBoxTight" style={styles.ridersBox}>
                 {members.map((m) => {
                   const t = riderTrip[m.member_id] || "none";
@@ -650,9 +777,7 @@ export default function App() {
 
             {/* Preview */}
             <div className="formRowTight" style={styles.formRow}>
-              <label className="labelTight" style={styles.label}>
-                Preview
-              </label>
+              <label className="labelTight" style={styles.label}>Preview</label>
               <div className="previewBoxTight" style={styles.previewBox}>
                 {computedPreview.riders.length === 0 ? (
                   <div style={styles.muted}>
@@ -662,29 +787,22 @@ export default function App() {
                   computedPreview.riders.map((r) => (
                     <div key={r.member_id} style={styles.rowBetween}>
                       <div>
-                        {r.name} (
-                        {r.trip_type === "one_way" ? "1-way" : "2-way"})
+                        {r.name} ({r.trip_type === "one_way" ? "1-way" : "2-way"})
                       </div>
-                      <div style={{ fontWeight: 900 }}>
-                        ${r.charge.toFixed(2)}
-                      </div>
+                      <div style={{ fontWeight: 900 }}>${r.charge.toFixed(2)}</div>
                     </div>
                   ))
                 )}
                 <div style={{ ...styles.rowBetween, paddingTop: 10 }}>
                   <div style={{ fontWeight: 950 }}>Total</div>
-                  <div style={{ fontWeight: 950 }}>
-                    ${computedPreview.total.toFixed(2)}
-                  </div>
+                  <div style={{ fontWeight: 950 }}>${computedPreview.total.toFixed(2)}</div>
                 </div>
               </div>
             </div>
 
             {/* Notes */}
             <div className="formRowTight" style={styles.formRow}>
-              <label className="labelTight" style={styles.label}>
-                Notes
-              </label>
+              <label className="labelTight" style={styles.label}>Notes</label>
               <input
                 className="notesInput"
                 style={styles.input}
@@ -695,17 +813,12 @@ export default function App() {
             </div>
 
             <div style={{ display: "flex", gap: 10, marginTop: 12 }}>
-              <button style={styles.primary} onClick={onSave}>
-                Save day
-              </button>
-              <button style={styles.btn} onClick={() => setOpen(false)}>
-                Cancel
-              </button>
+              <button style={styles.primary} onClick={onSave}>Save day</button>
+              <button style={styles.btn} onClick={() => setOpen(false)}>Cancel</button>
             </div>
 
             <div style={styles.help}>
-              Split uses units: one-way=1, two-way=2. Rounding drift goes to
-              driver.
+              Split uses units: one-way=1, two-way=2. Rounding drift goes to driver.
             </div>
           </div>
         </div>
@@ -770,6 +883,7 @@ const styles = {
     color: "#ffffff",
     cursor: "pointer",
     fontWeight: 750,
+    whiteSpace: "nowrap",
   },
 
   error: {

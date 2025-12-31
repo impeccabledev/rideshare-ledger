@@ -417,3 +417,72 @@
     transform: translateY(-50%) translateX(80px);
   }
 }
+/* ===== Join Group screen ===== */
+.joinPage {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 18px;
+  background: linear-gradient(180deg, #f7f9ff 0%, #ffffff 65%);
+}
+
+.joinCard {
+  width: min(460px, 92vw);
+  background: #ffffff;
+  border: 1px solid #eef0f6;
+  border-radius: 18px;
+  padding: 18px;
+  box-shadow: 0 10px 24px rgba(20, 20, 40, 0.06);
+}
+
+.joinTitle {
+  font-size: 18px;
+  font-weight: 950;
+  color: #101828;
+  margin-top: 8px;
+}
+
+.joinSub {
+  margin-top: 6px;
+  font-size: 13px;
+  color: #667085;
+  font-weight: 650;
+  line-height: 1.3;
+}
+
+.joinError {
+  margin-top: 10px;
+  padding: 10px;
+  border-radius: 12px;
+  background: #fff1f1;
+  border: 1px solid #ffd2d2;
+  color: #8a0000;
+  font-weight: 800;
+  font-size: 13px;
+}
+
+.joinForm {
+  margin-top: 12px;
+  display: grid;
+  gap: 10px;
+}
+
+.joinInput {
+  width: 100%;
+  padding: 12px;
+  border-radius: 12px;
+  border: 1px solid #d0d5dd;
+  outline: none;
+  font-size: 14px;
+}
+
+.joinBtn {
+  padding: 12px;
+  border-radius: 12px;
+  border: 1px solid #155eef;
+  background: #155eef;
+  color: #ffffff;
+  font-weight: 900;
+  cursor: pointer;
+}
