@@ -1,181 +1,147 @@
 /* frontend/src/App.css */
 
+* {
+  box-sizing: border-box;
+}
+
 /* =========================
-   Base helpers
+   Calendar helpers
    ========================= */
-   * {
-    box-sizing: border-box;
-  }
-  
-  .topbar {
-    box-sizing: border-box;
-  }
-  
-  .calendarCell {
-    position: relative;
-    overflow: hidden;
-  }
-  
-  .amountTag {
-    display: inline-block;
-    font-weight: 900;
-    white-space: nowrap;
-  }
-  
-  .dayTop {
-    align-items: center;
-  }
-  
-  /* =========================
-     Rate inputs (driver rates)
-     ========================= */
-  .rateRow {
-    display: grid;
-    gap: 10px; /* ensures separation always */
-    align-items: center;
-  }
-  
-  .rateInput {
-    width: 100%;
-    box-sizing: border-box;
-    padding: 10px !important;
-    font-size: 14px !important;
-    height: 42px;
-    min-width: 0; /* prevents overflow in grid */
-  }
-  
-  /* Notes input: keep consistent sizing */
-  .notesInput {
-    width: 100%;
-    box-sizing: border-box;
-    padding: 10px !important;
-    height: 42px;
-    font-size: 14px;
-  }
-  
-  /* =========================
-     Mobile-first (phones)
-     ========================= */
-  @media (max-width: 640px) {
-    /* Top bar becomes stacked */
-    .topbar {
-      flex-direction: column;
-      align-items: stretch;
-      gap: 10px;
-    }
-  
-    .topbarRow {
-      display: flex;
-      width: 100%;
-      justify-content: space-between;
-      gap: 8px;
-    }
-  
-    .topbarButtons {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 8px;
-      width: 100%;
-    }
-  
-    .ratesPill {
-      width: 100%;
-      text-align: center;
-    }
-  
-    /* Calendar: summary-only in each cell */
-    .calendarCell {
-      min-height: 64px !important;
-      padding: 8px !important;
-    }
-  
-    /* Hide noisy per-cell details */
-    .cellDetails,
-    .clickToAdd {
-      display: none !important;
-    }
-  
-    /* Amount becomes a badge top-right */
-    .amountTag {
-      position: absolute;
-      top: 8px;
-      right: 8px;
-      padding: 2px 8px;
-      border-radius: 999px;
-      border: 1px solid #dbeafe;
-      background: #eff6ff;
-      font-size: 12px !important;
-    }
-  
-    .dayNum {
-      font-size: 14px !important;
-    }
-  
-    /* Holiday chip: smaller + ellipsis */
-    .holidayTag {
-      left: 8px !important;
-      bottom: 8px !important;
-      font-size: 10px !important;
-      padding: 2px 6px !important;
-      max-width: calc(100% - 16px) !important;
-    }
-  
-    /* Bottom cards stack */
-    .bottomGrid {
-      grid-template-columns: 1fr !important;
-    }
-  
-    /* Modal fills most of the screen */
-    .modal {
-      width: 100% !important;
-      height: 92vh;
-      overflow: auto;
-      border-radius: 16px;
-    }
-  
-    /* Rate inputs stack on phones */
-    .rateRow {
-      grid-template-columns: 1fr;
-    }
-  }
-  
-  /* =========================
-     Tablet tweaks
-     ========================= */
-  @media (min-width: 641px) and (max-width: 1024px) {
-    .calendarCell {
-      min-height: 90px !important;
-    }
-  
-    .cellDetails {
-      font-size: 12px;
-      line-height: 1.2;
-    }
-  
-    /* Rate inputs: 2 columns */
-    .rateRow {
-      grid-template-columns: 1fr 1fr;
-      max-width: 520px;
-    }
-  }
-  
-  /* =========================
-     Desktop tweaks
-     ========================= */
-  @media (min-width: 1025px) {
-    /* Rate inputs: 2 columns and not too wide */
-    .rateRow {
-      grid-template-columns: 1fr 1fr;
-      max-width: 520px;
-    }
-  }
-  /* Mobile calendar: show only date + driver + riders */
+.calendarCell {
+  position: relative;
+  overflow: hidden;
+}
+
+.dayTop {
+  align-items: center;
+}
+
+.amountTag {
+  display: inline-block;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+/* Desktop/tablet details hidden on mobile via CSS */
+.cellDetails {
+  margin-top: 8px;
+}
+
+/* Mobile summary block */
+.mobileSummary {
+  display: none; /* enabled on mobile */
+}
+
+/* =========================
+   Driver rate inputs
+   ========================= */
+.rateRow {
+  display: grid;
+  gap: 10px;
+  align-items: center;
+}
+
+.rateInput {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 10px !important;
+  font-size: 14px !important;
+  height: 42px;
+  min-width: 0;
+}
+
+/* Notes input consistent sizing */
+.notesInput {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 10px !important;
+  height: 42px;
+  font-size: 14px;
+}
+
+/* =========================
+   Modal sizing + tighter form
+   ========================= */
+.modal {
+  width: min(520px, 92vw);
+  max-height: 80vh;
+  overflow: auto;
+}
+
+.modal .formRowTight {
+  margin-top: 10px;
+}
+
+.modal .labelTight {
+  margin-bottom: 6px;
+}
+
+.modal .inputTight {
+  height: 40px;
+  padding: 8px 10px;
+  font-size: 14px;
+}
+
+.modal .ridersBoxTight {
+  max-height: 240px;
+  overflow: auto;
+}
+
+.modal .previewBoxTight {
+  max-height: 180px;
+  overflow: auto;
+}
+
+/* =========================
+   Mobile layout
+   ========================= */
 @media (max-width: 640px) {
+  /* Top bar stack */
+  .topbar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+
+  .topbarRow {
+    display: flex;
+    width: 100%;
+    justify-content: space-between;
+    gap: 8px;
+  }
+
+  .topbarButtons {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    width: 100%;
+  }
+
+  .ratesPill {
+    width: 100%;
+    text-align: center;
+  }
+
+  /* Calendar: tighter cells */
+  .calendarCell {
+    min-height: 72px !important;
+    padding: 8px !important;
+  }
+
+  /* Remove amount from calendar on mobile */
   .amountTag {
     display: none !important;
   }
 
+  /* Hide noisy desktop details & click text */
+  .cellDetails,
+  .clickToAdd {
+    display: none !important;
+  }
+
+  /* Show mobile summary */
   .mobileSummary {
+    display: block;
     margin-top: 6px;
     font-size: 12px;
     color: #344054;
@@ -194,5 +160,91 @@
     margin-top: 2px;
     color: #667085;
     font-weight: 700;
+  }
+
+  .dayNum {
+    font-size: 14px !important;
+  }
+
+  /* Holiday chip tighter */
+  .holidayTag {
+    left: 8px !important;
+    bottom: 8px !important;
+    font-size: 10px !important;
+    padding: 2px 6px !important;
+    max-width: calc(100% - 16px) !important;
+  }
+
+  /* Bottom cards stack */
+  .bottomGrid {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Modal as bottom sheet */
+  .modalBackdrop {
+    align-items: flex-end !important;
+    padding: 10px !important;
+  }
+
+  .modal {
+    width: 100% !important;
+    height: 82vh !important;
+    border-radius: 18px;
+  }
+
+  /* Rate inputs stack */
+  .rateRow {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* =========================
+   Tablet tweaks
+   ========================= */
+@media (min-width: 641px) and (max-width: 1024px) {
+  .calendarCell {
+    min-height: 90px !important;
+  }
+
+  .cellDetails {
+    font-size: 12px;
+    line-height: 1.2;
+  }
+
+  .rateRow {
+    grid-template-columns: 1fr 1fr;
+    max-width: 520px;
+  }
+}
+
+/* =========================
+   Desktop tweaks
+   ========================= */
+@media (min-width: 1025px) {
+  .rateRow {
+    grid-template-columns: 1fr 1fr;
+    max-width: 520px;
+  }
+}
+/* Force: mobile summary ONLY on phones */
+.mobileSummary {
+  display: none !important;
+}
+
+@media (max-width: 640px) {
+  .mobileSummary {
+    display: block !important;
+  }
+
+  /* And desktop details should stay hidden on mobile */
+  .cellDetails {
+    display: none !important;
+  }
+}
+
+/* Force: desktop details ONLY on tablet/desktop */
+@media (min-width: 641px) {
+  .cellDetails {
+    display: block !important;
   }
 }
