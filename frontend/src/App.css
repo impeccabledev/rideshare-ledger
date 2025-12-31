@@ -4,15 +4,27 @@
   box-sizing: border-box;
 }
 
-/* Force: mobile summary OFF by default (desktop/tablet) */
-.mobileSummary {
-  display: none !important;
-}
-
-/* Calendar cell basics */
+/* =========================
+   Calendar cells + details
+   ========================= */
 .calendarCell {
   position: relative;
   overflow: hidden;
+  border-radius: 0;
+}
+
+/* Outer corner rounding (only corners of the whole grid) */
+.calendarCell.firstCell {
+  border-top-left-radius: 14px;
+}
+.calendarCell.lastCell {
+  border-top-right-radius: 14px;
+}
+.calendarCell.bottomFirstCell {
+  border-bottom-left-radius: 14px;
+}
+.calendarCell.bottomLastCell {
+  border-bottom-right-radius: 14px;
 }
 
 .dayTop {
@@ -23,7 +35,34 @@
   font-weight: 900;
 }
 
-/* Hide amount everywhere (we removed it from JSX anyway) */
+/* Desktop/tablet details inside calendar cells */
+.cellDetails {
+  margin-top: 8px;
+  font-size: 12px;
+  line-height: 1.15;
+  color: #344054;
+}
+
+.pcDriver {
+  font-weight: 900;
+  color: #101828;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pcRiders {
+  margin-top: 2px;
+  color: #667085;
+  font-weight: 700;
+}
+
+/* Mobile summary block */
+.mobileSummary {
+  display: none !important;
+}
+
+/* Hide amounts everywhere in calendar */
 .amountTag {
   display: none !important;
 }
@@ -122,7 +161,11 @@
     padding: 8px !important;
   }
 
-  /* Show mobile summary */
+  /* Use mobile summary instead of desktop details */
+  .cellDetails {
+    display: none !important;
+  }
+
   .mobileSummary {
     display: block !important;
     margin-top: 6px;
