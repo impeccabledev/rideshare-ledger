@@ -20,8 +20,8 @@
 }
 
 .appIcon {
-  font-size: 22px;
-  background: linear-gradient(135deg, #155eef, #4f46e5);
+  font-size: 50px;
+  /* background: linear-gradient(135deg, #155eef, #4f46e5); */
   color: white;
   width: 38px;
   height: 38px;
@@ -32,7 +32,7 @@
 }
 
 .appTitle {
-  font-size: 20px;
+  font-size: 30px;
   font-weight: 950;
   color: #101828;
   letter-spacing: 0.4px;
