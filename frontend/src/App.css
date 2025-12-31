@@ -169,4 +169,30 @@
       max-width: 520px;
     }
   }
-  
+  /* Mobile calendar: show only date + driver + riders */
+@media (max-width: 640px) {
+  .amountTag {
+    display: none !important;
+  }
+
+  .mobileSummary {
+    margin-top: 6px;
+    font-size: 12px;
+    color: #344054;
+    line-height: 1.15;
+  }
+
+  .mobileDriver {
+    font-weight: 900;
+    color: #101828;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .mobileRiders {
+    margin-top: 2px;
+    color: #667085;
+    font-weight: 700;
+  }
+}
