@@ -1,0 +1,835 @@
+import { useEffect, useMemo, useState } from "react";
+import { getEntries, getMembers, getSettings, saveEntry, updateSettings, getHolidays } from "./api";
+
+// ---------- date helpers ----------
+const pad2 = (n) => String(n).padStart(2, "0");
+const fmtMonth = (d) => `${d.getFullYear()}-${pad2(d.getMonth() + 1)}`;
+const fmtDate = (d) => `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
+const round2 = (x) => Math.round(Number(x) * 100) / 100;
+
+function monthGrid(year, monthIdx0) {
+  const first = new Date(year, monthIdx0, 1);
+  const startDay = first.getDay(); // 0 Sun
+  const gridStart = new Date(year, monthIdx0, 1 - startDay);
+
+  const weeks = [];
+  let cur = new Date(gridStart);
+  for (let w = 0; w < 6; w++) {
+    const week = [];
+    for (let i = 0; i < 7; i++) {
+      week.push(new Date(cur));
+      cur.setDate(cur.getDate() + 1);
+    }
+    weeks.push(week);
+  }
+  return weeks;
+}
+
+// ---------- settlement helpers ----------
+function computeMonthBalances(members, entries) {
+  const balances = {};
+  for (const m of members) balances[m.member_id] = 0;
+
+  for (const e of entries) {
+    const total = Number(e.total_amount || 0);
+    if (!total) continue;
+
+    const driverId = e.driver_id;
+    balances[driverId] = (balances[driverId] || 0) + total;
+
+    for (const r of e.riders || []) {
+      const charge = Number(r.charge || 0);
+      balances[r.member_id] = (balances[r.member_id] || 0) - charge;
+    }
+  }
+
+  for (const k of Object.keys(balances)) balances[k] = round2(balances[k]);
+  return balances;
+}
+
+function suggestTransfers(balances) {
+  const creditors = [];
+  const debtors = [];
+  for (const [id, bal] of Object.entries(balances)) {
+    const v = round2(bal);
+    if (v > 0.01) creditors.push([id, v]);
+    else if (v < -0.01) debtors.push([id, -v]);
+  }
+  creditors.sort((a, b) => b[1] - a[1]);
+  debtors.sort((a, b) => b[1] - a[1]);
+
+  const transfers = [];
+  let i = 0,
+    j = 0;
+  while (i < debtors.length && j < creditors.length) {
+    const [debId, debAmt] = debtors[i];
+    const [creId, creAmt] = creditors[j];
+    const x = Math.min(debAmt, creAmt);
+    transfers.push({ from: debId, to: creId, amount: round2(x) });
+
+    debtors[i][1] = round2(debAmt - x);
+    creditors[j][1] = round2(creAmt - x);
+
+    if (debtors[i][1] <= 0.01) i++;
+    if (creditors[j][1] <= 0.01) j++;
+  }
+  return transfers;
+}
+
+export default function App() {
+  const [monthDate, setMonthDate] = useState(() => new Date());
+  const month = useMemo(() => fmtMonth(monthDate), [monthDate]);
+
+  const [members, setMembers] = useState([]);
+  const [settings, setSettings] = useState(null);
+  const [entries, setEntries] = useState([]);
+  const [holidays, setHolidays] = useState([]);
+
+  const [loading, setLoading] = useState(false);
+  const [err, setErr] = useState("");
+
+  // day modal state
+  const [open, setOpen] = useState(false);
+  const [activeDay, setActiveDay] = useState(null);
+  const [driverId, setDriverId] = useState("");
+  const [dayType, setDayType] = useState("two_way");
+  const [riderTrip, setRiderTrip] = useState({});
+  const [notes, setNotes] = useState("");
+
+  // totals modal state
+  const [ratesOpen, setRatesOpen] = useState(false);
+  const [rateForm, setRateForm] = useState({ one_way_total: "", two_way_total: "" });
+
+  const nameById = useMemo(() => {
+    const m = {};
+    for (const x of members) m[x.member_id] = x.name;
+    return m;
+  }, [members]);
+
+  const holidayByDate = useMemo(() => {
+    const map = new Map();
+    for (const h of holidays) map.set(h.date, h.name || "");
+    return map;
+  }, [holidays]);
+
+  async function loadAll() {
+    setLoading(true);
+    setErr("");
+    try {
+      const [m, s, e, h] = await Promise.all([
+        getMembers(),
+        getSettings(),
+        getEntries(month),
+        getHolidays(month),
+      ]);
+      setMembers(m.filter((x) => x.active));
+      setSettings(s);
+      setEntries(e);
+      setHolidays(h);
+
+      if (!driverId && m.length) setDriverId(m[0].member_id);
+    } catch (e) {
+      setErr(e.message || "Failed to load");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  useEffect(() => {
+    loadAll();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [month]);
+
+  const entryByDate = useMemo(() => {
+    const map = new Map();
+    for (const e of entries) map.set(e.date, e);
+    return map;
+  }, [entries]);
+
+  const balances = useMemo(() => computeMonthBalances(members, entries), [members, entries]);
+  const transfers = useMemo(() => suggestTransfers(balances), [balances]);
+  const weeks = useMemo(() => monthGrid(monthDate.getFullYear(), monthDate.getMonth()), [monthDate]);
+
+  function prevMonth() {
+    const d = new Date(monthDate);
+    d.setMonth(d.getMonth() - 1);
+    setMonthDate(d);
+  }
+  function nextMonth() {
+    const d = new Date(monthDate);
+    d.setMonth(d.getMonth() + 1);
+    setMonthDate(d);
+  }
+
+  function openDay(d) {
+    const dateStr = fmtDate(d);
+    const existing = entryByDate.get(dateStr);
+
+    setActiveDay(d);
+    setNotes(existing?.notes || "");
+    setDriverId(existing?.driver_id || members[0]?.member_id || "");
+    setDayType(existing?.day_type || "two_way");
+
+    const next = {};
+    for (const m of members) next[m.member_id] = "none";
+
+    if (existing?.riders?.length) {
+      for (const r of existing.riders) next[r.member_id] = r.trip_type;
+    } else {
+      const dId = existing?.driver_id || members[0]?.member_id;
+      if (dId) next[dId] = "two_way";
+    }
+
+    setRiderTrip(next);
+    setOpen(true);
+  }
+
+  function setTrip(member_id, trip_type) {
+    setRiderTrip((p) => ({ ...p, [member_id]: trip_type }));
+  }
+
+  const computedPreview = useMemo(() => {
+    if (!settings) return { riders: [], total: 0 };
+
+    const dayTotal =
+      dayType === "one_way"
+        ? Number(settings.one_way_total || 0)
+        : Number(settings.two_way_total || 0);
+
+    const riders = [];
+    for (const m of members) {
+      const t = riderTrip[m.member_id] || "none";
+      if (t === "none") continue;
+      const units = t === "one_way" ? 1 : 2;
+      riders.push({ member_id: m.member_id, name: m.name, trip_type: t, units, charge: 0 });
+    }
+
+    const totalUnits = riders.reduce((s, r) => s + r.units, 0);
+    if (!dayTotal || totalUnits === 0) return { riders: [], total: 0 };
+
+    const computed = riders.map((r) => ({
+      ...r,
+      charge: round2(dayTotal * (r.units / totalUnits)),
+    }));
+
+    const sum = computed.reduce((s, r) => s + r.charge, 0);
+    const drift = round2(dayTotal - sum);
+    if (Math.abs(drift) >= 0.01) {
+      const i = computed.findIndex((x) => x.member_id === driverId);
+      if (i >= 0) computed[i].charge = round2(computed[i].charge + drift);
+    }
+
+    return { riders: computed, total: round2(computed.reduce((s, r) => s + r.charge, 0)) };
+  }, [settings, dayType, members, riderTrip, driverId]);
+
+  async function onSave() {
+    setErr("");
+    if (!activeDay) return;
+
+    const date = fmtDate(activeDay);
+    if (!driverId) return setErr("Pick a driver.");
+
+    const riders = computedPreview.riders.map((r) => ({
+      member_id: r.member_id,
+      trip_type: r.trip_type,
+    }));
+
+    if (riders.length === 0) return setErr("Select at least 1 rider.");
+    if (!riders.some((r) => r.member_id === driverId)) return setErr("Driver must be included as a rider.");
+
+    try {
+      const entry = await saveEntry({ date, driver_id: driverId, day_type: dayType, riders, notes });
+      setEntries((prev) => {
+        const rest = prev.filter((e) => e.date !== date);
+        return [...rest, entry].sort((a, b) => a.date.localeCompare(b.date));
+      });
+      setOpen(false);
+    } catch (e) {
+      setErr(e.message || "Failed to save entry");
+    }
+  }
+
+  function openTotalsModal() {
+    if (!settings) return;
+    setRateForm({
+      one_way_total: String(settings.one_way_total ?? ""),
+      two_way_total: String(settings.two_way_total ?? ""),
+    });
+    setRatesOpen(true);
+  }
+
+  async function saveTotals() {
+    setErr("");
+    const one = Number(rateForm.one_way_total);
+    const two = Number(rateForm.two_way_total);
+
+    if (!Number.isFinite(one) || one <= 0) return setErr("one_way_total must be a positive number.");
+    if (!Number.isFinite(two) || two <= 0) return setErr("two_way_total must be a positive number.");
+    if (two < one) return setErr("two_way_total should be >= one_way_total.");
+
+    try {
+      await updateSettings({ one_way_total: one, two_way_total: two });
+      const s = await getSettings();
+      setSettings(s);
+      setRatesOpen(false);
+    } catch (e) {
+      setErr(e.message || "Failed to update totals");
+    }
+  }
+
+  const todayStr = fmtDate(new Date());
+
+  return (
+    <div style={styles.page}>
+      <div style={styles.topbar}>
+        <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+          <button style={styles.btn} onClick={prevMonth}>Prev</button>
+          <div style={styles.monthTitle}>{month}</div>
+          <button style={styles.btn} onClick={nextMonth}>Next</button>
+        </div>
+
+        <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+          {settings && (
+            <div style={styles.rates}>
+              1-way day: ${settings.one_way_total} | 2-way day: ${settings.two_way_total}
+            </div>
+          )}
+          <button style={styles.btn} onClick={openTotalsModal} disabled={!settings}>
+            Edit totals
+          </button>
+          <button style={styles.btn} onClick={loadAll} disabled={loading}>
+            {loading ? "Refreshing…" : "Refresh"}
+          </button>
+        </div>
+      </div>
+
+      {err && <div style={styles.error}>{err}</div>}
+
+      <div style={styles.calendar}>
+        <div style={styles.weekHeader}>
+          {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((label, i) => (
+            <div
+              key={label}
+              style={{
+                ...styles.weekHeaderCell,
+                ...(i === 0 || i === 6 ? styles.weekHeaderWeekend : {}),
+              }}
+            >
+              {label}
+            </div>
+          ))}
+        </div>
+
+        {weeks.map((week, wi) => (
+          <div key={wi} style={styles.weekRow}>
+            {week.map((d) => {
+              const dateStr = fmtDate(d);
+              const inMonth = d.getMonth() === monthDate.getMonth();
+              const e = entryByDate.get(dateStr);
+
+              const dow = d.getDay();
+              const isWeekend = dow === 0 || dow === 6;
+              const isToday = dateStr === todayStr;
+              const hasEntry = !!e;
+
+              const holidayName = holidayByDate.get(dateStr);
+              const isHoliday = !!holidayName;
+
+              return (
+                <div
+                  key={dateStr}
+                  style={{
+                    ...styles.dayCell,
+                    ...(isWeekend ? styles.dayCellWeekend : {}),
+                    ...(hasEntry ? styles.dayCellHasEntry : {}),
+                    ...(isHoliday ? styles.dayCellHoliday : {}),
+                    ...(isToday ? styles.dayCellToday : {}),
+                    opacity: inMonth ? 1 : 0.45,
+                  }}
+                  onClick={() => openDay(d)}
+                  onMouseEnter={(ev) => {
+                    ev.currentTarget.style.transform = "translateY(-1px)";
+                    ev.currentTarget.style.boxShadow = "0 10px 18px rgba(16,24,40,0.08)";
+                  }}
+                  onMouseLeave={(ev) => {
+                    ev.currentTarget.style.transform = "translateY(0px)";
+                    ev.currentTarget.style.boxShadow = "none";
+                  }}
+                >
+                  <div style={styles.dayTop}>
+                    <div style={styles.dayNum}>{d.getDate()}</div>
+                    {e ? (
+                      <div style={styles.amount}>${Number(e.total_amount || 0).toFixed(2)}</div>
+                    ) : (
+                      <div />
+                    )}
+                  </div>
+
+                  {e ? (
+                    <div style={styles.dayInfo}>
+                      <div style={styles.small}>Driver: {nameById[e.driver_id] || e.driver_id}</div>
+                      <div style={styles.small}>Day: {e.day_type}</div>
+                      <div style={styles.small}>Riders: {e.riders?.length || 0}</div>
+                    </div>
+                  ) : (
+                    <div style={styles.placeholder}>Click to add</div>
+                  )}
+
+                  {isHoliday && <div style={styles.holidayTag}>{holidayName}</div>}
+                </div>
+              );
+            })}
+          </div>
+        ))}
+      </div>
+
+      <div style={styles.legend}>
+        <div>
+          <span style={{ ...styles.legendSwatch, background: "#fff7ed" }} /> Weekend
+        </div>
+        <div>
+          <span style={{ ...styles.legendSwatch, background: "#eef6ff" }} /> Has entry
+        </div>
+        <div>
+          <span style={{ ...styles.legendSwatch, background: "#f0f9ff", border: "1px dashed #0ea5e9" }} /> Federal holiday
+        </div>
+        <div>
+          <span style={{ ...styles.legendSwatch, background: "#e8efff", border: "1px solid #155eef" }} /> Today
+        </div>
+      </div>
+
+      <div style={styles.bottomGrid}>
+        <div style={styles.card}>
+          <div style={styles.cardTitle}>Balances ({month})</div>
+          {members.map((m) => {
+            const b = balances[m.member_id] || 0;
+            return (
+              <div key={m.member_id} style={styles.rowBetween}>
+                <div>{m.name}</div>
+                <div style={b >= 0 ? styles.pillPos : styles.pillNeg}>
+                  {b > 0 ? `+${b.toFixed(2)}` : b.toFixed(2)}
+                </div>
+              </div>
+            );
+          })}
+          <div style={styles.help}>Positive = should receive. Negative = should pay.</div>
+        </div>
+
+        <div style={styles.card}>
+          <div style={styles.cardTitle}>Suggested transfers</div>
+          {transfers.length === 0 ? (
+            <div style={styles.muted}>Nothing to settle.</div>
+          ) : (
+            transfers.map((t, i) => (
+              <div key={i} style={styles.rowBetween}>
+                <div>
+                  {nameById[t.from]} → {nameById[t.to]}
+                </div>
+                <div style={{ fontWeight: 900 }}>${t.amount.toFixed(2)}</div>
+              </div>
+            ))
+          )}
+        </div>
+      </div>
+
+      {/* Day Modal */}
+      {open && (
+        <div style={styles.modalBackdrop} onClick={() => setOpen(false)}>
+          <div style={styles.modal} onClick={(e) => e.stopPropagation()}>
+            <div style={styles.modalTitle}>{activeDay ? fmtDate(activeDay) : ""}</div>
+
+            <div style={styles.formRow}>
+              <label style={styles.label}>Driver</label>
+              <select
+                style={styles.input}
+                value={driverId}
+                onChange={(e) => {
+                  const v = e.target.value;
+                  setDriverId(v);
+                  setRiderTrip((p) => ({
+                    ...p,
+                    [v]: p[v] && p[v] !== "none" ? p[v] : "two_way",
+                  }));
+                }}
+              >
+                {members.map((m) => (
+                  <option key={m.member_id} value={m.member_id}>
+                    {m.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div style={styles.formRow}>
+              <label style={styles.label}>Day total type</label>
+              <select style={styles.input} value={dayType} onChange={(e) => setDayType(e.target.value)}>
+                <option value="one_way">One-way day (uses one_way_total)</option>
+                <option value="two_way">Two-way day (uses two_way_total)</option>
+              </select>
+            </div>
+
+            <div style={styles.formRow}>
+              <label style={styles.label}>Who rode today?</label>
+              <div style={styles.ridersBox}>
+                {members.map((m) => {
+                  const t = riderTrip[m.member_id] || "none";
+                  return (
+                    <div key={m.member_id} style={styles.riderRow}>
+                      <div style={{ fontWeight: 800 }}>{m.name}</div>
+                      <select style={styles.riderSelect} value={t} onChange={(e) => setTrip(m.member_id, e.target.value)}>
+                        <option value="none">Not riding</option>
+                        <option value="one_way">One-way</option>
+                        <option value="two_way">Two-way</option>
+                      </select>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div style={styles.formRow}>
+              <label style={styles.label}>Preview</label>
+              <div style={styles.previewBox}>
+                {computedPreview.riders.length === 0 ? (
+                  <div style={styles.muted}>No riders selected.</div>
+                ) : (
+                  computedPreview.riders.map((r) => (
+                    <div key={r.member_id} style={styles.rowBetween}>
+                      <div>
+                        {r.name} ({r.trip_type === "one_way" ? "1-way" : "2-way"})
+                      </div>
+                      <div style={{ fontWeight: 900 }}>${r.charge.toFixed(2)}</div>
+                    </div>
+                  ))
+                )}
+                <div style={{ ...styles.rowBetween, paddingTop: 10 }}>
+                  <div style={{ fontWeight: 950 }}>Total</div>
+                  <div style={{ fontWeight: 950 }}>${computedPreview.total.toFixed(2)}</div>
+                </div>
+              </div>
+            </div>
+
+            <div style={styles.formRow}>
+              <label style={styles.label}>Notes</label>
+              <input
+                style={styles.input}
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                placeholder="Optional"
+              />
+            </div>
+
+            <div style={{ display: "flex", gap: 10, marginTop: 12 }}>
+              <button style={styles.primary} onClick={onSave}>
+                Save
+              </button>
+              <button style={styles.btn} onClick={() => setOpen(false)}>
+                Cancel
+              </button>
+            </div>
+
+            <div style={styles.help}>
+              Fixed day total is split by units: one-way=1, two-way=2. Rounding drift goes to driver.
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Totals Modal */}
+      {ratesOpen && (
+        <div style={styles.modalBackdrop} onClick={() => setRatesOpen(false)}>
+          <div style={styles.modal} onClick={(e) => e.stopPropagation()}>
+            <div style={styles.modalTitle}>Edit daily totals</div>
+
+            <div style={styles.formRow}>
+              <label style={styles.label}>one_way_total</label>
+              <input
+                style={styles.input}
+                type="number"
+                min="0"
+                step="0.01"
+                value={rateForm.one_way_total}
+                onChange={(e) => setRateForm((p) => ({ ...p, one_way_total: e.target.value }))}
+              />
+            </div>
+
+            <div style={styles.formRow}>
+              <label style={styles.label}>two_way_total</label>
+              <input
+                style={styles.input}
+                type="number"
+                min="0"
+                step="0.01"
+                value={rateForm.two_way_total}
+                onChange={(e) => setRateForm((p) => ({ ...p, two_way_total: e.target.value }))}
+              />
+            </div>
+
+            <div style={{ display: "flex", gap: 10, marginTop: 12 }}>
+              <button style={styles.primary} onClick={saveTotals}>
+                Save
+              </button>
+              <button style={styles.btn} onClick={() => setRatesOpen(false)}>
+                Cancel
+              </button>
+            </div>
+
+            <div style={styles.help}>This affects new saves only. Old days keep stored charges.</div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+const styles = {
+  page: {
+    maxWidth: 1100,
+    margin: "24px auto",
+    padding: 16,
+    fontFamily: "system-ui, sans-serif",
+    background: "linear-gradient(180deg, #f7f9ff 0%, #ffffff 60%)",
+    borderRadius: 16,
+  },
+
+  topbar: {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    gap: 12,
+    padding: 12,
+    borderRadius: 14,
+    background: "#ffffff",
+    border: "1px solid #eef0f6",
+    boxShadow: "0 6px 18px rgba(20, 20, 40, 0.05)",
+  },
+
+  monthTitle: { fontSize: 18, fontWeight: 900, padding: "0 6px", color: "#101828" },
+
+  rates: {
+    fontSize: 12,
+    color: "#344054",
+    padding: "6px 10px",
+    border: "1px solid #e6eaf2",
+    borderRadius: 999,
+    background: "#f8fafc",
+  },
+
+  btn: {
+    padding: "8px 12px",
+    borderRadius: 12,
+    border: "1px solid #d0d5dd",
+    background: "#ffffff",
+    cursor: "pointer",
+    color: "#101828",
+    fontWeight: 650,
+  },
+
+  primary: {
+    padding: "8px 12px",
+    borderRadius: 12,
+    border: "1px solid #155eef",
+    background: "#155eef",
+    color: "#ffffff",
+    cursor: "pointer",
+    fontWeight: 750,
+  },
+
+  error: {
+    marginTop: 14,
+    padding: 10,
+    borderRadius: 12,
+    background: "#fff1f1",
+    border: "1px solid #ffd2d2",
+    color: "#8a0000",
+  },
+
+  muted: { color: "#667085", fontSize: 13 },
+
+  calendar: {
+    marginTop: 16,
+    border: "1px solid #eef0f6",
+    borderRadius: 16,
+    overflow: "hidden",
+    background: "#ffffff",
+    boxShadow: "0 10px 24px rgba(20, 20, 40, 0.06)",
+  },
+
+  weekHeader: {
+    display: "grid",
+    gridTemplateColumns: "repeat(7, 1fr)",
+    background: "#f8fafc",
+    borderBottom: "1px solid #eef0f6",
+  },
+
+  weekHeaderCell: {
+    padding: 10,
+    fontSize: 12,
+    color: "#344054",
+    fontWeight: 800,
+  },
+
+  weekHeaderWeekend: { color: "#b54708" },
+
+  weekRow: { display: "grid", gridTemplateColumns: "repeat(7, 1fr)" },
+
+  dayCell: {
+    minHeight: 110,
+    borderRight: "1px solid #f0f2f7",
+    borderBottom: "1px solid #f0f2f7",
+    padding: 10,
+    cursor: "pointer",
+    background: "#ffffff",
+    transition: "transform 120ms ease, box-shadow 120ms ease",
+    position: "relative",
+  },
+
+  dayCellWeekend: {
+    background: "linear-gradient(180deg, #fff7ed 0%, #ffffff 70%)",
+  },
+
+  dayCellHasEntry: {
+    background: "linear-gradient(180deg, #eef6ff 0%, #ffffff 70%)",
+  },
+
+  dayCellHoliday: {
+    background: "linear-gradient(180deg, #f0f9ff 0%, #ffffff 70%)",
+    outline: "2px dashed #0ea5e9",
+    outlineOffset: "-2px",
+  },
+
+  dayCellToday: {
+    outline: "2px solid #155eef",
+    outlineOffset: "-2px",
+    background: "linear-gradient(180deg, #e8efff 0%, #ffffff 70%)",
+  },
+
+  holidayTag: {
+    position: "absolute",
+    left: 10,
+    bottom: 10,
+    fontSize: 11,
+    color: "#0b74b5",
+    fontWeight: 850,
+    background: "#e0f2fe",
+    border: "1px solid #bae6fd",
+    padding: "2px 8px",
+    borderRadius: 999,
+    maxWidth: "calc(100% - 20px)",
+    overflow: "hidden",
+    textOverflow: "ellipsis",
+    whiteSpace: "nowrap",
+  },
+
+  dayTop: { display: "flex", justifyContent: "space-between", alignItems: "baseline" },
+  dayNum: { fontWeight: 900, color: "#101828" },
+  amount: { fontSize: 12, fontWeight: 900, color: "#155eef" },
+  dayInfo: { marginTop: 8, display: "flex", flexDirection: "column", gap: 4 },
+  small: { fontSize: 12, color: "#344054" },
+  placeholder: { marginTop: 10, fontSize: 12, color: "#98a2b3" },
+
+  legend: {
+    marginTop: 10,
+    display: "flex",
+    gap: 14,
+    flexWrap: "wrap",
+    color: "#344054",
+    fontSize: 12,
+    alignItems: "center",
+  },
+  legendSwatch: {
+    display: "inline-block",
+    width: 14,
+    height: 10,
+    borderRadius: 4,
+    marginRight: 6,
+    border: "1px solid #e6eaf2",
+    verticalAlign: "middle",
+  },
+
+  bottomGrid: { marginTop: 16, display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 },
+
+  card: {
+    padding: 14,
+    border: "1px solid #eef0f6",
+    borderRadius: 16,
+    background: "#ffffff",
+    boxShadow: "0 10px 24px rgba(20, 20, 40, 0.06)",
+  },
+
+  cardTitle: { fontWeight: 900, marginBottom: 10, color: "#101828" },
+
+  rowBetween: {
+    display: "flex",
+    justifyContent: "space-between",
+    padding: "8px 0",
+    borderBottom: "1px solid #f2f4f7",
+  },
+
+  help: { marginTop: 10, fontSize: 12, color: "#667085" },
+
+  pillPos: {
+    padding: "2px 8px",
+    borderRadius: 999,
+    background: "#ecfdf3",
+    color: "#027a48",
+    fontWeight: 900,
+    fontSize: 12,
+  },
+
+  pillNeg: {
+    padding: "2px 8px",
+    borderRadius: 999,
+    background: "#fef3f2",
+    color: "#b42318",
+    fontWeight: 900,
+    fontSize: 12,
+  },
+
+  modalBackdrop: {
+    position: "fixed",
+    inset: 0,
+    background: "rgba(16,24,40,0.45)",
+    display: "flex",
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 16,
+  },
+
+  modal: {
+    width: "min(580px, 100%)",
+    background: "#ffffff",
+    borderRadius: 16,
+    padding: 16,
+    border: "1px solid #eef0f6",
+    boxShadow: "0 20px 50px rgba(16,24,40,0.25)",
+  },
+
+  modalTitle: { fontWeight: 950, fontSize: 16, marginBottom: 10, color: "#101828" },
+  formRow: { marginTop: 10 },
+  label: { display: "block", fontSize: 12, fontWeight: 900, marginBottom: 6, color: "#344054" },
+
+  input: {
+    width: "100%",
+    padding: 10,
+    borderRadius: 12,
+    border: "1px solid #d0d5dd",
+    outline: "none",
+    background: "#ffffff",
+  },
+
+  ridersBox: {
+    border: "1px solid #eef0f6",
+    borderRadius: 12,
+    padding: 10,
+    display: "flex",
+    flexDirection: "column",
+    gap: 10,
+    background: "#fbfcfe",
+  },
+
+  riderRow: { display: "flex", justifyContent: "space-between", gap: 10, alignItems: "center" },
+  riderSelect: { padding: 8, borderRadius: 12, border: "1px solid #d0d5dd", background: "#ffffff" },
+  previewBox: { border: "1px solid #eef0f6", borderRadius: 12, padding: 10, background: "#ffffff" },
+};
+
