@@ -322,8 +322,8 @@ export default function App() {
                   }}
                   onClick={() => openDay(d)}
                 >
-                  <div style={styles.dayTop}>
-                    <div style={styles.dayNum}>{d.getDate()}</div>
+                  <div className="dayTop" style={styles.dayTop}>
+                  <div className="dayNum" style={styles.dayNum}>{d.getDate()}</div>
                     {e ? (
                       <div className="amountTag" style={styles.amount}>${Number(e.total_amount || 0).toFixed(2)}</div>
                     ) : (
@@ -414,8 +414,9 @@ export default function App() {
 
               <div style={{ marginTop: 10 }}>
                 <label style={styles.label}>Driver rates (used for split)</label>
-                <div className="twoColInputs" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+                <div className="twoColInputs rateRow" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
                   <input
+                    className="rateInput"
                     style={styles.input}
                     type="number"
                     step="0.01"
@@ -424,6 +425,7 @@ export default function App() {
                     onChange={(e) => setDriverRatesForm(p => ({ ...p, one_way_total: e.target.value }))}
                   />
                   <input
+                    className="rateInput"
                     style={styles.input}
                     type="number"
                     step="0.01"

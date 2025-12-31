@@ -1,4 +1,40 @@
+/* frontend/src/App.css */
+
+/* -----------------------------
+   Base helpers
+------------------------------ */
+
+.topbar {
+  box-sizing: border-box;
+}
+
+.calendarCell {
+  position: relative;
+  overflow: hidden;
+}
+
+.amountTag {
+  display: inline-block;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+.dayTop {
+  align-items: center;
+}
+
+/* Smaller inputs specifically for driver-rate fields */
+.rateInput {
+  padding: 8px !important;
+  font-size: 14px !important;
+  height: 40px;
+}
+
+/* -----------------------------
+   Mobile-first layout (phones)
+------------------------------ */
 @media (max-width: 640px) {
+  /* Top bar becomes stacked */
   .topbar {
     flex-direction: column;
     align-items: stretch;
@@ -24,27 +60,49 @@
     text-align: center;
   }
 
+  /* Calendar: show summary-only in each cell */
   .calendarCell {
-    min-height: 78px !important;
+    min-height: 64px !important;
     padding: 8px !important;
   }
 
-  .cellDetails {
-    display: none;
-  }
-
+  /* Hide the noisy per-cell detail text */
+  .cellDetails,
   .clickToAdd {
-    display: none;
+    display: none !important;
   }
 
+  /* Amount becomes a small badge in the top-right */
   .amountTag {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    padding: 2px 8px;
+    border-radius: 999px;
+    border: 1px solid #dbeafe;
+    background: #eff6ff;
     font-size: 12px !important;
   }
 
+  .dayNum {
+    font-size: 14px !important;
+  }
+
+  /* Holiday chip: smaller + keep it inside the cell */
+  .holidayTag {
+    left: 8px !important;
+    bottom: 8px !important;
+    font-size: 10px !important;
+    padding: 2px 6px !important;
+    max-width: calc(100% - 16px) !important;
+  }
+
+  /* Bottom cards stack */
   .bottomGrid {
     grid-template-columns: 1fr !important;
   }
 
+  /* Modal fills most of the screen */
   .modal {
     width: 100% !important;
     height: 92vh;
@@ -52,7 +110,32 @@
     border-radius: 16px;
   }
 
+  /* Rate inputs stack on phones */
   .twoColInputs {
     grid-template-columns: 1fr !important;
+  }
+}
+
+/* -----------------------------
+   Tablet tweaks
+------------------------------ */
+@media (min-width: 641px) and (max-width: 1024px) {
+  .calendarCell {
+    min-height: 90px !important;
+  }
+
+  .cellDetails {
+    font-size: 12px;
+    line-height: 1.2;
+  }
+}
+
+/* -----------------------------
+   Desktop tweaks
+------------------------------ */
+@media (min-width: 1025px) {
+  /* keep the driver-rate row from stretching too wide */
+  .rateRow {
+    max-width: 460px;
   }
 }
