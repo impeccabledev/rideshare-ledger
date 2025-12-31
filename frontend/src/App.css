@@ -163,7 +163,7 @@
   .appIcon {
     width: 34px;
     height: 34px;
-    font-size: 20px;
+    font-size: 30px;
   }
 
   /* Top bar stack */
@@ -177,7 +177,7 @@
     display: flex;
     width: 100%;
     justify-content: space-between;
-    gap: 8px;
+    gap: 4px;
   }
 
   .topbarButtons {
@@ -220,10 +220,11 @@
   }
 
   .mobileRiders {
-    margin-top: 2px;
+    font-weight: 900;
     color: #667085;
-    font-weight: 800;
-    padding: 4px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   /* Holiday chip tighter */
