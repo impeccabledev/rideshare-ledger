@@ -70,13 +70,20 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  display: flex;
+  align-items: center;   /* 👈 vertical alignment */
+  gap: 6px;              /* space between icon + text */
+  line-height: 1.1;
 }
 
 .pcRiders {
   margin-top: 2px;
   color: #667085;
   font-weight: 800;
-  padding: 4px;
+  display: flex;
+  align-items: center;   /* 👈 vertical alignment */
+  gap: 6px;              /* space between icon + text */
+  line-height: 1.1;
 }
 
 /* Mobile summary block */
@@ -223,6 +230,10 @@
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+    display: flex;
+    align-items: center;   /* 👈 vertical alignment */
+    gap: 3px;              /* space between icon + text */
+    line-height: 1.1;
   }
 
   .mobileRiders {
@@ -231,6 +242,10 @@
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+    display: flex;
+    align-items: center;   /* 👈 vertical alignment */
+    gap: 3px;              /* space between icon + text */
+    line-height: 1.1;
   }
 
   /* Holiday chip tighter */
