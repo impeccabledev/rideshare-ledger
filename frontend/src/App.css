@@ -247,10 +247,19 @@
     padding: 2px !important;
   }
 
-  /* Increase gap between week rows on mobile */
+  /* Calendar header tighter */
+  .weekHeader {
+    gap: 1px !important;
+  }
+
+  .weekHeaderCell {
+    font-size: 11px !important;
+  }
+
+  /* Calendar rows tighter */
   .weekRow {
-    gap: 2px !important;
-    margin-bottom: 2px !important;
+    gap: 1px !important;
+    margin-bottom: 1px !important;
   }
 
   /* Day number more visible on mobile */

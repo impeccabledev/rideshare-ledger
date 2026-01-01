@@ -1003,14 +1003,14 @@ const styles = {
     overflow: "hidden",
   },
   calendar: { display: "flex", flexDirection: "column", gap: 8 },
-  weekHeader: { display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 8 },
+  weekHeader: { display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 2 },
   weekHeaderCell: {
     textAlign: "center",
     fontWeight: 900,
     color: "#475467",
     fontSize: 12,
   },
-  weekRow: { display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 8 },
+  weekRow: { display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 2 },
   dayCell: {
     border: "1px solid #e4e7ec",
     borderRadius: 14,
