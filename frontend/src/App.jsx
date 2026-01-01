@@ -687,7 +687,7 @@ export default function App() {
         </div>
 
         <div style={styles.card}>
-          <div style={styles.cardTitle}>Up</div>
+          <div style={styles.cardTitle}>Settle Up</div>
           <div style={{ marginTop: 10 }}>
             {transfers.length === 0 ? (
               <div style={styles.small}>No transfers needed.</div>
