@@ -687,7 +687,7 @@ export default function App() {
         </div>
 
         <div style={styles.card}>
-          <div style={styles.cardTitle}>Settle up</div>
+          <div style={styles.cardTitle}>Up</div>
           <div style={{ marginTop: 10 }}>
             {transfers.length === 0 ? (
               <div style={styles.small}>No transfers needed.</div>
@@ -1006,7 +1006,7 @@ const styles = {
   },
   bottomGrid: { marginTop: 16, display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 },
   card: { border: "1px solid #e4e7ec", background: "#fff", borderRadius: 16, padding: 12 },
-  cardTitle: { fontWeight: 950, color: "#101828", marginBottom: 6 },
+  cardTitle: { fontWeight: 950, color: "#101828", marginBottom: 6, textAlign: "center" },
   small: { fontSize: 12, color: "#667085", fontWeight: 700 },
   rowLine: {
     display: "flex",
