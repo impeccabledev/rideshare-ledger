@@ -54,12 +54,17 @@ async function getValues(range) {
 }
 
 async function setValues(range, values) {
-  await sheets.spreadsheets.values.update({
+  console.log("setValues called:", range, "rows:", values.length);
+  console.log("First row:", values[0]);
+  console.log("Second row if exists:", values[1]);
+  const resp = await sheets.spreadsheets.values.update({
     spreadsheetId: GOOGLE_SHEET_ID,
     range,
     valueInputOption: "USER_ENTERED",
     requestBody: { values },
   });
+  console.log("setValues response updatedCells:", resp.data?.updatedCells);
+  return resp.data;
 }
 
 async function appendValues(range, values) {
@@ -405,7 +410,7 @@ app.get("/entries", async (req, res) => {
 // ---- UPSERT ENTRY (per-driver total + weighted split) ----
 app.post("/entries", async (req, res) => {
   try {
-    const { date, driver_id, day_type, riders, notes = "" } = req.body || {};
+    const { date, driver_id, day_type, riders = [], notes = "" } = req.body || {};
 
     if (!date || !/^\d{4}-\d{2}-\d{2}$/.test(String(date))) {
       return res.status(400).json({ error: "date required as YYYY-MM-DD" });
@@ -414,11 +419,8 @@ app.post("/entries", async (req, res) => {
     if (!["one_way", "two_way"].includes(day_type)) {
       return res.status(400).json({ error: "day_type must be one_way or two_way" });
     }
-    if (!Array.isArray(riders) || riders.length === 0) {
-      return res.status(400).json({ error: "riders must be a non-empty array" });
-    }
-    if (!riders.some((x) => x.member_id === driver_id)) {
-      return res.status(400).json({ error: "Driver must be included in riders" });
+    if (!Array.isArray(riders)) {
+      return res.status(400).json({ error: "riders must be an array" });
     }
 
     // Load driver totals from members tab
@@ -434,6 +436,63 @@ app.post("/entries", async (req, res) => {
     const driverTwo = Number(driverRow[midx["two_way_total"]] ?? 0);
 
     const day_total_used = day_type === "one_way" ? driverOne : driverTwo;
+
+    // If no riders, save entry with empty riders array
+    if (riders.length === 0) {
+      const created_at = new Date().toISOString();
+      const total_amount = 0;
+
+      const entryHeader = ["entry_id","date","driver_id","day_type","day_total_used","total_amount","notes","created_at"];
+      const entryRows = await getValues(`${TAB_DAY_ENTRIES}!A:H`);
+      const entryData = entryRows.length ? entryRows : [entryHeader];
+
+      const existingIdx = entryData.findIndex((r, i) => i > 0 && String(r[1] ?? "") === date);
+      const entryRow = [
+        date,
+        date,
+        driver_id,
+        day_type,
+        String(day_total_used),
+        String(total_amount),
+        notes,
+        created_at,
+      ];
+
+      if (existingIdx >= 1) {
+        entryData[existingIdx] = entryRow;
+        await setValues(`${TAB_DAY_ENTRIES}!A1:H${entryData.length}`, entryData);
+      } else {
+        await appendValues(`${TAB_DAY_ENTRIES}!A:H`, [entryRow]);
+      }
+
+      // Clear riders for this date
+      const riderRows = await getValues(`${TAB_DAY_RIDERS}!A:E`);
+      if (riderRows.length > 1) {
+        const riderData = riderRows;
+        const kept = [riderData[0], ...riderData.slice(1).filter((r) => String(r[0] ?? "") !== date)];
+        await setValues(`${TAB_DAY_RIDERS}!A1:E${kept.length}`, kept);
+      }
+
+      return res.status(201).json({
+        entry: {
+          entry_id: date,
+          date,
+          driver_id,
+          day_type,
+          day_total_used,
+          total_amount,
+          notes,
+          created_at,
+          riders: [],
+        },
+      });
+    }
+
+    // Existing logic for when riders are provided
+    if (!riders.some((x) => x.member_id === driver_id)) {
+      return res.status(400).json({ error: "Driver must be included in riders" });
+    }
+
     if (!Number.isFinite(day_total_used) || day_total_used <= 0) {
       return res.status(400).json({ error: "Driver rates not set (one_way_total/two_way_total)" });
     }
@@ -484,7 +543,7 @@ app.post("/entries", async (req, res) => {
       created_at,
     ];
 
-    if (existingIdx > 0) {
+    if (existingIdx >= 1) {
       entryData[existingIdx] = entryRow;
       await setValues(`${TAB_DAY_ENTRIES}!A1:H${entryData.length}`, entryData);
     } else {
@@ -521,6 +580,117 @@ app.post("/entries", async (req, res) => {
       return res.status(400).json({ error: "riders.trip_type must be one_way or two_way" });
     }
     res.status(500).json({ error: "Failed to save entry" });
+  }
+});
+
+// Helper to delete a row by index (1-indexed, including header)
+async function deleteRow(sheetName, rowIndex) {
+  await sheets.spreadsheets.batchUpdate({
+    spreadsheetId: GOOGLE_SHEET_ID,
+    requestBody: {
+      requests: [{
+        deleteDimension: {
+          range: {
+            sheetId: 0, // Use the first sheet's ID, or get it dynamically
+            dimension: "ROWS",
+            startIndex: rowIndex - 1, // Convert to 0-indexed
+            endIndex: rowIndex, // Exclusive end
+          }
+        }
+      }]
+    }
+  });
+}
+
+// ---- DELETE ENTRY ----
+app.delete("/entries/:date", async (req, res) => {
+  try {
+    const { date } = req.params;
+    console.log(`[DELETE] Attempting to delete entry for date: ${date}`);
+    
+    if (!date || !/^\d{4}-\d{2}-\d{2}$/.test(String(date))) {
+      return res.status(400).json({ error: "date required as YYYY-MM-DD" });
+    }
+
+    // First, get the current sheet metadata to find the correct sheetId
+    const spreadsheet = await sheets.spreadsheets.get({ spreadsheetId: GOOGLE_SHEET_ID });
+    const entriesSheet = spreadsheet.data.sheets.find(s => s.properties.title === TAB_DAY_ENTRIES);
+    const ridersSheet = spreadsheet.data.sheets.find(s => s.properties.title === TAB_DAY_RIDERS);
+    const entriesSheetId = entriesSheet?.properties?.sheetId || 0;
+    const ridersSheetId = ridersSheet?.properties?.sheetId || 0;
+
+    // Delete from day_entries sheet
+    const entryRows = await getValues(`${TAB_DAY_ENTRIES}!A:H`);
+    console.log(`[DELETE] entryRows length: ${entryRows.length}`);
+    if (entryRows.length > 1) {
+      const existingIdx = entryRows.findIndex((r, i) => i > 0 && String(r[1] ?? "") === date);
+      console.log(`[DELETE] existingIdx for ${date}: ${existingIdx}`);
+      if (existingIdx >= 1) {
+        // Delete the row (index + 1 because header is row 0, data starts at row 1)
+        const rowToDelete = existingIdx + 1; // 1-indexed including header
+        console.log(`[DELETE] Deleting row ${rowToDelete} from day_entries`);
+        await sheets.spreadsheets.batchUpdate({
+          spreadsheetId: GOOGLE_SHEET_ID,
+          requestBody: {
+            requests: [{
+              deleteDimension: {
+                range: {
+                  sheetId: entriesSheetId,
+                  dimension: "ROWS",
+                  startIndex: existingIdx, // 0-indexed, so existingIdx is the row to delete
+                  endIndex: existingIdx + 1,
+                }
+              }
+            }]
+          }
+        });
+        console.log(`[DELETE] Deleted row ${rowToDelete} from day_entries`);
+      } else {
+        console.log(`[DELETE] Entry not found in day_entries sheet`);
+      }
+    }
+
+    // Delete from day_riders sheet
+    const riderRows = await getValues(`${TAB_DAY_RIDERS}!A:E`);
+    console.log(`[DELETE] riderRows length: ${riderRows.length}`);
+    if (riderRows.length > 1) {
+      // Find all rows for this date (there might be multiple riders)
+      const rowsToDelete = [];
+      riderRows.forEach((r, i) => {
+        if (i > 0 && String(r[0] ?? "") === date) {
+          rowsToDelete.push(i);
+        }
+      });
+      console.log(`[DELETE] Found ${rowsToDelete.length} rider rows to delete:`, rowsToDelete);
+      
+      // Delete rows in reverse order (so indices stay valid)
+      for (let i = rowsToDelete.length - 1; i >= 0; i--) {
+        const rowIdx = rowsToDelete[i];
+        console.log(`[DELETE] Deleting rider row ${rowIdx + 1} (index ${rowIdx})`);
+        await sheets.spreadsheets.batchUpdate({
+          spreadsheetId: GOOGLE_SHEET_ID,
+          requestBody: {
+            requests: [{
+              deleteDimension: {
+                range: {
+                  sheetId: ridersSheetId,
+                  dimension: "ROWS",
+                  startIndex: rowIdx,
+                  endIndex: rowIdx + 1,
+                }
+              }
+            }]
+          }
+        });
+      }
+      console.log(`[DELETE] Deleted ${rowsToDelete.length} rider rows`);
+    }
+
+    console.log(`[DELETE] Successfully deleted entry for date: ${date}`);
+    res.json({ ok: true, deleted: date });
+  } catch (e) {
+    console.error("[DELETE] Error:", e);
+    res.status(500).json({ error: "Failed to delete entry" });
   }
 });
 

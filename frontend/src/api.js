@@ -22,7 +22,10 @@ async function request(path, { method = "GET", body } = {}) {
   const headers = { ...authHeaders() };
   if (body !== undefined) headers["Content-Type"] = "application/json";
 
-  const res = await fetch(`${API_BASE}${path}`, {
+  const url = `${API_BASE}${path}`;
+  console.log("request:", method, url);
+  
+  const res = await fetch(url, {
     method,
     headers,
     body: body !== undefined ? JSON.stringify(body) : undefined,
@@ -61,6 +64,13 @@ export async function getEntries(month) {
 export async function saveEntry(payload) {
   const data = await request("/entries", { method: "POST", body: payload });
   return data.entry;
+}
+
+export async function deleteEntry(date) {
+  console.log("deleteEntry called with date:", date);
+  const data = await request(`/entries/${encodeURIComponent(date)}`, { method: "DELETE" });
+  console.log("deleteEntry result:", data);
+  return data;
 }
 
 // ----- Holidays -----

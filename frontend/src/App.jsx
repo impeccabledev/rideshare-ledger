@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState, useCallback } from "react";
 import "./App.css";
 import {
   groupCheck,
@@ -6,6 +6,7 @@ import {
   getEntries,
   getHolidays,
   saveEntry,
+  deleteEntry,
   updateMemberRates,
   createMember,
 } from "./api";
@@ -128,6 +129,10 @@ export default function App() {
   const [members, setMembers] = useState([]);
   const [entries, setEntries] = useState([]);
   const [holidays, setHolidays] = useState([]);
+  
+  // Force re-render counter
+  const [, setTick] = useState(0);
+  const forceUpdate = useCallback(() => setTick(t => t + 1), []);
 
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState("");
@@ -139,6 +144,7 @@ export default function App() {
   const [dayType, setDayType] = useState("two_way");
   const [riderTrip, setRiderTrip] = useState({});
   const [notes, setNotes] = useState("");
+  const [shouldClear, setShouldClear] = useState(false);  // Flag to track if entry should be cleared
 
   // driver rates form (per-driver)
   const [driverRatesForm, setDriverRatesForm] = useState({
@@ -211,7 +217,7 @@ export default function App() {
     bootAuth();
   }, []);
 
-  async function loadAll() {
+  async function loadAll(skipDriverReset = false) {
     setLoading(true);
     setErr("");
     try {
@@ -220,7 +226,10 @@ export default function App() {
       setMembers(active);
       setEntries(e || []);
       setHolidays(h || []);
-      if (!driverId && active.length) setDriverId(active[0].member_id);
+      // Only auto-select first driver if driverId is truly empty (not __none__)
+      if (!skipDriverReset && !driverId && !driverId.startsWith("__") && active.length) {
+        setDriverId(active[0].member_id);
+      }
     } catch (e) {
       setErr(e.message || "Failed to load");
     } finally {
@@ -326,10 +335,21 @@ export default function App() {
     const dateStr = fmtDate(d);
     const existing = entryByDate.get(dateStr);
 
+    // Reset the clear flag when opening a new day
+    setShouldClear(false);
+    
     setActiveDay(d);
     setNotes(existing?.notes || "");
 
-    const defaultDriver = existing?.driver_id || members[0]?.member_id || "";
+    // If we're in clear mode, keep the driver as "none", otherwise use existing or first member
+    let defaultDriver;
+    if (shouldClear) {
+      // Preserve the "None" state after clearing
+      defaultDriver = "__none__";
+    } else {
+      defaultDriver = existing?.driver_id || members[0]?.member_id || "";
+    }
+    
     setDriverId(defaultDriver);
     setDayType(existing?.day_type || "two_way");
 
@@ -338,13 +358,13 @@ export default function App() {
 
     if (existing?.riders?.length) {
       for (const r of existing.riders) next[r.member_id] = r.trip_type;
-    } else if (defaultDriver) {
+    } else if (defaultDriver && defaultDriver !== "__none__") {
       next[defaultDriver] = "two_way";
     }
 
     setRiderTrip(next);
 
-    const dObj = memberById.get(defaultDriver);
+    const dObj = memberById.get(defaultDriver === "__none__" ? "" : defaultDriver);
     setDriverRatesForm({
       one_way_total: String(dObj?.one_way_total ?? ""),
       two_way_total: String(dObj?.two_way_total ?? ""),
@@ -355,6 +375,41 @@ export default function App() {
 
   function setTrip(member_id, trip_type) {
     setRiderTrip((p) => ({ ...p, [member_id]: trip_type }));
+  }
+
+  function clearForm() {
+    // Reset all form fields to defaults (empty state)
+    console.log("clearForm called, members:", members.map(m => m.name));
+    
+    setDriverId("__none__");  // Use special value to indicate no driver selected
+    setDayType("two_way");
+    setDriverRatesForm({
+      one_way_total: "",
+      two_way_total: "",
+    });
+
+    // Reset all riders to none
+    const next = {};
+    for (const m of members) next[m.member_id] = "none";
+    setRiderTrip(next);
+    console.log("Rider trip reset:", next);
+
+    setNotes("");
+  }
+
+  async function onClear() {
+    setErr("");
+    
+    // Set flag to indicate entry should be cleared on save
+    setShouldClear(true);
+    
+    // Clear the form fields (resets to defaults without closing modal)
+    clearForm();
+    
+    // Force re-render to ensure UI updates
+    forceUpdate();
+    
+    console.log("onClear: shouldClear set to true, driverId:", driverId);
   }
 
   // ---------- Split preview ----------
@@ -405,15 +460,44 @@ export default function App() {
     if (!activeDay) return;
 
     const date = fmtDate(activeDay);
-    if (!driverId) return setErr("Pick a driver.");
+    console.log("onSave called, shouldClear:", shouldClear, "driverId:", driverId);
 
+    // Check if this is a clear operation
+    if (shouldClear) {
+      try {
+        console.log("Deleting entry for date:", date);
+        console.log("Current entries before delete:", entries.map(e => ({ date: e.date, driver: e.driver_id })));
+        
+        // Delete the existing entry from Google Sheets
+        console.log("Delete: date parameter type:", typeof date, "value:", date);
+        const result = await deleteEntry(date);
+        console.log("Delete API result:", result);
+        console.log("Delete API result.ok:", result?.ok, "deleted:", result?.deleted);
+        
+        // Update local state to remove the entry immediately (optimistic update)
+        const filteredEntries = entries.filter((e) => e.date !== date);
+        console.log("Filtered entries after delete:", filteredEntries.map(e => e.date));
+        setEntries(filteredEntries);
+        
+        // Reset the clear flag
+        setShouldClear(false);
+        
+        // Close the modal
+        setOpen(false);
+        
+        console.log("Clear complete - entry removed from UI");
+      } catch (e) {
+        console.error("Clear error:", e);
+        setErr(e.message || "Failed to clear entry");
+      }
+      return;
+    }
+
+    // Build riders array from form data - can be empty
     const riders = computedPreview.riders.map((r) => ({
       member_id: r.member_id,
       trip_type: r.trip_type,
     }));
-
-    if (riders.length === 0) return setErr("Select at least 1 rider.");
-    if (!riders.some((r) => r.member_id === driverId)) return setErr("Driver must be included as a rider.");
 
     try {
       const entry = await saveEntry({
@@ -430,6 +514,9 @@ export default function App() {
       });
 
       setOpen(false);
+      
+      // Reload all data to refresh the memoized entryByDate map
+      await loadAll();
     } catch (e) {
       setErr(e.message || "Failed to save entry");
     }
@@ -749,14 +836,29 @@ export default function App() {
       {open && (
         <div className="modalBackdrop" style={styles.modalBackdrop} onClick={() => setOpen(false)}>
           <div className="modal" style={styles.modal} onClick={(e) => e.stopPropagation()}>
-            <div style={styles.modalTitle}>{activeDay ? fmtDate(activeDay) : ""}</div>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
+              <div style={styles.modalTitle}>{activeDay ? fmtDate(activeDay) : ""}</div>
+              <button
+                type="button"
+                style={{
+                  ...styles.btn,
+                  background: "linear-gradient(135deg, #fca5a5 0%, #f87171 100%)",
+                  color: "white",
+                  borderColor: "#f87171",
+                  minWidth: "70px",
+                }}
+                onClick={onClear}
+              >
+                Clear
+              </button>
+            </div>
 
             <div className="formRowTight" style={styles.formRow}>
               <div className="labelTight" style={styles.label}>Driver</div>
               <select
                 className="inputTight"
                 style={styles.select}
-                value={driverId}
+                value={driverId === "__none__" ? "" : driverId}
                 onChange={(e) => {
                   const id = e.target.value;
                   setDriverId(id);
@@ -767,6 +869,7 @@ export default function App() {
                   });
                 }}
               >
+                <option value="">None</option>
                 {members.map((m) => (
                   <option key={m.member_id} value={m.member_id}>
                     {m.name}
