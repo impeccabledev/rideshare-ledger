@@ -12,7 +12,11 @@ import {
 
 // ---------- date helpers ----------
 const pad2 = (n) => String(n).padStart(2, "0");
-const fmtMonth = (d) => `${d.getFullYear()}-${pad2(d.getMonth() + 1)}`;
+const fmtMonthApi = (d) => `${d.getFullYear()}-${pad2(d.getMonth() + 1)}`;
+const fmtMonthDisplay = (d) => {
+  const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  return `${months[d.getMonth()]}'${String(d.getFullYear()).slice(-2)}`;
+};
 const fmtDate = (d) => `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
 const round2 = (x) => Math.round(Number(x) * 100) / 100;
 
@@ -117,7 +121,8 @@ export default function App() {
   const [showSplash, setShowSplash] = useState(true);
 
   const [monthDate, setMonthDate] = useState(() => new Date());
-  const month = useMemo(() => fmtMonth(monthDate), [monthDate]);
+  const month = useMemo(() => fmtMonthApi(monthDate), [monthDate]);
+  const monthDisplay = useMemo(() => fmtMonthDisplay(monthDate), [monthDate]);
 
   const [members, setMembers] = useState([]);
   const [entries, setEntries] = useState([]);
@@ -492,34 +497,41 @@ export default function App() {
         
 
         <form onSubmit={handleJoin} style={styles.joinCard}>
-          <div className="appHeader" style={{ marginBottom: 5}}>
+          <div className="appHeader" style={{ marginBottom: 5 }}>
             <div className="appBrand">
               <div className="appIcon">🚘</div>
               <div className="appTitle">RideShare</div>
             </div>
           </div>
-          <div style={styles.joinTitle}>Join your group</div>
+          <div style={styles.joinTitle}>Welcome back</div>
+          <div style={styles.joinSubtitle}>Enter your group credentials to continue</div>
 
           {authErr && <div style={styles.error}>{authErr}</div>}
 
-          <input
-            style={styles.input}
-            value={groupId}
-            onChange={(e) => setGroupId(e.target.value)}
-            placeholder="Group ID"
-            autoComplete="off"
-          />
+          <div style={styles.inputGroup}>
+            <input
+              style={styles.input}
+              value={groupId}
+              onChange={(e) => setGroupId(e.target.value)}
+              placeholder="Group ID"
+              autoComplete="off"
+            />
+          </div>
 
-          <input
-            style={styles.input}
-            value={joinCode}
-            onChange={(e) => setJoinCode(e.target.value)}
-            placeholder="Join Code"
-            autoComplete="off"
-          />
+          <div style={styles.inputGroup}>
+            <input
+              style={styles.input}
+              type="password"
+              value={joinCode}
+              onChange={(e) => setJoinCode(e.target.value)}
+              placeholder="Join Code"
+              autoComplete="off"
+              maxLength={8}
+            />
+          </div>
 
-          <button type="submit" style={{ ...styles.btn, ...styles.btnPrimary, width: "100%" }}>
-            Join
+          <button type="submit" style={{ ...styles.btn, ...styles.btnPrimary, width: "100%", marginTop: 8 }}>
+            Continue
           </button>
         </form>
       </div>
@@ -541,7 +553,7 @@ export default function App() {
             <div className="road">
               <div className="car">🚗</div>
             </div>
-            <div className="splashSub">Getting things ready…</div>
+            <div className="splashSub">Buckle Up…</div>
           </div>
         </div>
       )}
@@ -555,20 +567,12 @@ export default function App() {
 
       <div className="topbar" style={styles.topbar}>
         <div className="topbarRow" style={{ display: "flex", gap: 8, alignItems: "center" }}>
-          <button style={styles.btn} onClick={prevMonth}>
-            Prev
-          </button>
-          <div style={styles.monthTitle}>{month}</div>
-          <button style={styles.btn} onClick={nextMonth}>
-            Next
-          </button>
+          <button style={styles.btn} onClick={prevMonth}>&lt; Prev</button>
+          <div style={styles.monthTitle}>{monthDisplay}</div>
+          <button style={styles.btn} onClick={nextMonth}>Next &gt;</button>
         </div>
 
         <div className="topbarButtons" style={{ display: "flex", gap: 10, alignItems: "center" }}>
-          <div className="ratesPill" style={styles.rates}>
-            Office view: Mon–Fri only
-          </div>
-
           <button style={styles.btn} onClick={() => { setMemberErr(""); setMemberOpen(true); }}>
             + Member
           </button>
@@ -927,8 +931,10 @@ const styles = {
     flexDirection: "column",
     gap: 10,
   },
-  joinTitle: { fontWeight: 600, fontSize: 16, color: "#101828", fontFamily:"tahoma, sans-serif", textAlign:"center", marginBottom:10 },
+  joinTitle: { fontWeight: 600, fontSize: 16, color: "#101828", fontFamily:"tahoma, sans-serif", textAlign:"center", marginBottom:4 },
+  joinSubtitle: { fontSize: 13, color: "#667085", textAlign: "center", marginBottom: 16, fontFamily:"tahoma, sans-serif" },
   joinHint: { fontSize: 12, color: "#667085", fontWeight: 700, marginTop: 6 },
+  inputGroup: { marginBottom: 12 },
   topbar: {
     display: "flex",
     justifyContent: "space-between",
@@ -948,15 +954,6 @@ const styles = {
   },
   btnOn: { borderColor: "#155eef", background: "#eff4ff" },
   btnPrimary: { background: "#155eef", color: "white", borderColor: "#155eef" },
-  rates: {
-    border: "1px solid #e4e7ec",
-    background: "#fff",
-    padding: "8px 12px",
-    borderRadius: 12,
-    fontWeight: 850,
-    color: "#344054",
-    whiteSpace: "nowrap",
-  },
   error: {
     background: "#fff1f3",
     border: "1px solid #fecdd3",
