@@ -199,6 +199,7 @@
     flex-direction: column;
     align-items: stretch;
     gap: 10px;
+    padding: 8px 0 !important;
   }
 
   .topbarRow {
@@ -229,7 +230,24 @@
   /* Calendar: tighter cells */
   .calendarCell {
     min-height: 66px !important;
+    padding: 6px !important;
+    margin: 2px !important;
+  }
+
+  /* Add space around calendar container */
+  .calendar {
+    padding: 8px !important;
+  }
+
+  /* Add space around calendar container wrapper */
+  .calendarContainer {
     padding: 4px !important;
+  }
+
+  /* Increase gap between week rows on mobile */
+  .weekRow {
+    gap: 6px !important;
+    margin-bottom: 4px !important;
   }
 
   /* Day number more visible on mobile */
@@ -286,6 +304,14 @@
   /* Bottom cards stack */
   .bottomGrid {
     grid-template-columns: 1fr !important;
+    gap: 12px !important;
+    margin-top: 12px !important;
+  }
+
+  .cardBalances,
+  .cardSettleUp {
+    padding: 12px !important;
+    margin: 4px !important;
   }
 
   .modal {
