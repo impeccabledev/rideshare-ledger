@@ -121,6 +121,7 @@ export default function App() {
   const [showSplash, setShowSplash] = useState(true);
 
   const [monthDate, setMonthDate] = useState(() => new Date());
+  const [transitionDirection, setTransitionDirection] = useState("none");
   const month = useMemo(() => fmtMonthApi(monthDate), [monthDate]);
   const monthDisplay = useMemo(() => fmtMonthDisplay(monthDate), [monthDate]);
 
@@ -305,15 +306,19 @@ export default function App() {
   );
 
   function prevMonth() {
+    setTransitionDirection("prev");
     const d = new Date(monthDate);
     d.setMonth(d.getMonth() - 1);
     setMonthDate(d);
+    setTimeout(() => setTransitionDirection("none"), 300);
   }
 
   function nextMonth() {
+    setTransitionDirection("next");
     const d = new Date(monthDate);
     d.setMonth(d.getMonth() + 1);
     setMonthDate(d);
+    setTimeout(() => setTransitionDirection("none"), 300);
   }
 
   // ---------- Open day modal ----------
@@ -617,7 +622,10 @@ export default function App() {
 
       {err && <div style={styles.error}>{err}</div>}
 
-      <div style={styles.calendar}>
+      <div style={{
+        ...styles.calendarContainer,
+        animation: transitionDirection === "prev" ? "fadeInRight 0.3s ease-out" : transitionDirection === "next" ? "fadeInLeft 0.3s ease-out" : "none",
+      }}>
         <div style={styles.weekHeader}>
           {["Mon", "Tue", "Wed", "Thu", "Fri"].map((label) => (
             <div key={label} style={styles.weekHeaderCell}>
@@ -990,6 +998,9 @@ const styles = {
     borderRadius: 12,
     marginBottom: 12,
     fontWeight: 800,
+  },
+  calendarContainer: {
+    overflow: "hidden",
   },
   calendar: { display: "flex", flexDirection: "column", gap: 8 },
   weekHeader: { display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 8 },
