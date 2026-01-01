@@ -11,6 +11,7 @@
   display: flex;
   justify-content: center;
   margin-bottom: 12px;
+  font-family: 'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif;
 }
 
 .appBrand {
@@ -167,6 +168,7 @@
 @media (max-width: 640px) {
   .appHeader {
     margin-bottom: 8px;
+    font-family: 'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif;
   }
 
   .appTitle {

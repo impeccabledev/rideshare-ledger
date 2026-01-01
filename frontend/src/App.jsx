@@ -8,7 +8,6 @@ import {
   saveEntry,
   updateMemberRates,
   createMember,
-  notify,
 } from "./api";
 
 // ---------- date helpers ----------
@@ -144,8 +143,35 @@ export default function App() {
   // ------- Add member modal state -------
   const [memberOpen, setMemberOpen] = useState(false);
   const [newMemberName, setNewMemberName] = useState("");
+  const [newMemberCountryCode, setNewMemberCountryCode] = useState("+1");
   const [newMemberPhone, setNewMemberPhone] = useState("");
   const [memberErr, setMemberErr] = useState("");
+
+  // Country codes with flags
+  const countryCodes = [
+    { code: "+1", country: "US", flag: "🇺🇸" },
+    { code: "+44", country: "GB", flag: "🇬🇧" },
+    { code: "+91", country: "IN", flag: "🇮🇳" },
+    { code: "+86", country: "CN", flag: "🇨🇳" },
+    { code: "+81", country: "JP", flag: "🇯🇵" },
+    { code: "+49", country: "DE", flag: "🇩🇪" },
+    { code: "+33", country: "FR", flag: "🇫🇷" },
+    { code: "+55", country: "BR", flag: "🇧🇷" },
+    { code: "+61", country: "AU", flag: "🇦🇺" },
+    { code: "+82", country: "KR", flag: "🇰🇷" },
+    { code: "+55", country: "BR", flag: "🇧🇷" },
+    { code: "+31", country: "NL", flag: "🇳🇱" },
+    { code: "+34", country: "ES", flag: "🇪🇸" },
+    { code: "+39", country: "IT", flag: "🇮🇹" },
+    { code: "+7", country: "RU", flag: "🇷🇺" },
+    { code: "+55", country: "BR", flag: "🇧🇷" },
+    { code: "+27", country: "ZA", flag: "🇿🇦" },
+    { code: "+82", country: "KR", flag: "🇰🇷" },
+    { code: "+90", country: "TR", flag: "🇹🇷" },
+    { code: "+52", country: "MX", flag: "🇲🇽" },
+    { code: "+351", country: "PT", flag: "🇵🇹" },
+    { code: "+55", country: "BR", flag: "🇧🇷" },
+  ];
 
   // ---- Boot: splash + auto-check stored creds ----
   useEffect(() => {
@@ -421,8 +447,11 @@ export default function App() {
     if (!name) return setMemberErr("Name is required.");
     if (!phone) return setMemberErr("Phone is required.");
 
+    // Combine country code with phone number
+    const fullPhone = `${newMemberCountryCode}${phone}`;
+
     try {
-      await createMember({ name, phone, active: true });
+      await createMember({ name, phone: fullPhone, active: true });
       setNewMemberName("");
       setNewMemberPhone("");
       setMemberOpen(false);
@@ -432,14 +461,6 @@ export default function App() {
     }
   }
 
-  async function onNotify() {
-    try {
-      const resp = await notify({ message: "Reminder: please add today’s ride details." });
-      alert(`Notify ready. Recipients: ${resp.recipients?.length || 0}`);
-    } catch (e) {
-      alert(e.message || "Notify failed");
-    }
-  }
 
   // ---------- Balances ----------
   const balances = useMemo(() => computeMonthBalances(members, entries), [members, entries]);
@@ -468,14 +489,15 @@ export default function App() {
           </div>
         )}
 
-        <div className="appHeader" style={{ marginBottom: 16 }}>
+        
+
+        <form onSubmit={handleJoin} style={styles.joinCard}>
+          <div className="appHeader" style={{ marginBottom: 16 }}>
           <div className="appBrand">
             <div className="appIcon">🚘</div>
             <div className="appTitle">RideShare</div>
           </div>
         </div>
-
-        <form onSubmit={handleJoin} style={styles.joinCard}>
           <div style={styles.joinTitle}>Join your group</div>
 
           {authErr && <div style={styles.error}>{authErr}</div>}
@@ -499,10 +521,6 @@ export default function App() {
           <button type="submit" style={{ ...styles.btn, ...styles.btnPrimary, width: "100%" }}>
             Join
           </button>
-
-          <div style={styles.joinHint}>
-            This is required because your backend expects x-group-id and x-join-code headers.
-          </div>
         </form>
       </div>
     );
@@ -553,10 +571,6 @@ export default function App() {
 
           <button style={styles.btn} onClick={() => { setMemberErr(""); setMemberOpen(true); }}>
             + Member
-          </button>
-
-          <button style={styles.btn} onClick={onNotify}>
-            Notify
           </button>
 
           <button style={styles.btn} onClick={loadAll} disabled={loading}>
@@ -849,8 +863,26 @@ export default function App() {
 
             <div className="formRowTight" style={styles.formRow}>
               <div className="labelTight" style={styles.label}>Mobile number</div>
-              <input style={styles.input} value={newMemberPhone} onChange={(e) => setNewMemberPhone(e.target.value)} placeholder="e.g., +1 703 555 1234" />
-              <div style={styles.small}>Use +countrycode format if possible.</div>
+              <div style={{ display: "flex", gap: 8 }}>
+                <select
+                  style={{ ...styles.select, width: 80 }}
+                  value={newMemberCountryCode}
+                  onChange={(e) => setNewMemberCountryCode(e.target.value)}
+                >
+                  {countryCodes.map((c) => (
+                    <option key={c.code} value={c.code}>
+                      {c.flag} {c.code}
+                    </option>
+                  ))}
+                </select>
+                <input
+                  style={{ ...styles.input, flex: 1 }}
+                  value={newMemberPhone}
+                  onChange={(e) => setNewMemberPhone(e.target.value)}
+                  placeholder="Phone number"
+                />
+              </div>
+              <div style={styles.small}>Select country code, then enter number.</div>
             </div>
 
             <div style={{ display: "flex", gap: 10, marginTop: 12 }}>
@@ -894,7 +926,7 @@ const styles = {
     flexDirection: "column",
     gap: 10,
   },
-  joinTitle: { fontWeight: 950, fontSize: 16, color: "#101828" },
+  joinTitle: { fontWeight: 600, fontSize: 16, color: "#101828", fontFamily:"tahoma, sans-serif", textAlign:"center", marginBottom:10 },
   joinHint: { fontSize: 12, color: "#667085", fontWeight: 700, marginTop: 6 },
   topbar: {
     display: "flex",
