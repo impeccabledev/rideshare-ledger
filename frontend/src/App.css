@@ -227,11 +227,14 @@
     text-align: center;
   }
 
-  /* Calendar: tighter cells */
+  /* Calendar: tighter cells - all cells same height */
   .calendarCell {
-    min-height: 66px !important;
+    min-height: 72px !important;
+    max-height: 72px !important;
+    height: 72px !important;
     padding: 6px !important;
     margin: 2px !important;
+    overflow: hidden !important;
   }
 
   /* Add space around calendar container */
