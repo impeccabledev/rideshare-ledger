@@ -492,12 +492,12 @@ export default function App() {
         
 
         <form onSubmit={handleJoin} style={styles.joinCard}>
-          <div className="appHeader" style={{ marginBottom: 16 }}>
-          <div className="appBrand">
-            <div className="appIcon">🚘</div>
-            <div className="appTitle">RideShare</div>
+          <div className="appHeader" style={{ marginBottom: 10 }}>
+            <div className="appBrand">
+              <div className="appIcon">🚘</div>
+              <div className="appTitle">RideShare</div>
+            </div>
           </div>
-        </div>
           <div style={styles.joinTitle}>Join your group</div>
 
           {authErr && <div style={styles.error}>{authErr}</div>}
@@ -940,10 +940,11 @@ const styles = {
   btn: {
     border: "1px solid #e4e7ec",
     background: "#fff",
-    padding: "8px 12px",
+    padding: "10px 12px",
     borderRadius: 12,
     fontWeight: 850,
     cursor: "pointer",
+    fontSize: 16,
   },
   btnOn: { borderColor: "#155eef", background: "#eff4ff" },
   btnPrimary: { background: "#155eef", color: "white", borderColor: "#155eef" },
