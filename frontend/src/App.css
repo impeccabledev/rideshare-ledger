@@ -65,9 +65,9 @@
 
 /* Desktop/tablet details inside calendar cells */
 .cellDetails {
-  margin-top: 8px;
+  margin-top: 6px;
   font-size: 12px;
-  line-height: 1.15;
+  line-height: 1.2;
   color: #344054;
 }
 
@@ -79,18 +79,33 @@
   white-space: nowrap;
   display: flex;
   align-items: center;
-  gap: 6px;
-  line-height: 1.1;
+  gap: 5px;
+  line-height: 1.3;
+  min-height: 18px;
 }
 
 .pcRiders {
-  margin-top: 2px;
+  margin-top: 4px;
   color: #667085;
   font-weight: 800;
   display: flex;
   align-items: center;
-  gap: 6px;
-  line-height: 1.1;
+  gap: 5px;
+  line-height: 1.3;
+  min-height: 18px;
+}
+
+/* Ensure icon and text are vertically centered */
+.pcDriver .icon,
+.pcRiders .icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 14px;
+  height: 14px;
+  font-size: 11px;
+  line-height: 1;
+  margin: 0;
 }
 
 /* Mobile summary block */
@@ -274,37 +289,54 @@
   }
 
   .mobileSummary {
-    display: block !important;
+    display: flex !important;
+    flex-direction: column;
+    gap: 2px;
     margin-top: 4px;
     font-size: 10px;
     color: #344054;
-    line-height: 1.1;
+    line-height: 1.2;
+  }
+
+  .mobileDriver,
+  .mobileRiders {
+    font-weight: 900;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    line-height: 1.3;
+    font-size: 10px;
+    min-height: 16px;
   }
 
   .mobileDriver {
-    font-weight: 900;
     color: #101828;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    display: flex;
-    align-items: center;
-    gap: 1px;
-    line-height: 1.0;
-    font-size: 10px;
   }
 
   .mobileRiders {
-    font-weight: 900;
     color: #667085;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    display: flex;
+  }
+
+  /* Ensure icons are properly sized and aligned in mobile */
+  .mobileSummary .icon,
+  .mobileDriver .icon,
+  .mobileRiders .icon {
+    display: inline-flex;
     align-items: center;
-    gap: 1px;
-    line-height: 1.0;
+    justify-content: center;
+    width: 12px;
+    height: 12px;
     font-size: 10px;
+    line-height: 1;
+    margin: 0;
+  }
+
+  /* Move rider icon slightly up for better visual alignment */
+  .mobileRiders .icon {
+    transform: translateY(-1px);
   }
 
   /* Holiday chip tighter */
