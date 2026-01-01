@@ -126,9 +126,10 @@ function usFederalHolidaysObservedForYear(year) {
 function normalizePhone(phoneRaw) {
   const s = String(phoneRaw || "").trim();
   if (!s) return "";
+  // Strip leading apostrophe that may be used to prevent Google Sheets formula interpretation
+  const cleaned = s.replace(/^'/, "");
   // keep + and digits only
-  const cleaned = s.replace(/[^\d+]/g, "");
-  return cleaned;
+  return cleaned.replace(/[^\d+]/g, "");
 }
 
 function genMemberId() {
@@ -251,9 +252,11 @@ app.post("/members", async (req, res) => {
     // Build row aligned to header
     const headerLen = rows[0].length;
     const newRow = new Array(headerLen).fill("");
+    // Prefix phone with ' to prevent Google Sheets from interpreting + as formula
+    const phoneForSheet = p.startsWith("+") ? "'" + p : p;
     newRow[idx["member_id"]] = id;
     newRow[idx["name"]] = n;
-    newRow[idx["phone"]] = p;
+    newRow[idx["phone"]] = phoneForSheet;
     newRow[idx["active"]] = active ? "TRUE" : "FALSE";
     newRow[idx["one_way_total"]] = one_way_total;
     newRow[idx["two_way_total"]] = two_way_total;
