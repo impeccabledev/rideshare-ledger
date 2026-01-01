@@ -4,6 +4,13 @@
   box-sizing: border-box;
 }
 
+/* Prevent auto-zoom on iOS Safari for inputs */
+@media screen and (max-width: 768px) {
+  input, select, textarea {
+    font-size: 16px !important;
+  }
+}
+
 /* =========================
    App header (persistent)
    ========================= */

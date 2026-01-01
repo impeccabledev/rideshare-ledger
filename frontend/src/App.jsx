@@ -1060,6 +1060,7 @@ const styles = {
     fontWeight: 800,
     color: "#101828",
     outline: "none",
+    fontSize: 16,
   },
   select: {
     width: "100%",
