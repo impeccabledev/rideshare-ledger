@@ -120,10 +120,10 @@ function observedFixedDateHoliday(year, monthIdx0, day) {
 function usFederalHolidaysObservedForYear(year) {
   const holidays = [];
   holidays.push({ date: observedFixedDateHoliday(year, 0, 1), name: "New Year's Day" });
-  holidays.push({ date: nthWeekdayOfMonth(year, 0, 1, 3), name: "Birthday of Martin Luther King, Jr." });
-  holidays.push({ date: nthWeekdayOfMonth(year, 1, 1, 3), name: "Washington's Birthday" });
+  holidays.push({ date: nthWeekdayOfMonth(year, 0, 1, 3), name: "MLK Day" });
+  holidays.push({ date: nthWeekdayOfMonth(year, 1, 1, 3), name: "Presidents's Day" });
   holidays.push({ date: lastWeekdayOfMonth(year, 4, 1), name: "Memorial Day" });
-  holidays.push({ date: observedFixedDateHoliday(year, 5, 19), name: "Juneteenth National Independence Day" });
+  holidays.push({ date: observedFixedDateHoliday(year, 5, 19), name: "Juneteenth Day" });
   holidays.push({ date: observedFixedDateHoliday(year, 6, 4), name: "Independence Day" });
   holidays.push({ date: nthWeekdayOfMonth(year, 8, 1, 1), name: "Labor Day" });
   holidays.push({ date: nthWeekdayOfMonth(year, 9, 1, 2), name: "Columbus Day" });
