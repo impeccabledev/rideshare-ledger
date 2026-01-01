@@ -1,63 +1,75 @@
 const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:4000";
 
+function authHeaders() {
+  return {
+    "x-group-id": localStorage.getItem("group_id") || "",
+    "x-join-code": localStorage.getItem("join_code") || "",
+  };
+}
+
 async function handle(res) {
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.error || "API error");
+  let data = {};
+  try {
+    data = await res.json();
+  } catch {
+    // no body
+  }
+  if (!res.ok) throw new Error(data.error || `API error (${res.status})`);
   return data;
 }
 
+async function request(path, { method = "GET", body } = {}) {
+  const headers = { ...authHeaders() };
+  if (body !== undefined) headers["Content-Type"] = "application/json";
+
+  const res = await fetch(`${API_BASE}${path}`, {
+    method,
+    headers,
+    body: body !== undefined ? JSON.stringify(body) : undefined,
+  });
+
+  return handle(res);
+}
+
+// ----- Auth / group -----
+export async function groupCheck() {
+  return request("/group_check");
+}
+
+
+// ----- Members -----
 export async function getMembers() {
-  const res = await fetch(`${API_BASE}/members`);
-  const data = await handle(res);
-  return data.members;
+  const data = await request("/members");
+  return data.members || [];
 }
 
 export async function createMember(payload) {
-  const res = await fetch(`${API_BASE}/members`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload),
-  });
-  const data = await handle(res);
+  const data = await request("/members", { method: "POST", body: payload });
   return data.member;
 }
 
+export async function updateMemberRates(payload) {
+  return request("/member_rates", { method: "POST", body: payload });
+}
+
+// ----- Entries -----
 export async function getEntries(month) {
-  const res = await fetch(`${API_BASE}/entries?month=${month}`);
-  const data = await handle(res);
-  return data.entries;
+  const data = await request(`/entries?month=${encodeURIComponent(month)}`);
+  return data.entries || [];
 }
 
 export async function saveEntry(payload) {
-  const res = await fetch(`${API_BASE}/entries`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload),
-  });
-  const data = await handle(res);
+  const data = await request("/entries", { method: "POST", body: payload });
   return data.entry;
 }
 
+// ----- Holidays -----
 export async function getHolidays(month) {
-  const res = await fetch(`${API_BASE}/holidays?month=${month}`);
-  const data = await handle(res);
-  return data.holidays;
+  const data = await request(`/holidays?month=${encodeURIComponent(month)}`);
+  return data.holidays || [];
 }
 
-export async function updateMemberRates(payload) {
-  const res = await fetch(`${API_BASE}/member_rates`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload),
-  });
-  return handle(res);
-}
-
+// ----- Notify (optional) -----
 export async function notify(payload) {
-  const res = await fetch(`${API_BASE}/notify`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload || {}),
-  });
-  return handle(res);
+  return request("/notify", { method: "POST", body: payload || {} });
 }

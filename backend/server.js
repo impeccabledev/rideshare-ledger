@@ -137,6 +137,25 @@ function genMemberId() {
 
 app.get("/health", (_req, res) => res.json({ ok: true }));
 
+// ---- GROUP CHECK ----
+app.get("/group_check", async (req, res) => {
+  try {
+    const groupId = req.headers["x-group-id"];
+    const joinCode = req.headers["x-join-code"];
+
+    if (!groupId || !joinCode) {
+      return res.status(400).json({ error: "Missing x-group-id or x-join-code headers" });
+    }
+
+    // For now, just validate that the headers are present
+    // In a more complete implementation, you could validate against stored groups
+    res.json({ ok: true, group_id: groupId });
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ error: "Group check failed" });
+  }
+});
+
 /** Ensure members header has required columns. Returns {rows, idx}. */
 async function loadMembersSheetEnsuringColumns() {
   const rows = await getValues(`${TAB_MEMBERS}!A:Z`);
