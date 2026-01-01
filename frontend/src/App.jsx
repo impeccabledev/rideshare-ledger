@@ -580,8 +580,8 @@ export default function App() {
               background: "linear-gradient(135deg, #a5b4fc 0%, #818cf8 100%)", 
               color: "white", 
               borderColor: "#818cf8",
-              borderRadius: "20px 8px 8px 20px",
-              clipPath: "polygon(0% 50%, 15% 0%, 100% 0%, 100% 100%, 15% 100%)"
+              borderRadius: "12px",
+              clipPath: "polygon(0% 50%, 20% 0%, 100% 0%, 100% 100%, 20% 100%, 0% 50%)"
             }} 
             onClick={prevMonth}
           >
@@ -596,8 +596,8 @@ export default function App() {
               background: "linear-gradient(135deg, #a5b4fc 0%, #818cf8 100%)", 
               color: "white", 
               borderColor: "#818cf8",
-              borderRadius: "8px 20px 20px 8px",
-              clipPath: "polygon(0% 0%, 85% 0%, 100% 50%, 85% 100%, 0% 100%)"
+              borderRadius: "12px",
+              clipPath: "polygon(0% 0%, 80% 0%, 100% 50%, 80% 100%, 0% 100%)"
             }} 
             onClick={nextMonth}
           >
