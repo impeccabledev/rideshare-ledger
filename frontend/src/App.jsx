@@ -671,7 +671,7 @@ export default function App() {
       </div>
 
       <div style={styles.bottomGrid}>
-        <div style={styles.card}>
+        <div style={styles.cardBalances}>
           <div style={styles.cardTitle}>Balances</div>
           <div style={{ marginTop: 10 }}>
             {members.map((m) => (
@@ -686,7 +686,7 @@ export default function App() {
           </div>
         </div>
 
-        <div style={styles.card}>
+        <div style={styles.cardSettleUp}>
           <div style={styles.cardTitle}>Settle Up</div>
           <div style={{ marginTop: 10 }}>
             {transfers.length === 0 ? (
@@ -1005,7 +1005,19 @@ const styles = {
     whiteSpace: "nowrap",
   },
   bottomGrid: { marginTop: 16, display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 },
-  card: { border: "1px solid #e4e7ec", background: "#fff", borderRadius: 16, padding: 12 },
+  card: { border: "1px solid #e4e7ec", borderRadius: 16, padding: 12 },
+  cardBalances: { 
+    border: "1px solid #e4e7ec", 
+    borderRadius: 16, 
+    padding: 12,
+    background: "linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 50%, #bae6fd 100%)",
+  },
+  cardSettleUp: { 
+    border: "1px solid #e4e7ec", 
+    borderRadius: 16, 
+    padding: 12,
+    background: "linear-gradient(135deg, #faf5ff 0%, #f3e8ff 50%, #e9d5ff 100%)",
+  },
   cardTitle: { fontWeight: 950, color: "#101828", marginBottom: 6, textAlign: "center" },
   small: { fontSize: 12, color: "#667085", fontWeight: 700 },
   rowLine: {
