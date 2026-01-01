@@ -567,21 +567,49 @@ export default function App() {
 
       <div className="topbar" style={styles.topbar}>
         <div className="topbarRow" style={{ display: "flex", gap: 8, alignItems: "center" }}>
-          <button style={styles.btn} onClick={prevMonth}>&lt; Prev</button>
+          <button 
+            style={{ 
+              ...styles.btn, 
+              minWidth: "50px", 
+              padding: "10px 16px",
+              background: "linear-gradient(135deg, #a5b4fc 0%, #818cf8 100%)", 
+              color: "white", 
+              borderColor: "#818cf8",
+              borderRadius: "20px 8px 8px 20px",
+              clipPath: "polygon(0% 50%, 15% 0%, 100% 0%, 100% 100%, 15% 100%)"
+            }} 
+            onClick={prevMonth}
+          >
+            Prev
+          </button>
           <div style={styles.monthTitle}>{monthDisplay}</div>
-          <button style={styles.btn} onClick={nextMonth}>Next &gt;</button>
+          <button 
+            style={{ 
+              ...styles.btn, 
+              minWidth: "50px", 
+              padding: "10px 16px",
+              background: "linear-gradient(135deg, #a5b4fc 0%, #818cf8 100%)", 
+              color: "white", 
+              borderColor: "#818cf8",
+              borderRadius: "8px 20px 20px 8px",
+              clipPath: "polygon(0% 0%, 85% 0%, 100% 50%, 85% 100%, 0% 100%)"
+            }} 
+            onClick={nextMonth}
+          >
+            Next
+          </button>
         </div>
 
-        <div className="topbarButtons" style={{ display: "flex", gap: 10, alignItems: "center" }}>
-          <button style={styles.btn} onClick={() => { setMemberErr(""); setMemberOpen(true); }}>
+        <div className="topbarButtons" style={{ display: "flex", gap: 16, alignItems: "center" }}>
+          <button style={{ ...styles.btn, minWidth: "90px", background: "linear-gradient(135deg, #86efac 0%, #4ade80 100%)", color: "white", borderColor: "#4ade80" }} onClick={() => { setMemberErr(""); setMemberOpen(true); }}>
             + Member
           </button>
 
-          <button style={styles.btn} onClick={loadAll} disabled={loading}>
+          <button style={{ ...styles.btn, minWidth: "100px", background: "linear-gradient(135deg, #93c5fd 0%, #60a5fa 100%)", color: "white", borderColor: "#60a5fa" }} onClick={loadAll} disabled={loading}>
             {loading ? "Refreshing…" : "Refresh"}
           </button>
 
-          <button style={styles.btn} onClick={logout}>
+          <button style={{ ...styles.btn, minWidth: "80px", background: "linear-gradient(135deg, #fca5a5 0%, #f87171 100%)", color: "white", borderColor: "#f87171" }} onClick={logout}>
             Logout
           </button>
         </div>
