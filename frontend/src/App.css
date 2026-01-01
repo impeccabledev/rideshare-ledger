@@ -222,7 +222,12 @@
   /* Calendar: tighter cells */
   .calendarCell {
     min-height: 66px !important;
-    padding: 2px !important;
+    padding: 8px !important;
+  }
+
+  /* Day number more visible on mobile */
+  .dayNum {
+    font-size: 16px !important;
   }
 
   /* Use mobile summary instead of desktop details */
