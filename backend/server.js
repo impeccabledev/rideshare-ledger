@@ -2,6 +2,7 @@ import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
 import { google } from "googleapis";
+import twilio from "twilio";
 
 dotenv.config();
 
@@ -14,7 +15,17 @@ const {
   GOOGLE_SHEET_ID,
   GOOGLE_SERVICE_ACCOUNT_EMAIL,
   GOOGLE_PRIVATE_KEY,
+  TWILIO_ACCOUNT_SID,
+  TWILIO_AUTH_TOKEN,
+  TWILIO_PHONE_NUMBER,
+  APP_URL,
 } = process.env;
+
+// Initialize Twilio client if credentials are provided
+let twilioClient = null;
+if (TWILIO_ACCOUNT_SID && TWILIO_AUTH_TOKEN) {
+  twilioClient = twilio(TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN);
+}
 
 if (!GOOGLE_SHEET_ID || !GOOGLE_SERVICE_ACCOUNT_EMAIL || !GOOGLE_PRIVATE_KEY) {
   throw new Error(
@@ -513,13 +524,10 @@ app.post("/entries", async (req, res) => {
   }
 });
 
-/**
- * Reminder endpoint (SMS later)
- * For now: returns all active members with phones, so you can verify quickly.
- */
+// ---- NOTIFY (SMS) ----
 app.post("/notify", async (req, res) => {
   try {
-    const { message = "Reminder: please add today’s ride details." } = req.body || {};
+    const { message = "Reminder: please add today's ride details." } = req.body || {};
 
     const { rows, idx } = await loadMembersSheetEnsuringColumns();
     const members = rows
@@ -532,12 +540,43 @@ app.post("/notify", async (req, res) => {
       }))
       .filter((m) => m.active && m.phone);
 
-    // TODO: integrate Twilio / WhatsApp later.
-    // For now just return what would be sent.
+    // Build the full message with app URL
+    const appUrl = APP_URL || "https://your-app-url.com";
+    const fullMessage = `Hi! ${message}\n\nAdd your ride details here: ${appUrl}`;
+
+    // Send SMS via Twilio if configured
+    const results = [];
+    if (twilioClient && TWILIO_PHONE_NUMBER) {
+      for (const m of members) {
+        try {
+          await twilioClient.messages.create({
+            body: fullMessage,
+            from: TWILIO_PHONE_NUMBER,
+            to: m.phone,
+          });
+          results.push({ member_id: m.member_id, name: m.name, phone: m.phone, status: "sent" });
+        } catch (err) {
+          console.error(`Failed to send SMS to ${m.phone}:`, err.message);
+          results.push({ member_id: m.member_id, name: m.name, phone: m.phone, status: "failed", error: err.message });
+        }
+      }
+    } else {
+      // Return recipients without sending if Twilio is not configured
+      for (const m of members) {
+        results.push({ member_id: m.member_id, name: m.name, phone: m.phone, status: "pending", message: fullMessage });
+      }
+    }
+
+    const sentCount = results.filter(r => r.status === "sent").length;
+    const failedCount = results.filter(r => r.status === "failed").length;
+
     res.json({
       ok: true,
       message,
-      recipients: members.map((m) => ({ member_id: m.member_id, name: m.name, phone: m.phone })),
+      appUrl,
+      sent: sentCount,
+      failed: failedCount,
+      recipients: results,
     });
   } catch (e) {
     console.error(e);
@@ -548,3 +587,4 @@ app.post("/notify", async (req, res) => {
 app.listen(PORT, "0.0.0.0", () => {
   console.log(`Backend running on port ${PORT}`);
 });
+
