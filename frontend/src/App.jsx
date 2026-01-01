@@ -1,20 +1,19 @@
 import React, { useEffect, useMemo, useState } from "react";
 import "./App.css";
 import {
-  groupCheck,
   getEntries,
   getMembers,
   getHolidays,
   saveEntry,
   updateMemberRates,
   createMember,
+  notify,
 } from "./api";
 
 // ---------- date helpers ----------
 const pad2 = (n) => String(n).padStart(2, "0");
 const fmtMonth = (d) => `${d.getFullYear()}-${pad2(d.getMonth() + 1)}`;
-const fmtDate = (d) =>
-  `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
+const fmtDate = (d) => `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
 const round2 = (x) => Math.round(Number(x) * 100) / 100;
 
 /**
@@ -106,12 +105,6 @@ function suggestTransfers(balances) {
 }
 
 export default function App() {
-  // ---- group auth (localStorage) ----
-  const [groupId, setGroupId] = useState(localStorage.getItem("group_id") || "");
-  const [joinCode, setJoinCode] = useState(localStorage.getItem("join_code") || "");
-  const [groupOk, setGroupOk] = useState(false);
-  const [authErr, setAuthErr] = useState("");
-
   const [showSplash, setShowSplash] = useState(true);
   const [monthDate, setMonthDate] = useState(() => new Date());
   const month = useMemo(() => fmtMonth(monthDate), [monthDate]);
@@ -137,9 +130,11 @@ export default function App() {
     two_way_total: "",
   });
 
-  // add member
+  // --- NEW: member modal state ---
+  const [memberOpen, setMemberOpen] = useState(false);
   const [newMemberName, setNewMemberName] = useState("");
-  const [addingMember, setAddingMember] = useState(false);
+  const [newMemberPhone, setNewMemberPhone] = useState("");
+  const [memberErr, setMemberErr] = useState("");
 
   const nameById = useMemo(() => {
     const m = {};
@@ -159,82 +154,11 @@ export default function App() {
     return map;
   }, [holidays]);
 
-  async function verifyGroupOrShowJoin() {
-    const gid = (localStorage.getItem("group_id") || "").trim();
-    const jcode = (localStorage.getItem("join_code") || "").trim();
-    if (!gid || !jcode) {
-      setGroupOk(false);
-      return;
-    }
-    try {
-      setAuthErr("");
-      await groupCheck();
-      setGroupOk(true);
-    } catch (e) {
-      setGroupOk(false);
-      setAuthErr(e.message || "Invalid group");
-    }
-  }
-
-  async function handleJoin(e) {
-    e.preventDefault();
-    setAuthErr("");
-  
-    const gid = groupId.trim();
-    const jcode = joinCode.trim();
-  
-    if (!gid || !jcode) {
-      setAuthErr("Enter group id + join code");
-      return;
-    }
-  
-    // save credentials
-    localStorage.setItem("group_id", gid);
-    localStorage.setItem("join_code", jcode);
-  
-    // ✅ show splash every time user joins
-    setShowSplash(true);
-  
-    try {
-      await groupCheck();
-      setGroupOk(true);
-  
-      await loadAll();
-  
-      // ✅ hide splash after a short delay (so it feels intentional)
-      setTimeout(() => setShowSplash(false), 2000);
-    } catch (err) {
-      setGroupOk(false);
-      setAuthErr(err.message || "Invalid group");
-  
-      // ✅ don’t keep splash stuck if join fails
-      setShowSplash(false);
-    }
-  }  
-
-  function logoutGroup() {
-    localStorage.removeItem("group_id");
-    localStorage.removeItem("join_code");
-    setGroupId("");
-    setJoinCode("");
-    setGroupOk(false);
-    setMembers([]);
-    setEntries([]);
-    setHolidays([]);
-    setErr("");
-    setAuthErr("");
-  }
-
   async function loadAll() {
-    if (!groupOk) return;
     setLoading(true);
     setErr("");
     try {
-      const [m, e, h] = await Promise.all([
-        getMembers(),
-        getEntries(month),
-        getHolidays(month),
-      ]);
+      const [m, e, h] = await Promise.all([getMembers(), getEntries(month), getHolidays(month)]);
       const active = m.filter((x) => x.active);
       setMembers(active);
       setEntries(e);
@@ -248,22 +172,16 @@ export default function App() {
   }
 
   useEffect(() => {
-    if (!showSplash) return;
-    const timer = setTimeout(() => setShowSplash(false), 2000);
+    const timer = setTimeout(() => {
+      setShowSplash(false);
+    }, 2000);
     return () => clearTimeout(timer);
-  }, [showSplash]);
-  
-
-  useEffect(() => {
-    // on mount, verify group from localStorage
-    verifyGroupOrShowJoin();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
     loadAll();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [month, groupOk]);
+  }, [month]);
 
   const entryByDate = useMemo(() => {
     const map = new Map();
@@ -381,8 +299,7 @@ export default function App() {
     }));
 
     if (riders.length === 0) return setErr("Select at least 1 rider.");
-    if (!riders.some((r) => r.member_id === driverId))
-      return setErr("Driver must be included as a rider.");
+    if (!riders.some((r) => r.member_id === driverId)) return setErr("Driver must be included as a rider.");
 
     try {
       const entry = await saveEntry({
@@ -402,67 +319,49 @@ export default function App() {
     }
   }
 
-  async function onAddMember() {
-    const name = newMemberName.trim();
-    if (!name) return;
-
-    setAddingMember(true);
+  async function onUpdateRates() {
     setErr("");
+    if (!driverId) return;
     try {
-      await createMember(name);
-      setNewMemberName("");
+      await updateMemberRates({
+        member_id: driverId,
+        one_way_total: Number(driverRatesForm.one_way_total),
+        two_way_total: Number(driverRatesForm.two_way_total),
+      });
       await loadAll();
     } catch (e) {
-      setErr(e.message || "Failed to add member");
-    } finally {
-      setAddingMember(false);
+      setErr(e.message || "Failed to update rates");
+    }
+  }
+
+  async function onCreateMember() {
+    setMemberErr("");
+    const name = newMemberName.trim();
+    const phone = newMemberPhone.trim();
+    if (!name) return setMemberErr("Name is required.");
+    if (!phone) return setMemberErr("Phone is required.");
+
+    try {
+      await createMember({ name, phone, active: true });
+      setNewMemberName("");
+      setNewMemberPhone("");
+      setMemberOpen(false);
+      await loadAll();
+    } catch (e) {
+      setMemberErr(e.message || "Failed to create member");
+    }
+  }
+
+  async function onNotify() {
+    try {
+      const resp = await notify({ message: "Reminder: please add today’s ride details." });
+      alert(`Notify ready.\nRecipients: ${resp.recipients?.length || 0}\n(Backend is stub for now)`);
+    } catch (e) {
+      alert(e.message || "Notify failed");
     }
   }
 
   const todayStr = fmtDate(new Date());
-
-  // ---- Join screen gate ----
-  if (!groupOk) {
-    return (
-      <div className="joinPage">
-        <div className="joinCard">
-          <div className="appHeader">
-            <div className="appBrand">
-              <div className="appIcon">🚘</div>
-              <div className="appTitle">RideShare</div>
-            </div>
-          </div>
-
-          {/* <div className="joinTitle">Join your group</div> */}
-          <div className="joinSub">
-            Enter group ID & join code shared by your friends.
-          </div>
-
-          {authErr && <div className="joinError">{authErr}</div>}
-
-          <form onSubmit={handleJoin} className="joinForm">
-            <input
-              className="joinInput"
-              value={groupId}
-              onChange={(e) => setGroupId(e.target.value)}
-              placeholder="Group ID"
-              autoComplete="off"
-            />
-            <input
-              className="joinInput"
-              value={joinCode}
-              onChange={(e) => setJoinCode(e.target.value)}
-              placeholder="Join code"
-              autoComplete="off"
-            />
-            <button className="joinBtn" type="submit">
-              Enter
-            </button>
-          </form>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div style={styles.page}>
@@ -490,51 +389,42 @@ export default function App() {
 
       <div className="topbar" style={styles.topbar}>
         <div className="topbarRow" style={{ display: "flex", gap: 8, alignItems: "center" }}>
-          <button style={styles.btn} onClick={prevMonth}>Prev</button>
+          <button style={styles.btn} onClick={prevMonth}>
+            Prev
+          </button>
           <div style={styles.monthTitle}>{month}</div>
-          <button style={styles.btn} onClick={nextMonth}>Next</button>
+          <button style={styles.btn} onClick={nextMonth}>
+            Next
+          </button>
         </div>
 
         <div className="topbarButtons" style={{ display: "flex", gap: 10, alignItems: "center" }}>
-          <div className="ratesPill" style={styles.rates}>Office view: Mon–Fri only</div>
+          <div className="ratesPill" style={styles.rates}>
+            Office view: Mon–Fri only
+          </div>
+
+          <button style={styles.btn} onClick={() => { setMemberErr(""); setMemberOpen(true); }}>
+            + Member
+          </button>
+
+          <button style={styles.btn} onClick={onNotify}>
+            Notify
+          </button>
+
           <button style={styles.btn} onClick={loadAll} disabled={loading}>
             {loading ? "Refreshing…" : "Refresh"}
-          </button>
-          <button style={styles.btn} onClick={logoutGroup} title="Switch group">
-            Logout
           </button>
         </div>
       </div>
 
       {err && <div style={styles.error}>{err}</div>}
 
-      {/* Add Member */}
-      <div style={{ ...styles.card, marginTop: 12 }}>
-        <div style={styles.cardTitle}>Members</div>
-        <div style={{ display: "flex", gap: 8, alignItems: "center", marginBottom: 10 }}>
-          <input
-            value={newMemberName}
-            onChange={(e) => setNewMemberName(e.target.value)}
-            placeholder="Add member name (ex: Arun)"
-            style={{ ...styles.input, marginBottom: 0 }}
-          />
-          <button
-            style={styles.primary}
-            onClick={onAddMember}
-            disabled={addingMember || !newMemberName.trim()}
-          >
-            {addingMember ? "Adding…" : "Add"}
-          </button>
-        </div>
-        <div style={styles.help}>
-          Everyone in this group will see members added here.
-        </div>
-      </div>
-
       <div style={styles.calendar}>
         <div style={styles.weekHeader}>
           {["Mon", "Tue", "Wed", "Thu", "Fri"].map((label) => (
-            <div key={label} style={styles.weekHeaderCell}>{label}</div>
+            <div key={label} style={styles.weekHeaderCell}>
+              {label}
+            </div>
           ))}
         </div>
 
@@ -571,7 +461,9 @@ export default function App() {
                   onClick={() => openDay(d)}
                 >
                   <div className="dayTop" style={styles.dayTop}>
-                    <div className="dayNum" style={styles.dayNum}>{d.getDate()}</div>
+                    <div className="dayNum" style={styles.dayNum}>
+                      {d.getDate()}
+                    </div>
                   </div>
 
                   {e ? (
@@ -612,78 +504,65 @@ export default function App() {
         ))}
       </div>
 
-      <div className="bottomGrid" style={styles.bottomGrid}>
+      {/* Bottom cards (balances) */}
+      <div style={styles.bottomGrid}>
         <div style={styles.card}>
-          <div style={styles.cardTitle}>Balances ({month})</div>
-          {members.map((m) => {
-            const b = balances[m.member_id] || 0;
-            return (
-              <div key={m.member_id} style={styles.rowBetween}>
-                <div>{m.name}</div>
-                <div style={b >= 0 ? styles.pillPos : styles.pillNeg}>
-                  {b > 0 ? `+${b.toFixed(2)}` : b.toFixed(2)}
-                </div>
+          <div style={styles.cardTitle}>Balances</div>
+          <div style={styles.small}>
+            Driver gets credited; riders get debited. Positive means they should receive.
+          </div>
+          <div style={{ marginTop: 10 }}>
+            {members.map((m) => (
+              <div key={m.member_id} style={styles.rowLine}>
+                <div style={{ fontWeight: 800 }}>{m.name}</div>
+                <div style={{ fontWeight: 900 }}>{balances[m.member_id] ?? 0}</div>
               </div>
-            );
-          })}
-          <div style={styles.help}>
-            Positive = should receive. Negative = should pay.
+            ))}
           </div>
         </div>
 
         <div style={styles.card}>
-          <div style={styles.cardTitle}>Suggested transfers</div>
-          {transfers.length === 0 ? (
-            <div style={styles.muted}>Nothing to settle.</div>
-          ) : (
-            transfers.map((t, i) => (
-              <div key={i} style={styles.rowBetween}>
-                <div>
-                  {nameById[t.from]} → {nameById[t.to]}
+          <div style={styles.cardTitle}>Suggested settle up</div>
+          <div style={styles.small}>Greedy minimize transfers.</div>
+          <div style={{ marginTop: 10 }}>
+            {transfers.length === 0 ? (
+              <div style={styles.small}>No transfers needed.</div>
+            ) : (
+              transfers.map((t, i) => (
+                <div key={i} style={styles.rowLine}>
+                  <div style={{ fontWeight: 800 }}>
+                    {nameById[t.from] || t.from} → {nameById[t.to] || t.to}
+                  </div>
+                  <div style={{ fontWeight: 900 }}>{t.amount}</div>
                 </div>
-                <div style={{ fontWeight: 900 }}>${t.amount.toFixed(2)}</div>
-              </div>
-            ))
-          )}
+              ))
+            )}
+          </div>
         </div>
       </div>
 
+      {/* Day modal */}
       {open && (
-        <div
-          className="modalBackdrop"
-          style={styles.modalBackdrop}
-          onClick={() => setOpen(false)}
-        >
-          <div
-            className="modal"
-            style={styles.modal}
-            onClick={(e) => e.stopPropagation()}
-          >
+        <div className="modalBackdrop" style={styles.modalBackdrop} onClick={() => setOpen(false)}>
+          <div className="modal" style={styles.modal} onClick={(e) => e.stopPropagation()}>
             <div style={styles.modalTitle}>
               {activeDay ? fmtDate(activeDay) : ""}
             </div>
 
-            {/* Driver */}
             <div className="formRowTight" style={styles.formRow}>
-              <label className="labelTight" style={styles.label}>Driver</label>
+              <div className="labelTight" style={styles.label}>Driver</div>
               <select
                 className="inputTight"
-                style={styles.input}
+                style={styles.select}
                 value={driverId}
                 onChange={(e) => {
-                  const v = e.target.value;
-                  setDriverId(v);
-
-                  const dObj = memberById.get(v);
+                  const id = e.target.value;
+                  setDriverId(id);
+                  const dObj = memberById.get(id);
                   setDriverRatesForm({
                     one_way_total: String(dObj?.one_way_total ?? ""),
                     two_way_total: String(dObj?.two_way_total ?? ""),
                   });
-
-                  setRiderTrip((p) => ({
-                    ...p,
-                    [v]: p[v] && p[v] !== "none" ? p[v] : "two_way",
-                  }));
                 }}
               >
                 {members.map((m) => (
@@ -692,148 +571,181 @@ export default function App() {
                   </option>
                 ))}
               </select>
+            </div>
 
-              {/* Driver rates */}
-              <div style={{ marginTop: 10 }}>
-                <label className="labelTight" style={styles.label}>
-                  Driver rates (used for split)
-                </label>
-                <div className="rateRow">
-                  <input
-                    className="rateInput"
-                    style={styles.input}
-                    type="number"
-                    step="0.01"
-                    placeholder="one_way_total"
-                    value={driverRatesForm.one_way_total}
-                    onChange={(e) =>
-                      setDriverRatesForm((p) => ({
-                        ...p,
-                        one_way_total: e.target.value,
-                      }))
-                    }
-                  />
-                  <input
-                    className="rateInput"
-                    style={styles.input}
-                    type="number"
-                    step="0.01"
-                    placeholder="two_way_total"
-                    value={driverRatesForm.two_way_total}
-                    onChange={(e) =>
-                      setDriverRatesForm((p) => ({
-                        ...p,
-                        two_way_total: e.target.value,
-                      }))
-                    }
-                  />
-                </div>
+            <div className="formRowTight" style={styles.formRow}>
+              <div className="labelTight" style={styles.label}>Day type</div>
+              <div style={{ display: "flex", gap: 8 }}>
+                <button
+                  style={{ ...styles.btn, ...(dayType === "one_way" ? styles.btnOn : {}) }}
+                  onClick={() => setDayType("one_way")}
+                >
+                  One-way total
+                </button>
+                <button
+                  style={{ ...styles.btn, ...(dayType === "two_way" ? styles.btnOn : {}) }}
+                  onClick={() => setDayType("two_way")}
+                >
+                  Two-way total
+                </button>
+              </div>
+            </div>
 
-                <div style={{ marginTop: 10 }}>
-                  <button
-                    style={styles.btn}
-                    onClick={async () => {
-                      await updateMemberRates({
-                        member_id: driverId,
-                        one_way_total: Number(driverRatesForm.one_way_total),
-                        two_way_total: Number(driverRatesForm.two_way_total),
-                      });
-                      await loadAll();
-                    }}
-                  >
-                    Save driver rates
-                  </button>
-                </div>
+            <div className="formRowTight" style={styles.formRow}>
+              <div className="labelTight" style={styles.label}>Driver rates (used for split)</div>
 
-                <div style={styles.help}>
-                  Current: 1-way ${driverOne || 0} | 2-way ${driverTwo || 0}
+              <div className="rateRow">
+                <input
+                  className="rateInput"
+                  style={styles.input}
+                  placeholder="One-way total ($)"
+                  value={driverRatesForm.one_way_total}
+                  onChange={(e) =>
+                    setDriverRatesForm((p) => ({ ...p, one_way_total: e.target.value }))
+                  }
+                />
+                <input
+                  className="rateInput"
+                  style={styles.input}
+                  placeholder="Two-way total ($)"
+                  value={driverRatesForm.two_way_total}
+                  onChange={(e) =>
+                    setDriverRatesForm((p) => ({ ...p, two_way_total: e.target.value }))
+                  }
+                />
+              </div>
+
+              <div style={{ marginTop: 8, display: "flex", gap: 10 }}>
+                <button style={styles.btn} onClick={onUpdateRates}>
+                  Save driver rates
+                </button>
+                <div style={styles.small}>
+                  You only need to set rates once per driver.
                 </div>
               </div>
             </div>
 
-            {/* Day type */}
             <div className="formRowTight" style={styles.formRow}>
-              <label className="labelTight" style={styles.label}>Day type</label>
-              <select
-                className="inputTight"
-                style={styles.input}
-                value={dayType}
-                onChange={(e) => setDayType(e.target.value)}
-              >
-                <option value="one_way">Use driver's one_way_total</option>
-                <option value="two_way">Use driver's two_way_total</option>
-              </select>
-            </div>
+              <div className="labelTight" style={styles.label}>Riders (trip type per person)</div>
 
-            {/* Riders */}
-            <div className="formRowTight" style={styles.formRow}>
-              <label className="labelTight" style={styles.label}>Who rode today?</label>
               <div className="ridersBoxTight" style={styles.ridersBox}>
                 {members.map((m) => {
-                  const t = riderTrip[m.member_id] || "none";
+                  const v = riderTrip[m.member_id] || "none";
                   return (
                     <div key={m.member_id} style={styles.riderRow}>
-                      <div style={{ fontWeight: 800 }}>{m.name}</div>
-                      <select
-                        className="inputTight"
-                        style={styles.riderSelect}
-                        value={t}
-                        onChange={(e) => setTrip(m.member_id, e.target.value)}
-                      >
-                        <option value="none">Not riding</option>
-                        <option value="one_way">One-way</option>
-                        <option value="two_way">Two-way</option>
-                      </select>
+                      <div style={{ fontWeight: 900, minWidth: 90 }}>{m.name}</div>
+
+                      <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                        <button
+                          style={{ ...styles.pill, ...(v === "none" ? styles.pillOn : {}) }}
+                          onClick={() => setTrip(m.member_id, "none")}
+                        >
+                          None
+                        </button>
+                        <button
+                          style={{ ...styles.pill, ...(v === "one_way" ? styles.pillOn : {}) }}
+                          onClick={() => setTrip(m.member_id, "one_way")}
+                        >
+                          One-way
+                        </button>
+                        <button
+                          style={{ ...styles.pill, ...(v === "two_way" ? styles.pillOn : {}) }}
+                          onClick={() => setTrip(m.member_id, "two_way")}
+                        >
+                          Two-way
+                        </button>
+                      </div>
                     </div>
                   );
                 })}
               </div>
             </div>
 
-            {/* Preview */}
             <div className="formRowTight" style={styles.formRow}>
-              <label className="labelTight" style={styles.label}>Preview</label>
-              <div className="previewBoxTight" style={styles.previewBox}>
-                {computedPreview.riders.length === 0 ? (
-                  <div style={styles.muted}>
-                    No riders selected (or driver rate is 0).
-                  </div>
-                ) : (
-                  computedPreview.riders.map((r) => (
-                    <div key={r.member_id} style={styles.rowBetween}>
-                      <div>
-                        {r.name} ({r.trip_type === "one_way" ? "1-way" : "2-way"})
-                      </div>
-                      <div style={{ fontWeight: 900 }}>${r.charge.toFixed(2)}</div>
-                    </div>
-                  ))
-                )}
-                <div style={{ ...styles.rowBetween, paddingTop: 10 }}>
-                  <div style={{ fontWeight: 950 }}>Total</div>
-                  <div style={{ fontWeight: 950 }}>${computedPreview.total.toFixed(2)}</div>
-                </div>
-              </div>
-            </div>
-
-            {/* Notes */}
-            <div className="formRowTight" style={styles.formRow}>
-              <label className="labelTight" style={styles.label}>Notes</label>
+              <div className="labelTight" style={styles.label}>Notes</div>
               <input
                 className="notesInput"
                 style={styles.input}
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
-                placeholder="Optional"
+                placeholder="Optional notes…"
               />
             </div>
 
-            <div style={{ display: "flex", gap: 10, marginTop: 12 }}>
-              <button style={styles.primary} onClick={onSave}>Save day</button>
-              <button style={styles.btn} onClick={() => setOpen(false)}>Cancel</button>
+            <div className="formRowTight" style={styles.formRow}>
+              <div className="labelTight" style={styles.label}>Preview split (hidden in calendar)</div>
+              <div className="previewBoxTight" style={styles.previewBox}>
+                {computedPreview.riders.length === 0 ? (
+                  <div style={styles.small}>Select riders to see charges.</div>
+                ) : (
+                  computedPreview.riders.map((r) => (
+                    <div key={r.member_id} style={styles.rowLine}>
+                      <div style={{ fontWeight: 800 }}>
+                        {r.name} ({r.trip_type})
+                      </div>
+                      <div style={{ fontWeight: 900 }}>{r.charge}</div>
+                    </div>
+                  ))
+                )}
+                <div style={{ ...styles.rowLine, marginTop: 8 }}>
+                  <div style={{ fontWeight: 900 }}>Total</div>
+                  <div style={{ fontWeight: 950 }}>{computedPreview.total}</div>
+                </div>
+              </div>
             </div>
 
-            <div style={styles.help}>
-              Split uses units: one-way=1, two-way=2. Rounding drift goes to driver.
+            <div style={{ display: "flex", gap: 10, marginTop: 12 }}>
+              <button style={styles.btn} onClick={() => setOpen(false)}>
+                Cancel
+              </button>
+              <button style={{ ...styles.btn, ...styles.btnPrimary }} onClick={onSave}>
+                Save
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* NEW: Member modal */}
+      {memberOpen && (
+        <div className="modalBackdrop" style={styles.modalBackdrop} onClick={() => setMemberOpen(false)}>
+          <div className="modal" style={styles.modal} onClick={(e) => e.stopPropagation()}>
+            <div style={styles.modalTitle}>Add member</div>
+
+            {memberErr && <div style={styles.error}>{memberErr}</div>}
+
+            <div className="formRowTight" style={styles.formRow}>
+              <div className="labelTight" style={styles.label}>Name</div>
+              <input
+                className="inputTight"
+                style={styles.input}
+                value={newMemberName}
+                onChange={(e) => setNewMemberName(e.target.value)}
+                placeholder="e.g., Arun"
+              />
+            </div>
+
+            <div className="formRowTight" style={styles.formRow}>
+              <div className="labelTight" style={styles.label}>Mobile number</div>
+              <input
+                className="inputTight"
+                style={styles.input}
+                value={newMemberPhone}
+                onChange={(e) => setNewMemberPhone(e.target.value)}
+                placeholder="e.g., +1 703 555 1234"
+              />
+              <div style={styles.small}>
+                Use E.164 format if possible (starts with +countrycode).
+              </div>
+            </div>
+
+            <div style={{ display: "flex", gap: 10, marginTop: 12 }}>
+              <button style={styles.btn} onClick={() => setMemberOpen(false)}>
+                Cancel
+              </button>
+              <button style={{ ...styles.btn, ...styles.btnPrimary }} onClick={onCreateMember}>
+                Create
+              </button>
             </div>
           </div>
         </div>
@@ -844,268 +756,185 @@ export default function App() {
 
 const styles = {
   page: {
-    maxWidth: 1100,
-    margin: "24px auto",
+    maxWidth: 1000,
+    margin: "0 auto",
     padding: 16,
-    fontFamily: "system-ui, sans-serif",
-    background: "linear-gradient(180deg, #f7f9ff 0%, #ffffff 60%)",
-    borderRadius: 16,
+    fontFamily:
+      'ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, "Noto Sans"',
   },
-
   topbar: {
     display: "flex",
     justifyContent: "space-between",
     alignItems: "center",
-    gap: 12,
-    padding: 12,
-    borderRadius: 14,
-    background: "#ffffff",
-    border: "1px solid #eef0f6",
-    boxShadow: "0 6px 18px rgba(20, 20, 40, 0.05)",
+    gap: 10,
+    marginBottom: 14,
   },
-
-  monthTitle: {
-    fontSize: 18,
-    fontWeight: 900,
-    padding: "0 6px",
-    color: "#101828",
-  },
-
-  rates: {
-    fontSize: 12,
-    color: "#344054",
-    padding: "6px 10px",
-    border: "1px solid #e6eaf2",
-    borderRadius: 999,
-    background: "#f8fafc",
-  },
-
+  monthTitle: { fontSize: 16, fontWeight: 950, color: "#101828" },
   btn: {
+    border: "1px solid #e4e7ec",
+    background: "#fff",
     padding: "8px 12px",
     borderRadius: 12,
-    border: "1px solid #d0d5dd",
-    background: "#ffffff",
+    fontWeight: 850,
     cursor: "pointer",
-    color: "#101828",
-    fontWeight: 650,
   },
-
-  primary: {
+  btnOn: { borderColor: "#155eef", background: "#eff4ff" },
+  btnPrimary: { background: "#155eef", color: "white", borderColor: "#155eef" },
+  rates: {
+    border: "1px solid #e4e7ec",
+    background: "#fff",
     padding: "8px 12px",
     borderRadius: 12,
-    border: "1px solid #155eef",
-    background: "#155eef",
-    color: "#ffffff",
-    cursor: "pointer",
-    fontWeight: 750,
+    fontWeight: 850,
+    color: "#344054",
     whiteSpace: "nowrap",
   },
-
   error: {
-    marginTop: 14,
+    background: "#fff1f3",
+    border: "1px solid #fecdd3",
+    color: "#881337",
     padding: 10,
     borderRadius: 12,
-    background: "#fff1f1",
-    border: "1px solid #ffd2d2",
-    color: "#8a0000",
-  },
-
-  muted: { color: "#667085", fontSize: 13 },
-
-  calendar: {
-    marginTop: 16,
-    border: "1px solid #eef0f6",
-    borderRadius: 16,
-    overflow: "hidden",
-    background: "#ffffff",
-    boxShadow: "0 10px 24px rgba(20, 20, 40, 0.06)",
-    paddingBottom: 6,
-  },
-
-  weekHeader: {
-    display: "grid",
-    gridTemplateColumns: "repeat(5, 1fr)",
-    background: "#f8fafc",
-    borderBottom: "1px solid #eef0f6",
-  },
-
-  weekHeaderCell: {
-    padding: 6,
-    fontSize: 12,
-    color: "#344054",
+    marginBottom: 12,
     fontWeight: 800,
+  },
+  calendar: { display: "flex", flexDirection: "column", gap: 8 },
+  weekHeader: { display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 8 },
+  weekHeaderCell: {
     textAlign: "center",
+    fontWeight: 900,
+    color: "#475467",
+    fontSize: 12,
   },
-
-  weekRow: {
-    display: "grid",
-    gridTemplateColumns: "repeat(5, 1fr)",
-    gap: 4,
-    padding: 4,
-  },
-
+  weekRow: { display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 8 },
   dayCell: {
-    minHeight: 110,
-    padding: 10,
-    cursor: "pointer",
+    border: "1px solid #e4e7ec",
+    borderRadius: 14,
     background: "#ffffff",
+    padding: 10,
+    minHeight: 92,
+    cursor: "pointer",
     position: "relative",
-    border: "1px solid #eef0f6",
   },
-
   dayCellHasEntry: {
-    background: "linear-gradient(180deg, #eef6ff 0%, #ffffff 70%)",
+    borderColor: "#c7d7fe",
+    background: "#f5f8ff",
   },
-
   dayCellHoliday: {
-    background: "linear-gradient(180deg, #f0f9ff 0%, #ffffff 70%)",
-    outline: "2px dashed #0ea5e9",
-    outlineOffset: "-2px",
+    borderColor: "#fed7aa",
+    background: "#fff7ed",
   },
-
   dayCellToday: {
-    outline: "2px solid #155eef",
-    outlineOffset: "-2px",
-    background: "linear-gradient(180deg, #e8efff 0%, #ffffff 70%)",
+    borderColor: "#155eef",
+    boxShadow: "0 0 0 2px rgba(21,94,239,0.12) inset",
   },
-
+  dayTop: { display: "flex", justifyContent: "space-between", alignItems: "center" },
+  dayNum: { fontWeight: 950, color: "#101828" },
   holidayTag: {
     position: "absolute",
     left: 10,
     bottom: 10,
     fontSize: 11,
-    color: "#0b74b5",
-    fontWeight: 850,
-    background: "#e0f2fe",
-    border: "1px solid #bae6fd",
-    padding: "2px 8px",
+    fontWeight: 900,
+    color: "#9a3412",
+    background: "#ffedd5",
+    border: "1px solid #fed7aa",
+    padding: "3px 8px",
     borderRadius: 999,
     maxWidth: "calc(100% - 20px)",
     overflow: "hidden",
     textOverflow: "ellipsis",
     whiteSpace: "nowrap",
   },
-
-  dayTop: {
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "baseline",
-  },
-  dayNum: { fontWeight: 900, color: "#101828" },
-
   bottomGrid: {
     marginTop: 16,
     display: "grid",
     gridTemplateColumns: "1fr 1fr",
     gap: 12,
   },
-
   card: {
-    padding: 14,
-    border: "1px solid #eef0f6",
+    border: "1px solid #e4e7ec",
+    background: "#fff",
     borderRadius: 16,
-    background: "#ffffff",
-    boxShadow: "0 10px 24px rgba(20, 20, 40, 0.06)",
+    padding: 12,
   },
-
-  cardTitle: { fontWeight: 900, marginBottom: 10, color: "#101828" },
-
-  rowBetween: {
+  cardTitle: { fontWeight: 950, color: "#101828", marginBottom: 6 },
+  small: { fontSize: 12, color: "#667085", fontWeight: 700 },
+  rowLine: {
     display: "flex",
     justifyContent: "space-between",
-    padding: "8px 0",
-    borderBottom: "1px solid #f2f4f7",
+    alignItems: "center",
+    padding: "6px 0",
+    borderBottom: "1px dashed #eef2f6",
   },
-
-  help: { marginTop: 10, fontSize: 12, color: "#667085" },
-
-  pillPos: {
-    padding: "2px 8px",
-    borderRadius: 999,
-    background: "#ecfdf3",
-    color: "#027a48",
-    fontWeight: 900,
-    fontSize: 12,
-  },
-
-  pillNeg: {
-    padding: "2px 8px",
-    borderRadius: 999,
-    background: "#fef3f2",
-    color: "#b42318",
-    fontWeight: 900,
-    fontSize: 12,
-  },
-
   modalBackdrop: {
     position: "fixed",
     inset: 0,
     background: "rgba(16,24,40,0.45)",
+    backdropFilter: "blur(6px)",
     display: "flex",
-    justifyContent: "center",
     alignItems: "center",
+    justifyContent: "center",
     padding: 16,
+    zIndex: 1000,
   },
-
   modal: {
-    background: "#ffffff",
-    borderRadius: 16,
-    padding: 16,
-    border: "1px solid #eef0f6",
-    boxShadow: "0 20px 50px rgba(16,24,40,0.25)",
+    width: "min(520px, 92vw)",
+    maxHeight: "80vh",
+    overflow: "auto",
+    borderRadius: 18,
+    background: "#fff",
+    border: "1px solid #e4e7ec",
+    padding: 14,
   },
-
-  modalTitle: {
-    fontWeight: 950,
-    fontSize: 16,
-    marginBottom: 10,
-    color: "#101828",
-  },
+  modalTitle: { fontWeight: 950, fontSize: 16, color: "#101828", marginBottom: 10 },
   formRow: { marginTop: 10 },
-
-  label: {
-    display: "block",
-    fontSize: 12,
-    fontWeight: 900,
-    marginBottom: 6,
-    color: "#344054",
-  },
-
+  label: { fontWeight: 900, color: "#344054", fontSize: 12, marginBottom: 6 },
   input: {
     width: "100%",
-    padding: 10,
+    border: "1px solid #e4e7ec",
     borderRadius: 12,
-    border: "1px solid #d0d5dd",
+    padding: "10px 12px",
+    fontWeight: 800,
+    color: "#101828",
     outline: "none",
-    background: "#ffffff",
   },
-
-  ridersBox: {
-    border: "1px solid #eef0f6",
+  select: {
+    width: "100%",
+    border: "1px solid #e4e7ec",
     borderRadius: 12,
-    padding: 10,
-    display: "flex",
-    flexDirection: "column",
-    gap: 10,
-    background: "#fbfcfe",
+    padding: "10px 12px",
+    fontWeight: 800,
+    color: "#101828",
+    outline: "none",
+    background: "#fff",
   },
-
+  ridersBox: {
+    border: "1px solid #e4e7ec",
+    borderRadius: 12,
+    padding: 8,
+  },
   riderRow: {
     display: "flex",
     justifyContent: "space-between",
-    gap: 10,
     alignItems: "center",
+    gap: 10,
+    padding: "6px 4px",
+    borderBottom: "1px dashed #eef2f6",
   },
-  riderSelect: {
-    padding: 8,
-    borderRadius: 12,
-    border: "1px solid #d0d5dd",
-    background: "#ffffff",
+  pill: {
+    border: "1px solid #e4e7ec",
+    background: "#fff",
+    padding: "6px 10px",
+    borderRadius: 999,
+    fontWeight: 850,
+    cursor: "pointer",
   },
+  pillOn: { borderColor: "#155eef", background: "#eff4ff" },
   previewBox: {
-    border: "1px solid #eef0f6",
+    border: "1px solid #e4e7ec",
     borderRadius: 12,
     padding: 10,
-    background: "#ffffff",
+    background: "#fafbff",
   },
 };

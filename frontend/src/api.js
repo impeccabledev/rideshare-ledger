@@ -1,63 +1,63 @@
-// frontend/src/api.js
 const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:4000";
 
-function authHeaders() {
-  const group_id = (localStorage.getItem("group_id") || "").trim();
-  const join_code = (localStorage.getItem("join_code") || "").trim();
-
-  return group_id && join_code
-    ? { "x-group-id": group_id, "x-join-code": join_code }
-    : {};
-}
-
 async function handle(res) {
-  const data = await res.json().catch(() => ({}));
+  const data = await res.json();
   if (!res.ok) throw new Error(data.error || "API error");
   return data;
 }
 
-async function request(path, { method = "GET", body } = {}) {
-  const res = await fetch(`${API_BASE}${path}`, {
-    method,
-    headers: {
-      "Content-Type": "application/json",
-      ...authHeaders(),
-    },
-    body: body ? JSON.stringify(body) : undefined,
-  });
-  return handle(res);
-}
-
-export async function groupCheck() {
-  return request(`/group_check`);
-}
-
 export async function getMembers() {
-  const data = await request(`/members`);
+  const res = await fetch(`${API_BASE}/members`);
+  const data = await handle(res);
   return data.members;
 }
 
-export async function createMember(name) {
-  const data = await request(`/members`, { method: "POST", body: { name } });
+export async function createMember(payload) {
+  const res = await fetch(`${API_BASE}/members`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+  const data = await handle(res);
   return data.member;
 }
 
 export async function getEntries(month) {
-  const data = await request(`/entries?month=${encodeURIComponent(month)}`);
+  const res = await fetch(`${API_BASE}/entries?month=${month}`);
+  const data = await handle(res);
   return data.entries;
 }
 
 export async function saveEntry(payload) {
-  const data = await request(`/entries`, { method: "POST", body: payload });
+  const res = await fetch(`${API_BASE}/entries`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+  const data = await handle(res);
   return data.entry;
 }
 
 export async function getHolidays(month) {
-  // public endpoint, but harmless to send headers too
-  const data = await request(`/holidays?month=${encodeURIComponent(month)}`);
+  const res = await fetch(`${API_BASE}/holidays?month=${month}`);
+  const data = await handle(res);
   return data.holidays;
 }
 
 export async function updateMemberRates(payload) {
-  return request(`/member_rates`, { method: "POST", body: payload });
+  const res = await fetch(`${API_BASE}/member_rates`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+  return handle(res);
+}
+
+export async function notify(payload) {
+  const res = await fetch(`${API_BASE}/notify`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload || {}),
+  });
+  return handle(res);
 }

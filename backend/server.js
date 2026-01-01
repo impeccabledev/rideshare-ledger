@@ -1,4 +1,3 @@
-// backend/server.js
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
@@ -7,7 +6,7 @@ import { google } from "googleapis";
 dotenv.config();
 
 const app = express();
-app.use(cors()); // tighten later to your Vercel domain
+app.use(cors()); // tighten later to your deployed frontend domain
 app.use(express.json());
 
 const {
@@ -31,13 +30,10 @@ const auth = new google.auth.JWT({
 
 const sheets = google.sheets({ version: "v4", auth });
 
-// ===== Tabs =====
-const TAB_GROUPS = "groups"; // group_id, group_name, join_code, active
-const TAB_MEMBERS = "members"; // member_id, name, active, one_way_total, two_way_total, group_id
-const TAB_DAY_ENTRIES = "day_entries"; // entry_id, date, driver_id, day_type, day_total_used, total_amount, notes, created_at, group_id
-const TAB_DAY_RIDERS = "day_riders"; // entry_id, member_id, trip_type, units, charge, group_id
+const TAB_MEMBERS = "members";
+const TAB_DAY_ENTRIES = "day_entries";
+const TAB_DAY_RIDERS = "day_riders";
 
-// ===== Sheet helpers =====
 async function getValues(range) {
   const resp = await sheets.spreadsheets.values.get({
     spreadsheetId: GOOGLE_SHEET_ID,
@@ -74,9 +70,12 @@ function unitsForTrip(trip_type) {
   return 0;
 }
 
-// ===== US Federal holidays (observed) =====
-const pad2 = (n) => String(n).padStart(2, "0");
-const fmtDate = (d) => `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
+function pad2(n) {
+  return String(n).padStart(2, "0");
+}
+function fmtDate(d) {
+  return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
+}
 
 function nthWeekdayOfMonth(year, monthIdx0, weekday0Sun, nth) {
   const first = new Date(year, monthIdx0, 1);
@@ -110,10 +109,10 @@ function observedFixedDateHoliday(year, monthIdx0, day) {
 function usFederalHolidaysObservedForYear(year) {
   const holidays = [];
   holidays.push({ date: observedFixedDateHoliday(year, 0, 1), name: "New Year's Day" });
-  holidays.push({ date: nthWeekdayOfMonth(year, 0, 1, 3), name: "MLK Day" });
-  holidays.push({ date: nthWeekdayOfMonth(year, 1, 1, 3), name: "President's's Day" });
+  holidays.push({ date: nthWeekdayOfMonth(year, 0, 1, 3), name: "Birthday of Martin Luther King, Jr." });
+  holidays.push({ date: nthWeekdayOfMonth(year, 1, 1, 3), name: "Washington's Birthday" });
   holidays.push({ date: lastWeekdayOfMonth(year, 4, 1), name: "Memorial Day" });
-  holidays.push({ date: observedFixedDateHoliday(year, 5, 19), name: "Juneteenth Day" });
+  holidays.push({ date: observedFixedDateHoliday(year, 5, 19), name: "Juneteenth National Independence Day" });
   holidays.push({ date: observedFixedDateHoliday(year, 6, 4), name: "Independence Day" });
   holidays.push({ date: nthWeekdayOfMonth(year, 8, 1, 1), name: "Labor Day" });
   holidays.push({ date: nthWeekdayOfMonth(year, 9, 1, 2), name: "Columbus Day" });
@@ -124,110 +123,75 @@ function usFederalHolidaysObservedForYear(year) {
   return holidays.map((h) => ({ date: fmtDate(h.date), name: h.name }));
 }
 
-// ===== Group auth (join-code based) =====
-async function requireGroup(req, res, next) {
-  try {
-    const group_id = String(req.header("x-group-id") || "");
-    const join_code = String(req.header("x-join-code") || "");
-
-    if (!group_id || !join_code) {
-      return res.status(401).json({ error: "Missing x-group-id / x-join-code" });
-    }
-
-    const rows = await getValues(`${TAB_GROUPS}!A:Z`);
-    if (rows.length <= 1) return res.status(500).json({ error: "groups sheet empty" });
-
-    const header = rows[0];
-    const idx = {};
-    header.forEach((h, i) => (idx[h] = i));
-
-    const row = rows.find((r, i) => i > 0 && String(r[idx["group_id"]] ?? "") === group_id);
-    if (!row) return res.status(401).json({ error: "Invalid group" });
-
-    const active = String(row[idx["active"]] ?? "TRUE").toUpperCase() === "TRUE";
-    if (!active) return res.status(403).json({ error: "Group inactive" });
-
-    const code = String(row[idx["join_code"]] ?? "");
-    if (code !== join_code) return res.status(401).json({ error: "Invalid join code" });
-
-    req.group_id = group_id;
-    next();
-  } catch (e) {
-    console.error(e);
-    res.status(500).json({ error: "Group auth failed" });
-  }
+function normalizePhone(phoneRaw) {
+  const s = String(phoneRaw || "").trim();
+  if (!s) return "";
+  // keep + and digits only
+  const cleaned = s.replace(/[^\d+]/g, "");
+  return cleaned;
 }
 
-// ===== Utility: ensure columns exist in a sheet header =====
-function ensureCols(header, idx, cols) {
-  let changed = false;
-  for (const col of cols) {
+function genMemberId() {
+  return `m_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 7)}`;
+}
+
+app.get("/health", (_req, res) => res.json({ ok: true }));
+
+/** Ensure members header has required columns. Returns {rows, idx}. */
+async function loadMembersSheetEnsuringColumns() {
+  const rows = await getValues(`${TAB_MEMBERS}!A:Z`);
+  if (!rows.length) {
+    // Create a default header row if sheet is empty
+    const header = ["member_id", "name", "phone", "active", "one_way_total", "two_way_total"];
+    await setValues(`${TAB_MEMBERS}!A1:F1`, [header]);
+    return { rows: [header], idx: header.reduce((a, h, i) => ((a[h] = i), a), {}) };
+  }
+
+  const header = rows[0];
+  const idx = {};
+  header.forEach((h, i) => (idx[h] = i));
+
+  const ensureCol = async (col) => {
     if (idx[col] == null) {
       header.push(col);
       idx[col] = header.length - 1;
-      changed = true;
+      await setValues(`${TAB_MEMBERS}!A1:${String.fromCharCode(65 + header.length - 1)}1`, [header]);
     }
-  }
-  return changed;
+  };
+
+  await ensureCol("member_id");
+  await ensureCol("name");
+  await ensureCol("phone");
+  await ensureCol("active");
+  await ensureCol("one_way_total");
+  await ensureCol("two_way_total");
+
+  // Reload full range after header change (simple + safe)
+  const rows2 = await getValues(`${TAB_MEMBERS}!A:Z`);
+  const header2 = rows2[0] || header;
+  const idx2 = {};
+  header2.forEach((h, i) => (idx2[h] = i));
+  return { rows: rows2, idx: idx2 };
 }
 
-// ===== Health =====
-app.get("/health", async (_req, res) => {
+// ---- MEMBERS ----
+app.get("/members", async (_req, res) => {
   try {
-    await getValues(`${TAB_GROUPS}!A1:A1`);
-    res.json({ ok: true });
-  } catch (e) {
-    console.error(e);
-    res.status(500).json({ ok: false, error: "Sheets auth/read failed" });
-  }
-});
-
-// Optional: quick validate for join screen
-app.get("/group_check", requireGroup, async (req, res) => {
-  res.json({ ok: true, group_id: req.group_id });
-});
-
-// ===== HOLIDAYS (public) =====
-app.get("/holidays", async (req, res) => {
-  try {
-    const { month } = req.query;
-    if (!month || !/^\d{4}-\d{2}$/.test(String(month))) {
-      return res.status(400).json({ error: "month required as YYYY-MM" });
-    }
-    const year = Number(String(month).slice(0, 4));
-    const list = usFederalHolidaysObservedForYear(year).filter((h) => h.date.startsWith(String(month)));
-    res.json({ holidays: list });
-  } catch (e) {
-    console.error(e);
-    res.status(500).json({ error: "Failed to compute holidays" });
-  }
-});
-
-// ===== MEMBERS =====
-app.get("/members", requireGroup, async (req, res) => {
-  try {
-    const rows = await getValues(`${TAB_MEMBERS}!A:Z`);
+    const { rows, idx } = await loadMembersSheetEnsuringColumns();
     if (rows.length <= 1) return res.json({ members: [] });
-
-    const header = rows[0];
-    const idx = {};
-    header.forEach((h, i) => (idx[h] = i));
-
-    // tolerate older sheets missing cols
-    ensureCols(header, idx, ["member_id", "name", "active", "one_way_total", "two_way_total", "group_id"]);
 
     const members = rows
       .slice(1)
-      .filter((r) => r.length)
+      .filter((r) => r && r.length)
       .map((r) => ({
         member_id: r[idx["member_id"]] ?? "",
         name: r[idx["name"]] ?? "",
+        phone: r[idx["phone"]] ?? "",
         active: String(r[idx["active"]] ?? "TRUE").toUpperCase() === "TRUE",
         one_way_total: Number(r[idx["one_way_total"]] ?? 0),
         two_way_total: Number(r[idx["two_way_total"]] ?? 0),
-        group_id: r[idx["group_id"]] ?? "",
       }))
-      .filter((m) => m.member_id && m.name && String(m.group_id) === req.group_id);
+      .filter((m) => m.member_id && m.name);
 
     res.json({ members });
   } catch (e) {
@@ -236,53 +200,55 @@ app.get("/members", requireGroup, async (req, res) => {
   }
 });
 
-// Create member under this group
-app.post("/members", requireGroup, async (req, res) => {
+// Create a new member (name + phone)
+app.post("/members", async (req, res) => {
   try {
-    const name = String(req.body?.name ?? "").trim();
-    if (name.length < 2) return res.status(400).json({ error: "name required" });
+    const { name, phone, active = true, member_id } = req.body || {};
+    const n = String(name || "").trim();
+    if (!n) return res.status(400).json({ error: "name is required" });
 
-    const rows = await getValues(`${TAB_MEMBERS}!A:Z`);
-    if (rows.length <= 0) return res.status(400).json({ error: "members sheet missing header" });
+    const p = normalizePhone(phone);
+    const id = String(member_id || "").trim() || genMemberId();
 
-    const header = rows[0];
-    const idx = {};
-    header.forEach((h, i) => (idx[h] = i));
+    const { rows, idx } = await loadMembersSheetEnsuringColumns();
+    const existing = rows
+      .slice(1)
+      .some((r) => String(r[idx["member_id"]] ?? "") === id);
+    if (existing) return res.status(409).json({ error: "member_id already exists" });
 
-    const changed = ensureCols(header, idx, ["member_id", "name", "active", "one_way_total", "two_way_total", "group_id"]);
-    if (changed) {
-      await setValues(`${TAB_MEMBERS}!A1:Z1`, [header]);
-    }
-
-    // prevent duplicate name in same group
-    const dupe = rows
+    // Also prevent exact duplicate name+phone collisions (optional sanity)
+    const dup = rows
       .slice(1)
       .some(
         (r) =>
-          String(r[idx["group_id"]] ?? "") === req.group_id &&
-          String(r[idx["name"]] ?? "").trim().toLowerCase() === name.toLowerCase()
+          String(r[idx["name"]] ?? "").trim().toLowerCase() === n.toLowerCase() &&
+          normalizePhone(r[idx["phone"]] ?? "") === p
       );
-    if (dupe) return res.status(409).json({ error: "Member name already exists in this group" });
+    if (dup) return res.status(409).json({ error: "Member already exists (same name + phone)" });
 
-    const member_id = `m_${Date.now()}`;
-    const newRow = new Array(header.length).fill("");
-    newRow[idx["member_id"]] = member_id;
-    newRow[idx["name"]] = name;
-    newRow[idx["active"]] = "TRUE";
-    newRow[idx["one_way_total"]] = "0";
-    newRow[idx["two_way_total"]] = "0";
-    newRow[idx["group_id"]] = req.group_id;
+    const one_way_total = ""; // let user set later
+    const two_way_total = "";
+
+    // Build row aligned to header
+    const headerLen = rows[0].length;
+    const newRow = new Array(headerLen).fill("");
+    newRow[idx["member_id"]] = id;
+    newRow[idx["name"]] = n;
+    newRow[idx["phone"]] = p;
+    newRow[idx["active"]] = active ? "TRUE" : "FALSE";
+    newRow[idx["one_way_total"]] = one_way_total;
+    newRow[idx["two_way_total"]] = two_way_total;
 
     await appendValues(`${TAB_MEMBERS}!A:Z`, [newRow]);
 
     res.status(201).json({
       member: {
-        member_id,
-        name,
-        active: true,
+        member_id: id,
+        name: n,
+        phone: p,
+        active: !!active,
         one_way_total: 0,
         two_way_total: 0,
-        group_id: req.group_id,
       },
     });
   } catch (e) {
@@ -291,35 +257,26 @@ app.post("/members", requireGroup, async (req, res) => {
   }
 });
 
-// Update a member’s rates (only within the group)
-app.post("/member_rates", requireGroup, async (req, res) => {
+// Update a member's rates
+app.post("/member_rates", async (req, res) => {
   try {
-    const member_id = String(req.body?.member_id ?? "");
-    const one = Number(req.body?.one_way_total);
-    const two = Number(req.body?.two_way_total);
-
+    const { member_id, one_way_total, two_way_total } = req.body || {};
     if (!member_id) return res.status(400).json({ error: "member_id required" });
+
+    const one = Number(one_way_total);
+    const two = Number(two_way_total);
+
     if (!Number.isFinite(one) || one <= 0) return res.status(400).json({ error: "one_way_total must be positive" });
     if (!Number.isFinite(two) || two <= 0) return res.status(400).json({ error: "two_way_total must be positive" });
     if (two < one) return res.status(400).json({ error: "two_way_total should be >= one_way_total" });
 
-    const rows = await getValues(`${TAB_MEMBERS}!A:Z`);
+    const { rows, idx } = await loadMembersSheetEnsuringColumns();
     if (rows.length <= 1) return res.status(400).json({ error: "members sheet empty" });
-
-    const header = rows[0];
-    const idx = {};
-    header.forEach((h, i) => (idx[h] = i));
-
-    const changed = ensureCols(header, idx, ["member_id", "one_way_total", "two_way_total", "group_id"]);
-    if (changed) await setValues(`${TAB_MEMBERS}!A1:Z1`, [header]);
 
     const rowIndex = rows.findIndex((r, i) => i > 0 && String(r[idx["member_id"]] ?? "") === member_id);
     if (rowIndex < 0) return res.status(404).json({ error: "member not found" });
 
-    const memberGroup = String(rows[rowIndex][idx["group_id"]] ?? "");
-    if (memberGroup !== req.group_id) return res.status(403).json({ error: "Member not in this group" });
-
-    while (rows[rowIndex].length < header.length) rows[rowIndex].push("");
+    while (rows[rowIndex].length < rows[0].length) rows[rowIndex].push("");
 
     rows[rowIndex][idx["one_way_total"]] = String(one);
     rows[rowIndex][idx["two_way_total"]] = String(two);
@@ -333,66 +290,71 @@ app.post("/member_rates", requireGroup, async (req, res) => {
   }
 });
 
-// ===== ENTRIES =====
-
-// Read entries for group + month
-app.get("/entries", requireGroup, async (req, res) => {
+// ---- HOLIDAYS ----
+app.get("/holidays", async (req, res) => {
   try {
-    const month = String(req.query?.month ?? "");
-    if (!month || !/^\d{4}-\d{2}$/.test(month)) {
+    const { month } = req.query;
+    if (!month || !/^\d{4}-\d{2}$/.test(String(month))) {
+      return res.status(400).json({ error: "month required as YYYY-MM" });
+    }
+    const year = Number(String(month).slice(0, 4));
+    const list = usFederalHolidaysObservedForYear(year).filter((h) => h.date.startsWith(month));
+    res.json({ holidays: list });
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ error: "Failed to compute holidays" });
+  }
+});
+
+// ---- ENTRIES ----
+app.get("/entries", async (req, res) => {
+  try {
+    const { month } = req.query;
+    if (!month || !/^\d{4}-\d{2}$/.test(String(month))) {
       return res.status(400).json({ error: "month required as YYYY-MM" });
     }
 
-    const entryRows = await getValues(`${TAB_DAY_ENTRIES}!A:Z`);
-    const riderRows = await getValues(`${TAB_DAY_RIDERS}!A:Z`);
+    const entryRows = await getValues(`${TAB_DAY_ENTRIES}!A:H`);
+    const riderRows = await getValues(`${TAB_DAY_RIDERS}!A:E`);
 
     const entries = [];
     if (entryRows.length > 1) {
       const h = entryRows[0];
       const idx = {};
       h.forEach((x, i) => (idx[x] = i));
-      ensureCols(h, idx, ["entry_id","date","driver_id","day_type","day_total_used","total_amount","notes","created_at","group_id"]);
 
       for (const r of entryRows.slice(1)) {
-        const date = String(r[idx["date"]] ?? "");
-        const gid = String(r[idx["group_id"]] ?? "");
-        if (!date.startsWith(month)) continue;
-        if (gid !== req.group_id) continue;
+        const date = r[idx["date"]] ?? "";
+        if (!String(date).startsWith(month)) continue;
 
         entries.push({
-          entry_id: String(r[idx["entry_id"]] ?? ""),
+          entry_id: r[idx["entry_id"]] ?? "",
           date,
-          driver_id: String(r[idx["driver_id"]] ?? ""),
-          day_type: String(r[idx["day_type"]] ?? ""),
+          driver_id: r[idx["driver_id"]] ?? "",
+          day_type: r[idx["day_type"]] ?? "",
           day_total_used: Number(r[idx["day_total_used"]] ?? 0),
           total_amount: Number(r[idx["total_amount"]] ?? 0),
-          notes: String(r[idx["notes"]] ?? ""),
-          created_at: String(r[idx["created_at"]] ?? ""),
-          group_id: gid,
+          notes: r[idx["notes"]] ?? "",
+          created_at: r[idx["created_at"]] ?? "",
           riders: [],
         });
       }
     }
 
     const byId = new Map(entries.map((e) => [e.entry_id, e]));
-
     if (riderRows.length > 1) {
       const h = riderRows[0];
       const idx = {};
       h.forEach((x, i) => (idx[x] = i));
-      ensureCols(h, idx, ["entry_id","member_id","trip_type","units","charge","group_id"]);
 
       for (const r of riderRows.slice(1)) {
-        const gid = String(r[idx["group_id"]] ?? "");
-        if (gid !== req.group_id) continue;
-
-        const entry_id = String(r[idx["entry_id"]] ?? "");
+        const entry_id = r[idx["entry_id"]] ?? "";
         const e = byId.get(entry_id);
         if (!e) continue;
 
         e.riders.push({
-          member_id: String(r[idx["member_id"]] ?? ""),
-          trip_type: String(r[idx["trip_type"]] ?? ""),
+          member_id: r[idx["member_id"]] ?? "",
+          trip_type: r[idx["trip_type"]] ?? "",
           units: Number(r[idx["units"]] ?? 0),
           charge: Number(r[idx["charge"]] ?? 0),
         });
@@ -407,8 +369,8 @@ app.get("/entries", requireGroup, async (req, res) => {
   }
 });
 
-// Upsert entry for a date (group scoped) + weighted split
-app.post("/entries", requireGroup, async (req, res) => {
+// ---- UPSERT ENTRY (per-driver total + weighted split) ----
+app.post("/entries", async (req, res) => {
   try {
     const { date, driver_id, day_type, riders, notes = "" } = req.body || {};
 
@@ -426,39 +388,14 @@ app.post("/entries", requireGroup, async (req, res) => {
       return res.status(400).json({ error: "Driver must be included in riders" });
     }
 
-    // Load members and validate group membership
-    const membersRows = await getValues(`${TAB_MEMBERS}!A:Z`);
+    // Load driver totals from members tab
+    const { rows: membersRows, idx: midx } = await loadMembersSheetEnsuringColumns();
     if (membersRows.length <= 1) return res.status(400).json({ error: "members sheet empty" });
 
-    const mh = membersRows[0];
-    const midx = {};
-    mh.forEach((h, i) => (midx[h] = i));
-    ensureCols(mh, midx, ["member_id","name","active","one_way_total","two_way_total","group_id"]);
-
-    const memberMap = new Map();
-    for (const r of membersRows.slice(1)) {
-      const id = String(r[midx["member_id"]] ?? "");
-      if (!id) continue;
-      memberMap.set(id, r);
-    }
-
-    const driverRow = memberMap.get(String(driver_id));
+    const driverRow = membersRows.find(
+      (r, i) => i > 0 && String(r[midx["member_id"]] ?? "") === driver_id
+    );
     if (!driverRow) return res.status(400).json({ error: "Driver not found in members" });
-    if (String(driverRow[midx["group_id"]] ?? "") !== req.group_id) {
-      return res.status(403).json({ error: "Driver not in this group" });
-    }
-
-    for (const rr of riders) {
-      const rid = String(rr.member_id ?? "");
-      const row = memberMap.get(rid);
-      if (!row) return res.status(400).json({ error: `Unknown rider member_id: ${rid}` });
-      if (String(row[midx["group_id"]] ?? "") !== req.group_id) {
-        return res.status(403).json({ error: `Rider not in this group: ${rid}` });
-      }
-      if (!["one_way", "two_way"].includes(String(rr.trip_type ?? ""))) {
-        return res.status(400).json({ error: "riders.trip_type must be one_way or two_way" });
-      }
-    }
 
     const driverOne = Number(driverRow[midx["one_way_total"]] ?? 0);
     const driverTwo = Number(driverRow[midx["two_way_total"]] ?? 0);
@@ -468,13 +405,16 @@ app.post("/entries", requireGroup, async (req, res) => {
       return res.status(400).json({ error: "Driver rates not set (one_way_total/two_way_total)" });
     }
 
-    // Compute weighted split
-    const riderUnits = riders.map((x) => ({
-      entry_id: date, // we use date as entry_id (same as your existing design)
-      member_id: String(x.member_id),
-      trip_type: String(x.trip_type),
-      units: unitsForTrip(String(x.trip_type)),
-    }));
+    const riderUnits = riders.map((x) => {
+      if (!x.member_id) throw new Error("Missing member_id in riders");
+      if (!["one_way", "two_way"].includes(x.trip_type)) throw new Error("Invalid trip_type in riders");
+      return {
+        entry_id: date,
+        member_id: x.member_id,
+        trip_type: x.trip_type,
+        units: unitsForTrip(x.trip_type),
+      };
+    });
 
     const total_units = riderUnits.reduce((s, r) => s + r.units, 0);
     if (total_units <= 0) return res.status(400).json({ error: "No valid riders/units" });
@@ -484,95 +424,49 @@ app.post("/entries", requireGroup, async (req, res) => {
       charge: round2(day_total_used * (r.units / total_units)),
     }));
 
-    // Fix rounding drift to driver
+    // correct rounding drift to driver
     const sumCharges = computed.reduce((s, r) => s + r.charge, 0);
     const drift = round2(day_total_used - sumCharges);
     if (Math.abs(drift) >= 0.01) {
-      const i = computed.findIndex((x) => x.member_id === String(driver_id));
+      const i = computed.findIndex((x) => x.member_id === driver_id);
       if (i >= 0) computed[i].charge = round2(computed[i].charge + drift);
     }
 
     const total_amount = round2(computed.reduce((s, r) => s + r.charge, 0));
     const created_at = new Date().toISOString();
 
-    // ---- Upsert day_entries ----
-    const entryHeader = ["entry_id","date","driver_id","day_type","day_total_used","total_amount","notes","created_at","group_id"];
-    const entryRows = await getValues(`${TAB_DAY_ENTRIES}!A:Z`);
+    const entryHeader = ["entry_id","date","driver_id","day_type","day_total_used","total_amount","notes","created_at"];
+    const entryRows = await getValues(`${TAB_DAY_ENTRIES}!A:H`);
     const entryData = entryRows.length ? entryRows : [entryHeader];
 
-    // ensure header columns
-    const eh = entryData[0];
-    const eidx = {};
-    eh.forEach((h, i) => (eidx[h] = i));
-    const entryHeaderChanged = ensureCols(eh, eidx, entryHeader);
-
-    if (entryHeaderChanged) {
-      entryData[0] = eh;
-      await setValues(`${TAB_DAY_ENTRIES}!A1:Z1`, [eh]);
-    }
-
-    // Find existing by date+group (safer than date only)
-    const existingIdx = entryData.findIndex(
-      (r, i) =>
-        i > 0 &&
-        String(r[eidx["date"]] ?? "") === String(date) &&
-        String(r[eidx["group_id"]] ?? "") === req.group_id
-    );
-
-    // Build row aligned to header
-    const entryRow = new Array(eh.length).fill("");
-    entryRow[eidx["entry_id"]] = String(date);
-    entryRow[eidx["date"]] = String(date);
-    entryRow[eidx["driver_id"]] = String(driver_id);
-    entryRow[eidx["day_type"]] = String(day_type);
-    entryRow[eidx["day_total_used"]] = String(day_total_used);
-    entryRow[eidx["total_amount"]] = String(total_amount);
-    entryRow[eidx["notes"]] = String(notes ?? "");
-    entryRow[eidx["created_at"]] = String(created_at);
-    entryRow[eidx["group_id"]] = String(req.group_id);
+    const existingIdx = entryData.findIndex((r, i) => i > 0 && String(r[1] ?? "") === date);
+    const entryRow = [
+      date,
+      date,
+      driver_id,
+      day_type,
+      String(day_total_used),
+      String(total_amount),
+      notes,
+      created_at,
+    ];
 
     if (existingIdx > 0) {
       entryData[existingIdx] = entryRow;
-      await setValues(`${TAB_DAY_ENTRIES}!A1:Z${entryData.length}`, entryData);
+      await setValues(`${TAB_DAY_ENTRIES}!A1:H${entryData.length}`, entryData);
     } else {
-      // appendValues expects just row values in order; easiest is append full row
-      await appendValues(`${TAB_DAY_ENTRIES}!A:Z`, [entryRow]);
+      await appendValues(`${TAB_DAY_ENTRIES}!A:H`, [entryRow]);
     }
 
-    // ---- Upsert day_riders ----
-    const riderHeader = ["entry_id","member_id","trip_type","units","charge","group_id"];
-    const riderRows = await getValues(`${TAB_DAY_RIDERS}!A:Z`);
+    const riderHeader = ["entry_id","member_id","trip_type","units","charge"];
+    const riderRows = await getValues(`${TAB_DAY_RIDERS}!A:E`);
     const riderData = riderRows.length ? riderRows : [riderHeader];
 
-    const rh = riderData[0];
-    const ridx = {};
-    rh.forEach((h, i) => (ridx[h] = i));
-    const riderHeaderChanged = ensureCols(rh, ridx, riderHeader);
-
-    if (riderHeaderChanged) {
-      riderData[0] = rh;
-      await setValues(`${TAB_DAY_RIDERS}!A1:Z1`, [rh]);
-    }
-
-    // Keep all rows not matching this (entry_id+group), then append new computed rows
-    const kept = [rh, ...riderData.slice(1).filter((r) => {
-      const eid = String(r[ridx["entry_id"]] ?? "");
-      const gid = String(r[ridx["group_id"]] ?? "");
-      return !(eid === String(date) && gid === req.group_id);
-    })];
-
+    const kept = [riderHeader, ...riderData.slice(1).filter((r) => String(r[0] ?? "") !== date)];
     for (const c of computed) {
-      const row = new Array(rh.length).fill("");
-      row[ridx["entry_id"]] = String(c.entry_id);
-      row[ridx["member_id"]] = String(c.member_id);
-      row[ridx["trip_type"]] = String(c.trip_type);
-      row[ridx["units"]] = String(c.units);
-      row[ridx["charge"]] = String(c.charge);
-      row[ridx["group_id"]] = String(req.group_id);
-      kept.push(row);
+      kept.push([c.entry_id, c.member_id, c.trip_type, String(c.units), String(c.charge)]);
     }
-
-    await setValues(`${TAB_DAY_RIDERS}!A1:Z${kept.length}`, kept);
+    await setValues(`${TAB_DAY_RIDERS}!A1:E${kept.length}`, kept);
 
     res.status(201).json({
       entry: {
@@ -584,13 +478,48 @@ app.post("/entries", requireGroup, async (req, res) => {
         total_amount,
         notes,
         created_at,
-        group_id: req.group_id,
         riders: computed.map(({ entry_id, ...rest }) => rest),
       },
     });
   } catch (e) {
     console.error(e);
+    const msg = String(e?.message || "");
+    if (msg.includes("Invalid trip_type")) {
+      return res.status(400).json({ error: "riders.trip_type must be one_way or two_way" });
+    }
     res.status(500).json({ error: "Failed to save entry" });
+  }
+});
+
+/**
+ * Reminder endpoint (SMS later)
+ * For now: returns all active members with phones, so you can verify quickly.
+ */
+app.post("/notify", async (req, res) => {
+  try {
+    const { message = "Reminder: please add today’s ride details." } = req.body || {};
+
+    const { rows, idx } = await loadMembersSheetEnsuringColumns();
+    const members = rows
+      .slice(1)
+      .map((r) => ({
+        member_id: r[idx["member_id"]] ?? "",
+        name: r[idx["name"]] ?? "",
+        phone: normalizePhone(r[idx["phone"]] ?? ""),
+        active: String(r[idx["active"]] ?? "TRUE").toUpperCase() === "TRUE",
+      }))
+      .filter((m) => m.active && m.phone);
+
+    // TODO: integrate Twilio / WhatsApp later.
+    // For now just return what would be sent.
+    res.json({
+      ok: true,
+      message,
+      recipients: members.map((m) => ({ member_id: m.member_id, name: m.name, phone: m.phone })),
+    });
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ error: "Failed to notify" });
   }
 });
 
