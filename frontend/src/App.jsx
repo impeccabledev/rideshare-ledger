@@ -492,7 +492,7 @@ export default function App() {
         
 
         <form onSubmit={handleJoin} style={styles.joinCard}>
-          <div className="appHeader" style={{ marginBottom: 10 }}>
+          <div className="appHeader" style={{ marginBottom: 5}}>
             <div className="appBrand">
               <div className="appIcon">🚘</div>
               <div className="appTitle">RideShare</div>
