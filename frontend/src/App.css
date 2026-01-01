@@ -56,10 +56,11 @@
 /* Icons */
 .icon {
   display: inline-block;
-  margin-right: 2px;
-  margin-bottom: 4px;
-  width: 16px;
+  margin-right: 1px;
+  margin-bottom: 2px;
+  width: 12px;
   text-align: center;
+  font-size: 10px;
 }
 
 /* Desktop/tablet details inside calendar cells */
@@ -274,10 +275,10 @@
 
   .mobileSummary {
     display: block !important;
-    margin-top: 6px;
-    font-size: 12px;
+    margin-top: 4px;
+    font-size: 10px;
     color: #344054;
-    line-height: 1.15;
+    line-height: 1.1;
   }
 
   .mobileDriver {
@@ -288,8 +289,9 @@
     white-space: nowrap;
     display: flex;
     align-items: center;
-    gap: 1.5px;
-    line-height: 1.1;
+    gap: 1px;
+    line-height: 1.0;
+    font-size: 10px;
   }
 
   .mobileRiders {
@@ -300,8 +302,9 @@
     white-space: nowrap;
     display: flex;
     align-items: center;
-    gap: 1.5px;
-    line-height: 1.1;
+    gap: 1px;
+    line-height: 1.0;
+    font-size: 10px;
   }
 
   /* Holiday chip tighter */
