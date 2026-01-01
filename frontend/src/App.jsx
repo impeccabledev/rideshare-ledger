@@ -673,12 +673,14 @@ export default function App() {
       <div style={styles.bottomGrid}>
         <div style={styles.card}>
           <div style={styles.cardTitle}>Balances</div>
-          <div style={styles.small}>Positive means they should receive.</div>
           <div style={{ marginTop: 10 }}>
             {members.map((m) => (
               <div key={m.member_id} style={styles.rowLine}>
                 <div style={{ fontWeight: 800 }}>{m.name}</div>
-                <div style={{ fontWeight: 900 }}>{balances[m.member_id] ?? 0}</div>
+                <div style={{ 
+                  fontWeight: 900, 
+                  color: (balances[m.member_id] ?? 0) >= 0 ? '#22c55e' : '#ef4444' 
+                }}>${balances[m.member_id] ?? 0}</div>
               </div>
             ))}
           </div>
@@ -686,7 +688,6 @@ export default function App() {
 
         <div style={styles.card}>
           <div style={styles.cardTitle}>Suggested settle up</div>
-          <div style={styles.small}>Greedy minimize transfers.</div>
           <div style={{ marginTop: 10 }}>
             {transfers.length === 0 ? (
               <div style={styles.small}>No transfers needed.</div>
@@ -696,7 +697,7 @@ export default function App() {
                   <div style={{ fontWeight: 800 }}>
                     {nameById[t.from] || t.from} → {nameById[t.to] || t.to}
                   </div>
-                  <div style={{ fontWeight: 900 }}>{t.amount}</div>
+                  <div style={{ fontWeight: 900 }}>${t.amount}</div>
                 </div>
               ))
             )}
@@ -831,7 +832,7 @@ export default function App() {
                 )}
                 <div style={{ ...styles.rowLine, marginTop: 8 }}>
                   <div style={{ fontWeight: 900 }}>Total</div>
-                  <div style={{ fontWeight: 950 }}>{computedPreview.total}</div>
+                  <div style={{ fontWeight: 950 }}>${computedPreview.total}</div>
                 </div>
               </div>
             </div>
