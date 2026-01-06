@@ -1054,6 +1054,7 @@ const styles = {
     maxWidth: 1000,
     margin: "0 auto",
     padding: 16,
+    paddingTop: "max(16px, env(safe-area-inset-top, 47px))",
     fontFamily:
       'ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, "Noto Sans"',
   },
