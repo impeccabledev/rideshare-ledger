@@ -594,7 +594,7 @@ export default function App() {
               <div className="road">
                 <div className="car">🚗</div>
               </div>
-              <div className="splashSub">Loading…</div>
+              <div className="splashSub">Buckle Up…</div>
             </div>
           </div>
         )}
