@@ -141,7 +141,6 @@ export default function App() {
   const [open, setOpen] = useState(false);
   const [activeDay, setActiveDay] = useState(null);
   const [driverId, setDriverId] = useState("");
-  const [dayType, setDayType] = useState("two_way");
   const [riderTrip, setRiderTrip] = useState({});
   const [notes, setNotes] = useState("");
   const [shouldClear, setShouldClear] = useState(false);  // Flag to track if entry should be cleared
@@ -351,7 +350,6 @@ export default function App() {
     }
     
     setDriverId(defaultDriver);
-    setDayType(existing?.day_type || "two_way");
 
     const next = {};
     for (const m of members) next[m.member_id] = "none";
@@ -382,7 +380,6 @@ export default function App() {
     console.log("clearForm called, members:", members.map(m => m.name));
     
     setDriverId("__none__");  // Use special value to indicate no driver selected
-    setDayType("two_way");
     setDriverRatesForm({
       one_way_total: "",
       two_way_total: "",
@@ -418,6 +415,14 @@ export default function App() {
   const driverTwo = Number(driverObj?.two_way_total || 0);
 
   const computedPreview = useMemo(() => {
+    // Auto-detect day type from rider selections
+    let oneWayCount = 0, twoWayCount = 0;
+    for (const t of Object.values(riderTrip)) {
+      if (t === "one_way") oneWayCount++;
+      else if (t === "two_way") twoWayCount++;
+    }
+    // If any riders selected two-way, use two-way total; otherwise use one-way
+    const dayType = twoWayCount > 0 ? "two_way" : "one_way";
     const dayTotal = dayType === "one_way" ? driverOne : driverTwo;
 
     const riders = [];
@@ -453,7 +458,7 @@ export default function App() {
       riders: computed,
       total: round2(computed.reduce((s, r) => s + r.charge, 0)),
     };
-  }, [dayType, driverOne, driverTwo, members, riderTrip, driverId]);
+  }, [driverOne, driverTwo, members, riderTrip, driverId]);
 
   async function onSave() {
     setErr("");
@@ -498,6 +503,14 @@ export default function App() {
       member_id: r.member_id,
       trip_type: r.trip_type,
     }));
+
+    // Auto-detect day type from rider selections
+    let oneWayCount = 0, twoWayCount = 0;
+    for (const r of riders) {
+      if (r.trip_type === "one_way") oneWayCount++;
+      else if (r.trip_type === "two_way") twoWayCount++;
+    }
+    const dayType = twoWayCount > 0 ? "two_way" : "one_way";
 
     try {
       const entry = await saveEntry({
@@ -879,71 +892,63 @@ export default function App() {
             </div>
 
             <div className="formRowTight" style={styles.formRow}>
-              <div className="labelTight" style={styles.label}>Day type</div>
-              <div style={{ display: "flex", gap: 8 }}>
-                <button
-                  type="button"
-                  style={{ ...styles.btn, ...(dayType === "one_way" ? styles.btnOn : {}) }}
-                  onClick={() => setDayType("one_way")}
-                >
-                  One-way total
-                </button>
-                <button
-                  type="button"
-                  style={{ ...styles.btn, ...(dayType === "two_way" ? styles.btnOn : {}) }}
-                  onClick={() => setDayType("two_way")}
-                >
-                  Two-way total
-                </button>
-              </div>
-            </div>
-
-            <div className="formRowTight" style={styles.formRow}>
-              <div className="labelTight" style={styles.label}>Driver rates (used for split)</div>
+              <div className="labelTight" style={styles.label}>Driver Rates (Used for split)</div>
 
               <div className="rateRow">
-                <input
-                  className="rateInput"
-                  style={styles.input}
-                  placeholder="One-way total ($)"
-                  value={driverRatesForm.one_way_total}
-                  onChange={(e) => setDriverRatesForm((p) => ({ ...p, one_way_total: e.target.value }))}
-                />
-                <input
-                  className="rateInput"
-                  style={styles.input}
-                  placeholder="Two-way total ($)"
-                  value={driverRatesForm.two_way_total}
-                  onChange={(e) => setDriverRatesForm((p) => ({ ...p, two_way_total: e.target.value }))}
-                />
+                <div className="rateInputWrapper">
+                  <input
+                    className="rateInput"
+                    placeholder=" "
+                    value={driverRatesForm.two_way_total}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      setDriverRatesForm((p) => ({
+                        ...p,
+                        two_way_total: val,
+                        // Auto-calculate one-way as half of two-way
+                        one_way_total: val ? String((Number(val) / 2).toFixed(2)) : "",
+                      }));
+                    }}
+                  />
+                  <span className="rateLabel">Two-way total ($)</span>
+                </div>
+                <div className="rateInputWrapper">
+                  <input
+                    className="rateInput"
+                    placeholder=" "
+                    value={driverRatesForm.one_way_total}
+                    onChange={(e) => setDriverRatesForm((p) => ({ ...p, one_way_total: e.target.value }))}
+                  />
+                  <span className="rateLabel">One-way total ($)</span>
+                </div>
               </div>
 
               <div style={{ marginTop: 8, display: "flex", gap: 10, alignItems: "center" }}>
-                <button type="button" style={styles.btn} onClick={onUpdateRates}>
-                  Save driver rates
+                <button type="button" style={{ ...styles.btn, background: "linear-gradient(135deg, #a5b4fc 0%, #818cf8 100%)", color: "white", borderColor: "#818cf8" }} onClick={onUpdateRates}>
+                  Save Rates
                 </button>
                 <div style={styles.small}>Set once per driver.</div>
               </div>
             </div>
 
             <div className="formRowTight" style={styles.formRow}>
-              <div className="labelTight" style={styles.label}>Riders (trip type per person)</div>
+              <div className="labelTight" style={styles.label}>Riders (Trip type per person)</div>
 
               <div className="ridersBoxTight" style={styles.ridersBox}>
                 {members.map((m) => {
                   const v = riderTrip[m.member_id] || "none";
                   return (
                     <div key={m.member_id} style={styles.riderRow}>
-                      <div style={{ fontWeight: 900, minWidth: 90 }}>{m.name}</div>
+                      <div style={{ fontWeight: 900, minWidth: 60, maxWidth: 80, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{m.name}</div>
 
-                      <div style={{ display: "flex", gap: 6, flexWrap: "wrap", justifyContent: "flex-end" }}>
-                        <button type="button" style={{ ...styles.pill, ...(v === "none" ? styles.pillOn : {}) }} onClick={() => setTrip(m.member_id, "none")}>
+                      <div style={{ display: "flex", gap: 4, flexShrink: 0 }}>
+                        <button type="button" style={{ ...styles.pill, ...(v === "none" ? styles.pillOn : {}), padding: "6px 8px", fontSize: 12, minWidth: "auto" }} onClick={() => setTrip(m.member_id, "none")}>
                           None
                         </button>
-                        <button type="button" style={{ ...styles.pill, ...(v === "one_way" ? styles.pillOn : {}) }} onClick={() => setTrip(m.member_id, "one_way")}>
+                        <button type="button" style={{ ...styles.pill, ...(v === "one_way" ? styles.pillOn : {}), padding: "6px 8px", fontSize: 12, minWidth: "auto" }} onClick={() => setTrip(m.member_id, "one_way")}>
                           One-way
                         </button>
-                        <button type="button" style={{ ...styles.pill, ...(v === "two_way" ? styles.pillOn : {}) }} onClick={() => setTrip(m.member_id, "two_way")}>
+                        <button type="button" style={{ ...styles.pill, ...(v === "two_way" ? styles.pillOn : {}), padding: "6px 8px", fontSize: 12, minWidth: "auto" }} onClick={() => setTrip(m.member_id, "two_way")}>
                           Two-way
                         </button>
                       </div>
@@ -959,7 +964,7 @@ export default function App() {
             </div>
 
             <div className="formRowTight" style={styles.formRow}>
-              <div className="labelTight" style={styles.label}>Preview split</div>
+              <div className="labelTight" style={styles.label}>Preview Split</div>
               <div className="previewBoxTight" style={styles.previewBox}>
                 {computedPreview.riders.length === 0 ? (
                   <div style={styles.small}>Select riders to see charges.</div>
@@ -1185,7 +1190,8 @@ const styles = {
   },
   modal: {
     width: "min(520px, 92vw)",
-    maxHeight: "80vh",
+    maxWidth: "92vw",
+    maxHeight: "90vh",
     overflow: "auto",
     borderRadius: 18,
     background: "#fff",
@@ -1204,6 +1210,7 @@ const styles = {
     color: "#101828",
     outline: "none",
     fontSize: 16,
+    transition: "border-color 0.2s, box-shadow 0.2s",
   },
   select: {
     width: "100%",
@@ -1220,9 +1227,10 @@ const styles = {
     display: "flex",
     justifyContent: "space-between",
     alignItems: "center",
-    gap: 10,
+    gap: 8,
     padding: "6px 4px",
     borderBottom: "1px dashed #eef2f6",
+    minWidth: 0,
   },
   pill: { 
     border: "1px solid #e4e7ec",
@@ -1231,6 +1239,9 @@ const styles = {
     borderRadius: 999,
     fontWeight: 850,
     cursor: "pointer",
+    fontSize: 14,
+    minWidth: "70px",
+    textAlign: "center",
   },
   pillOn: { borderColor: "#155eef", background: "#eff4ff" },
   previewBox: { border: "1px solid #e4e7ec", borderRadius: 12, padding: 10, background: "#fafbff" },
