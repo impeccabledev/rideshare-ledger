@@ -1,5 +1,12 @@
 {
   "appId": "com.rideshare.ledger",
   "appName": "rideshare-ledger",
-  "webDir": "dist"
+  "webDir": "dist",
+  "ios": {
+    "useLegacySwift": false,
+    "minVersion": "15.0"
+  },
+  "server": {
+    "iosScheme": "https"
+  }
 }
