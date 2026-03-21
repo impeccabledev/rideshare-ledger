@@ -126,6 +126,7 @@ export default function App() {
   const month = useMemo(() => fmtMonthApi(monthDate), [monthDate]);
   const monthDisplay = useMemo(() => fmtMonthDisplay(monthDate), [monthDate]);
 
+  const [allMembers, setAllMembers] = useState([]);
   const [members, setMembers] = useState([]);
   const [entries, setEntries] = useState([]);
   const [holidays, setHolidays] = useState([]);
@@ -221,6 +222,7 @@ export default function App() {
     setErr("");
     try {
       const [m, e, h] = await Promise.all([getMembers(), getEntries(month), getHolidays(month)]);
+      setAllMembers(m || []);
       const active = (m || []).filter((x) => x.active);
       setMembers(active);
       setEntries(e || []);
@@ -285,9 +287,9 @@ export default function App() {
   // ---------- Derived maps ----------
   const nameById = useMemo(() => {
     const m = {};
-    for (const x of members) m[x.member_id] = x.name;
+    for (const x of allMembers) m[x.member_id] = x.name;
     return m;
-  }, [members]);
+  }, [allMembers]);
 
   const memberById = useMemo(() => {
     const m = new Map();
@@ -573,7 +575,7 @@ export default function App() {
 
 
   // ---------- Balances ----------
-  const balances = useMemo(() => computeMonthBalances(members, entries), [members, entries]);
+  const balances = useMemo(() => computeMonthBalances(allMembers, entries), [allMembers, entries]);
   const transfers = useMemo(() => suggestTransfers(balances), [balances]);
 
   const todayStr = fmtDate(new Date());
@@ -814,15 +816,24 @@ export default function App() {
         <div style={styles.cardBalances}>
           <div style={styles.cardTitle}>Balances</div>
           <div style={{ marginTop: 10 }}>
-            {members.map((m) => (
-              <div key={m.member_id} style={styles.rowLine}>
-                <div style={{ fontWeight: 800 }}>{m.name}</div>
-                <div style={{ 
-                  fontWeight: 900, 
-                  color: (balances[m.member_id] ?? 0) >= 0 ? '#22c55e' : '#ef4444' 
-                }}>${balances[m.member_id] ?? 0}</div>
-              </div>
-            ))}
+            {allMembers
+              .slice()
+              .sort((a, b) => Number(b.active) - Number(a.active))
+              .map((m) => (
+                <div key={m.member_id} style={styles.rowLine}>
+                  <div style={{ fontWeight: 800, opacity: m.active ? 1 : 0.6 }}>
+                    {m.name}{m.active ? '' : ' (inactive)'}
+                  </div>
+                  <div
+                    style={{
+                      fontWeight: 900,
+                      color: (balances[m.member_id] ?? 0) >= 0 ? '#22c55e' : '#ef4444',
+                    }}
+                  >
+                    ${balances[m.member_id] ?? 0}
+                  </div>
+                </div>
+              ))}
           </div>
         </div>
 
