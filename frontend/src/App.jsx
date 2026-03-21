@@ -822,7 +822,7 @@ export default function App() {
               .map((m) => (
                 <div key={m.member_id} style={styles.rowLine}>
                   <div style={{ fontWeight: 800, opacity: m.active ? 1 : 0.6 }}>
-                    {m.name}{m.active ? '' : ' (inactive)'}
+                    {m.name}{m.active ? '' : ' (Inactive)'}
                   </div>
                   <div
                     style={{
