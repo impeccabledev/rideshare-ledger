@@ -819,6 +819,7 @@ export default function App() {
             {allMembers
               .slice()
               .sort((a, b) => Number(b.active) - Number(a.active))
+              .filter((m) => m.active || Math.abs(balances[m.member_id] ?? 0) > 0.005)
               .map((m) => (
                 <div key={m.member_id} style={styles.rowLine}>
                   <div style={{ fontWeight: 800, opacity: m.active ? 1 : 0.6 }}>
