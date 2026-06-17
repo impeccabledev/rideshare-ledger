@@ -18,19 +18,61 @@ async function handle(res) {
   return data;
 }
 
+// Helper: fetch with Abort timeout and retries (exponential backoff)
+async function fetchWithTimeoutAndRetry(url, options = {}, timeoutMs = 15000, maxRetries = 2) {
+  let attempt = 0;
+  const baseDelay = 300;
+
+  while (true) {
+    const controller = new AbortController();
+    const id = setTimeout(() => controller.abort(), timeoutMs);
+    try {
+      const res = await fetch(url, { ...options, signal: controller.signal });
+      clearTimeout(id);
+      return res;
+    } catch (err) {
+      clearTimeout(id);
+      // If aborted due to timeout or other transient network error, retry
+      attempt += 1;
+      const isAbort = err && err.name === 'AbortError';
+      const isNetworkErr = err instanceof TypeError; // fetch network errors surface as TypeError
+
+      if (attempt > maxRetries || (!isAbort && !isNetworkErr)) {
+        // Give up
+        throw err;
+      }
+
+      // exponential backoff with jitter
+      const delay = baseDelay * Math.pow(2, attempt - 1);
+      const jitter = Math.floor(Math.random() * 100);
+      await new Promise((r) => setTimeout(r, delay + jitter));
+      // continue to next attempt
+    }
+  }
+}
+
+/**
+ * request wrapper used across the frontend.
+ * Adds configurable timeout + retry to avoid cron-trigger failures when backend is cold or slow.
+ * Configure via VITE_API_TIMEOUT_MS and VITE_API_MAX_RETRIES in your environment.
+ */
 async function request(path, { method = "GET", body } = {}) {
   const headers = { ...authHeaders() };
   if (body !== undefined) headers["Content-Type"] = "application/json";
 
   const url = `${API_BASE}${path}`;
-  console.log("request:", method, url);
-  
-  const res = await fetch(url, {
+  const timeoutMs = Number(import.meta.env.VITE_API_TIMEOUT_MS || 15000);
+  const maxRetries = Number(import.meta.env.VITE_API_MAX_RETRIES || 2);
+
+  console.log("request:", method, url, { timeoutMs, maxRetries });
+
+  const options = {
     method,
     headers,
     body: body !== undefined ? JSON.stringify(body) : undefined,
-  });
+  };
 
+  const res = await fetchWithTimeoutAndRetry(url, options, timeoutMs, maxRetries);
   return handle(res);
 }
 

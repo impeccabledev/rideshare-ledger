@@ -10,6 +10,12 @@ const app = express();
 app.use(cors()); // tighten later to your deployed frontend domain
 app.use(express.json());
 
+// Lightweight health endpoint for uptime/cron checks and warm pings
+app.get("/health", (req, res) => {
+  // Return service status quickly; avoid heavy initialization here.
+  res.json({ ok: true, time: new Date().toISOString(), service: "rideshare-ledger" });
+});
+
 const {
   PORT = 4000,
   GOOGLE_SHEET_ID,
