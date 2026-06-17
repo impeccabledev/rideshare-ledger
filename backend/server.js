@@ -762,19 +762,50 @@ app.post("/notify", async (req, res) => {
 });
 
 // ---- KEEPALIVE SCHEDULER ----
-// Keep the backend warm by self-pinging /health every 14 minutes
-// This prevents Render free/basic tier from spinning down the dyno
+// Keep the backend warm by self-pinging /health periodically. Defaults are safe for Render.
 if (process.env.NODE_ENV !== 'test') {
-  cron.schedule('*/14 * * * *', async () => {
+  // Default to 15 minutes in production; allow fast test schedule with KEEPALIVE_TEST=1
+  const keepaliveSchedule = process.env.KEEPALIVE_TEST === '1' ? '*/1 * * * *' : (process.env.KEEPALIVE_SCHEDULE || '*/14 * * * *');
+
+  // Auto-enable public ping when running in production and APP_URL is set, or override with KEEPALIVE_PUBLIC=1
+  const publicPingEnabled = process.env.KEEPALIVE_PUBLIC === '1' || (process.env.NODE_ENV === 'production' && !!APP_URL);
+
+  // Helper to fetch with timeout
+  async function fetchWithTimeout(url, timeoutMs = 10000) {
+    const controller = new AbortController();
+    const id = setTimeout(() => controller.abort(), timeoutMs);
     try {
-      const selfUrl = `http://localhost:${PORT}/health`;
-      const res = await fetch(selfUrl);
-      console.log(`[KEEPALIVE] Pinged /health at ${new Date().toISOString()}, status: ${res.status}`);
+      const res = await fetch(url, { signal: controller.signal });
+      clearTimeout(id);
+      return res;
     } catch (err) {
-      console.error(`[KEEPALIVE] Failed to ping /health:`, err.message);
+      clearTimeout(id);
+      throw err;
+    }
+  }
+
+  cron.schedule(keepaliveSchedule, async () => {
+    const targets = [{ name: 'local', url: `http://localhost:${PORT}/health` }];
+
+    if (publicPingEnabled) {
+      const publicUrl = APP_URL ? (APP_URL.endsWith('/health') ? APP_URL : `${APP_URL.replace(/\/$/, '')}/health`) : null;
+      if (publicUrl) targets.push({ name: 'public', url: publicUrl });
+    }
+
+    console.log(`[KEEPALIVE] Running scheduled ping (${keepaliveSchedule}) at ${new Date().toISOString()}`);
+    for (const t of targets) {
+      try {
+        const res = await fetchWithTimeout(t.url, Number(process.env.KEEPALIVE_TIMEOUT_MS || 10000));
+        console.log(`[KEEPALIVE] Pinged ${t.name} -> ${t.url}, status: ${res.status}`);
+      } catch (err) {
+        console.error(`[KEEPALIVE] Failed to ping ${t.name} -> ${t.url}:`, err && err.message ? err.message : err);
+      }
+      // small stagger to avoid simultaneous external hits
+      await new Promise((r) => setTimeout(r, 600));
     }
   });
-  console.log(`[KEEPALIVE] Scheduler started. Will ping /health every 14 minutes to keep backend warm.`);
+
+  console.log(`[KEEPALIVE] Scheduler started. Schedule='${keepaliveSchedule}', publicPing=${publicPingEnabled}`);
 }
 
 app.listen(PORT, "0.0.0.0", () => {
