@@ -22,6 +22,14 @@ async function pingOnce(u, t) {
   try {
     const res = await fetch(u, { signal: controller.signal });
     clearTimeout(id);
+    
+    // If we get a 429 (Too Many Requests), return a special marker
+    if (res.status === 429) {
+      const retryAfter = res.headers.get('retry-after') || '60';
+      console.warn(`Rate limited (429). Retry-After: ${retryAfter}s`);
+      throw new Error(`RATE_LIMITED:${retryAfter}`);
+    }
+    
     return res.ok;
   } catch (err) {
     clearTimeout(id);
@@ -40,7 +48,18 @@ async function pingOnce(u, t) {
       }
       console.warn('Ping failed or non-2xx response');
     } catch (err) {
-      console.error('Ping error:', err && err.message ? err.message : err);
+      const errMsg = err && err.message ? err.message : String(err);
+      
+      // If rate limited, back off significantly
+      if (errMsg.startsWith('RATE_LIMITED:')) {
+        const retryAfter = parseInt(errMsg.split(':')[1]) || 60;
+        console.error(`Rate limited. Backing off for ${retryAfter}s before retry...`);
+        const backoffMs = retryAfter * 1000 + Math.random() * 5000;
+        await wait(backoffMs);
+        continue;
+      }
+      
+      console.error('Ping error:', errMsg);
     }
 
     if (i < attempts) {

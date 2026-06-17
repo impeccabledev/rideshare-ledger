@@ -3,6 +3,7 @@ import cors from "cors";
 import dotenv from "dotenv";
 import { google } from "googleapis";
 import twilio from "twilio";
+import cron from "node-cron";
 
 dotenv.config();
 
@@ -759,6 +760,22 @@ app.post("/notify", async (req, res) => {
     res.status(500).json({ error: "Failed to notify" });
   }
 });
+
+// ---- KEEPALIVE SCHEDULER ----
+// Keep the backend warm by self-pinging /health every 14 minutes
+// This prevents Render free/basic tier from spinning down the dyno
+if (process.env.NODE_ENV !== 'test') {
+  cron.schedule('*/14 * * * *', async () => {
+    try {
+      const selfUrl = `http://localhost:${PORT}/health`;
+      const res = await fetch(selfUrl);
+      console.log(`[KEEPALIVE] Pinged /health at ${new Date().toISOString()}, status: ${res.status}`);
+    } catch (err) {
+      console.error(`[KEEPALIVE] Failed to ping /health:`, err.message);
+    }
+  });
+  console.log(`[KEEPALIVE] Scheduler started. Will ping /health every 14 minutes to keep backend warm.`);
+}
 
 app.listen(PORT, "0.0.0.0", () => {
   console.log(`Backend running on port ${PORT}`);
