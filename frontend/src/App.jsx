@@ -747,16 +747,19 @@ export default function App() {
         </div>
 
         <div className="topbarButtons" style={{ display: "flex", gap: 16, alignItems: "center" }}>
-          <button style={{ ...styles.btn, minWidth: "90px", background: "linear-gradient(135deg, #86efac 0%, #4ade80 100%)", color: "white", borderColor: "#4ade80" }} onClick={() => { setMemberErr(""); setMemberOpen(true); }}>
-            + Member
+          <button style={{ ...styles.btn, minWidth: "92px", background: "linear-gradient(135deg, #86efac 0%, #4ade80 100%)", color: "white", borderColor: "#4ade80", display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 6 }} onClick={() => { setMemberErr(""); setMemberOpen(true); }}>
+            <span aria-hidden="true">＋</span>
+            <span>Member</span>
           </button>
 
-          <button style={{ ...styles.btn, minWidth: "100px", background: "linear-gradient(135deg, #93c5fd 0%, #60a5fa 100%)", color: "white", borderColor: "#60a5fa" }} onClick={loadAll} disabled={loading}>
-            {loading ? "Refreshing…" : "Refresh"}
+          <button style={{ ...styles.btn, minWidth: "92px", background: "linear-gradient(135deg, #93c5fd 0%, #60a5fa 100%)", color: "white", borderColor: "#60a5fa", display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 6 }} onClick={loadAll} disabled={loading}>
+            <span aria-hidden="true">↻</span>
+            <span>{loading ? "Refreshing" : "Refresh"}</span>
           </button>
 
-          <button style={{ ...styles.btn, minWidth: "80px", background: "linear-gradient(135deg, #fca5a5 0%, #f87171 100%)", color: "white", borderColor: "#f87171" }} onClick={logout}>
-            Logout
+          <button style={{ ...styles.btn, minWidth: "92px", background: "linear-gradient(135deg, #fca5a5 0%, #f87171 100%)", color: "white", borderColor: "#f87171", display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 6 }} onClick={logout}>
+            <span aria-hidden="true">⎋</span>
+            <span>Logout</span>
           </button>
         </div>
       </div>

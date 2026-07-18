@@ -325,12 +325,13 @@ body {
     flex-wrap: wrap;
     gap: 8px;
     width: 100%;
+    justify-content: space-between;
   }
 
   .topbarButtons button {
-    flex: 1 1 auto;
-    min-width: 80px;
-    max-width: calc(50% - 4px);
+    flex: 1 1 0;
+    min-width: 0;
+    max-width: none;
   }
 
   .ratesPill {
