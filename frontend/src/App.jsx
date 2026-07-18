@@ -672,7 +672,7 @@ export default function App() {
           </div>
 
           <button type="submit" style={{ ...styles.btn, ...styles.btnPrimary, width: "100%", marginTop: 8, padding: "12px 14px" }}>
-            Continue
+            Login
           </button>
         </form>
       </div>
@@ -1129,16 +1129,16 @@ const styles = {
   },
   joinCard: {
     width: "min(430px, 92vw)",
-    border: "1px solid rgba(255, 255, 255, 0.14)",
-    background: "linear-gradient(135deg, rgba(255,255,255,0.12), rgba(255,255,255,0.06))",
-    backdropFilter: "blur(24px) saturate(140%)",
-    WebkitBackdropFilter: "blur(24px) saturate(140%)",
+    border: "1px solid rgba(255, 255, 255, 0.16)",
+    background: "linear-gradient(135deg, rgba(255,255,255,0.15), rgba(255,255,255,0.07))",
+    backdropFilter: "blur(24px) saturate(150%)",
+    WebkitBackdropFilter: "blur(24px) saturate(150%)",
     borderRadius: 22,
     padding: 22,
     display: "flex",
     flexDirection: "column",
     gap: 12,
-    boxShadow: "0 20px 45px rgba(0, 0, 0, 0.28), inset 0 1px 0 rgba(255,255,255,0.16)",
+    boxShadow: "0 22px 48px rgba(0, 0, 0, 0.28), inset 0 1px 0 rgba(255,255,255,0.18)",
   },
   authBrand: { display: "flex", alignItems: "center", justifyContent: "center", gap: 10, marginBottom: 8, marginLeft: 4 },
   authIcon: { width: 48, height: 48, borderRadius: 14, fontSize: 24, background: "transparent" },
@@ -1171,7 +1171,7 @@ const styles = {
     boxShadow: "0 10px 20px rgba(0, 0, 0, 0.16), inset 0 1px 0 rgba(255,255,255,0.12)",
   },
   btnOn: { borderColor: "rgba(255,255,255,0.22)", background: "rgba(255,255,255,0.16)", boxShadow: "0 8px 18px rgba(0, 0, 0, 0.16), inset 0 1px 0 rgba(255,255,255,0.16)" },
-  btnPrimary: { background: "linear-gradient(135deg, rgba(47, 191, 113, 0.88), rgba(34, 165, 94, 0.9))", color: "white", borderColor: "rgba(255,255,255,0.16)", boxShadow: "0 12px 24px rgba(34, 197, 94, 0.22)" },
+  btnPrimary: { background: "linear-gradient(135deg, rgba(34, 197, 94, 0.95), rgba(22, 163, 74, 0.95))", color: "white", borderColor: "rgba(255,255,255,0.18)", boxShadow: "0 12px 24px rgba(34, 197, 94, 0.28), inset 0 1px 0 rgba(255,255,255,0.18)" },
   error: {
     background: "rgba(127, 29, 29, 0.24)",
     border: "1px solid rgba(248, 113, 113, 0.35)",
@@ -1289,15 +1289,18 @@ const styles = {
   label: { fontWeight: 900, color: "#e2e8f0", fontSize: 12, marginBottom: 6 },
   input: {
     width: "100%",
-    border: "1px solid rgba(47, 191, 113, 0.38)",
+    border: "1px solid rgba(255, 255, 255, 0.16)",
     borderRadius: 12,
     padding: "10px 12px",
     fontWeight: 800,
     color: "#f8fafc",
     outline: "none",
     fontSize: 15,
-    background: "rgba(12, 20, 16, 0.9)",
-    transition: "border-color 0.2s, box-shadow 0.2s",
+    background: "linear-gradient(135deg, rgba(255,255,255,0.14), rgba(255,255,255,0.06))",
+    backdropFilter: "blur(16px) saturate(140%)",
+    WebkitBackdropFilter: "blur(16px) saturate(140%)",
+    transition: "border-color 0.2s, box-shadow 0.2s, transform 0.2s ease",
+    boxShadow: "inset 0 1px 0 rgba(255,255,255,0.14)",
   },
   select: {
     width: "100%",
@@ -1332,7 +1335,8 @@ const styles = {
     minWidth: "70px",
     textAlign: "center",
     boxShadow: "0 8px 16px rgba(0, 0, 0, 0.14), inset 0 1px 0 rgba(255,255,255,0.12)",
+    transition: "all 0.2s ease",
   },
-  pillOn: { borderColor: "rgba(255,255,255,0.2)", background: "rgba(255,255,255,0.16)", boxShadow: "0 8px 16px rgba(0, 0, 0, 0.14), inset 0 1px 0 rgba(255,255,255,0.16)" },
+  pillOn: { borderColor: "rgba(255,255,255,0.34)", background: "linear-gradient(135deg, rgba(47, 191, 113, 0.95), rgba(34, 197, 94, 0.9))", color: "#fff", boxShadow: "0 10px 20px rgba(34, 197, 94, 0.28), inset 0 1px 0 rgba(255,255,255,0.24)", transform: "translateY(-1px)" },
   previewBox: { border: "1px solid rgba(148, 163, 184, 0.16)", borderRadius: 12, padding: 10, background: "rgba(9, 10, 14, 0.88)" },
 };
