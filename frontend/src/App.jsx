@@ -928,27 +928,30 @@ export default function App() {
 
             <div className="formRowTight" style={styles.formRow}>
               <div className="labelTight" style={styles.label}>Driver</div>
-              <select
-                className="inputTight"
-                style={styles.select}
-                value={driverId === "__none__" ? "" : driverId}
-                onChange={(e) => {
-                  const id = e.target.value;
-                  setDriverId(id);
-                  const dObj = memberById.get(id);
-                  setDriverRatesForm({
-                    one_way_total: String(dObj?.one_way_total ?? ""),
-                    two_way_total: String(dObj?.two_way_total ?? ""),
-                  });
-                }}
-              >
-                <option value="">None</option>
-                {members.map((m) => (
-                  <option key={m.member_id} value={m.member_id}>
-                    {m.name}
-                  </option>
-                ))}
-              </select>
+              <div style={styles.selectWrapper}>
+                <select
+                  className="inputTight"
+                  style={styles.select}
+                  value={driverId === "__none__" ? "" : driverId}
+                  onChange={(e) => {
+                    const id = e.target.value;
+                    setDriverId(id);
+                    const dObj = memberById.get(id);
+                    setDriverRatesForm({
+                      one_way_total: String(dObj?.one_way_total ?? ""),
+                      two_way_total: String(dObj?.two_way_total ?? ""),
+                    });
+                  }}
+                >
+                  <option value="">None</option>
+                  {members.map((m) => (
+                    <option key={m.member_id} value={m.member_id}>
+                      {m.name}
+                    </option>
+                  ))}
+                </select>
+                <div style={styles.selectArrow}>▼</div>
+              </div>
             </div>
 
             <div className="formRowTight" style={styles.formRow}>
@@ -1083,17 +1086,20 @@ export default function App() {
             <div className="formRowTight" style={styles.formRow}>
               <div className="labelTight" style={styles.label}>Mobile number</div>
               <div style={{ display: "flex", gap: 8 }}>
-                <select
-                  style={{ ...styles.select, width: 80 }}
-                  value={newMemberCountryCode}
-                  onChange={(e) => setNewMemberCountryCode(e.target.value)}
-                >
-                  {countryCodes.map((c) => (
-                    <option key={c.code} value={c.code}>
-                      {c.flag} {c.code}
-                    </option>
-                  ))}
-                </select>
+                <div style={{ ...styles.selectWrapper, width: 80 }}>
+                  <select
+                    style={{ ...styles.select, width: 80, paddingRight: 28 }}
+                    value={newMemberCountryCode}
+                    onChange={(e) => setNewMemberCountryCode(e.target.value)}
+                  >
+                    {countryCodes.map((c) => (
+                      <option key={c.code} value={c.code}>
+                        {c.flag} {c.code}
+                      </option>
+                    ))}
+                  </select>
+                  <div style={styles.selectArrow}>▼</div>
+                </div>
                 <input
                   style={{ ...styles.input, flex: 1 }}
                   value={newMemberPhone}
@@ -1316,14 +1322,29 @@ const styles = {
     width: "100%",
     appearance: "none",
     WebkitAppearance: "none",
-    border: "1px solid rgba(59, 130, 246, 0.85)",
+    border: "1px solid rgba(47, 191, 113, 0.75)",
     borderRadius: 12,
-    padding: "10px 12px",
+    padding: "10px 40px 10px 12px",
     fontWeight: 800,
     color: "#f8fafc",
     outline: "none",
-    background: "linear-gradient(135deg, rgba(34, 197, 94, 0.95), rgba(22, 163, 74, 0.95))",
-    boxShadow: "0 0 0 1px rgba(47, 191, 113, 0.2), inset 0 1px 0 rgba(255,255,255,0.16)",
+    background: "linear-gradient(135deg, rgba(47, 191, 113, 0.95), rgba(34, 197, 94, 0.9))",
+    boxShadow: "0 12px 24px rgba(34, 197, 94, 0.28), inset 0 1px 0 rgba(255,255,255,0.18)",
+  },
+  selectWrapper: {
+    position: "relative",
+    width: "100%",
+  },
+  selectArrow: {
+    pointerEvents: "none",
+    position: "absolute",
+    right: 12,
+    top: "50%",
+    transform: "translateY(-50%)",
+    fontSize: 12,
+    fontWeight: 900,
+    color: "rgba(248, 250, 252, 0.9)",
+    textShadow: "0 1px 0 rgba(0,0,0,0.25)",
   },
   ridersBox: { border: "1px solid #e4e7ec", borderRadius: 12, padding: 8 },
   riderRow: {
