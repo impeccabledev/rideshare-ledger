@@ -35,6 +35,39 @@ function BrandMark({ compact = false }) {
   );
 }
 
+function UiIcon({ name, className = "" }) {
+  const paths = {
+    chevronLeft: <path d="m15 18-6-6 6-6" />,
+    chevronRight: <path d="m9 18 6-6-6-6" />,
+    userPlus: <><path d="M15 19c0-2.2-2-4-4.5-4S6 16.8 6 19" /><circle cx="10.5" cy="8.5" r="3" /><path d="M18 8v6m-3-3h6" /></>,
+    refresh: <><path d="M20 7v5h-5" /><path d="M19 12a7 7 0 1 0-1.5 4.3" /></>,
+    logout: <><path d="M10 5H5v14h5" /><path d="m14 8 4 4-4 4m4-4H9" /></>,
+    car: <><path d="M5 17v-5l2-5h10l2 5v5" /><path d="M5 13h14M8 17v2m8-2v2" /><circle cx="8" cy="14.5" r="1" /><circle cx="16" cy="14.5" r="1" /></>,
+    carSide: <>
+      <path className="sideCarBody" d="M2.3 16.1v-3c0-.9.6-1.6 1.5-1.8l3.1-.6 2.6-4h6.4l3.5 3.9 1.4.3c.8.2 1.3.9 1.3 1.7v3.5h-2.4a2.6 2.6 0 0 0-5.1 0H9.3a2.6 2.6 0 0 0-5.1 0H2.3Z" />
+      <path className="sideCarWindow" d="m10 8.1-1.8 2.7h4V8.1H10Zm3.3 0h2l2.4 2.7h-4.4V8.1Z" />
+      <path className="sideCarDetail" d="M3.1 13h2.1m14.7 0h1.6m-8.2-.4h2.2" />
+      <circle className="sideCarWheel" cx="6.8" cy="16.2" r="2.15" />
+      <circle className="sideCarHub" cx="6.8" cy="16.2" r=".75" />
+      <circle className="sideCarWheel" cx="17.1" cy="16.2" r="2.15" />
+      <circle className="sideCarHub" cx="17.1" cy="16.2" r=".75" />
+    </>,
+    users: <><circle cx="9" cy="9" r="3" /><path d="M4 19c0-2.8 2.2-5 5-5s5 2.2 5 5" /><path d="M16 7.5a2.5 2.5 0 0 1 0 5M16.5 14c2 0 3.5 1.6 3.5 3.5" /></>,
+    wallet: <><path d="M4 7.5A2.5 2.5 0 0 1 6.5 5H19v14H6.5A2.5 2.5 0 0 1 4 16.5v-9Z" /><path d="M4 8h15m-4 4h4v4h-4a2 2 0 0 1 0-4Z" /></>,
+    settle: <><path d="M5 8h13m-3-3 3 3-3 3M19 16H6m3 3-3-3 3-3" /></>,
+    calendar: <><rect x="4" y="5" width="16" height="15" rx="3" /><path d="M8 3v4m8-4v4M4 10h16" /></>,
+    trash: <><path d="M4 7h16M9 7V4h6v3m3 0-1 13H7L6 7" /><path d="M10 11v5m4-5v5" /></>,
+    save: <><path d="M5 4h12l2 2v14H5V4Z" /><path d="M8 4v6h8V4M8 20v-6h8v6" /></>,
+    close: <path d="m7 7 10 10M17 7 7 17" />,
+  };
+
+  return (
+    <svg className={`uiIcon${className ? ` ${className}` : ""}`} viewBox="0 0 24 24" aria-hidden="true">
+      {paths[name]}
+    </svg>
+  );
+}
+
 function AuthBenefits({ className = "" }) {
   return (
     <div className={`authBenefits${className ? ` ${className}` : ""}`} aria-label="RideShare benefits">
@@ -230,8 +263,8 @@ export default function App() {
 
   // ---- Boot: splash + auto-check stored creds ----
   useEffect(() => {
-    // splash hides by default after 2s; but we re-trigger on join too
-    const t = setTimeout(() => setShowSplash(false), 2000);
+    // Allow the full car and caption sequence to finish before the splash closes.
+    const t = setTimeout(() => setShowSplash(false), 2400);
     return () => clearTimeout(t);
   }, []);
 
@@ -305,7 +338,7 @@ export default function App() {
     const gid = groupId.trim();
     const jcode = joinCode.trim();
     if (!gid || !jcode) {
-      setAuthErr("Enter group id + join code");
+      setAuthErr("Group ID and Join Code are required.");
       return;
     }
 
@@ -319,7 +352,7 @@ export default function App() {
       setShowSplash(true);
       setGroupOk(true);
       await loadAll();
-      setTimeout(() => setShowSplash(false), 1200);
+      setTimeout(() => setShowSplash(false), 2400);
     } catch (e2) {
       setGroupOk(false);
       setAuthErr(e2.message || "Invalid group");
@@ -660,9 +693,12 @@ export default function App() {
             <div className="splashCard">
               <BrandMark />
               <div className="road">
-                <div className="car" aria-hidden="true"><span /></div>
+                <div className="car" aria-hidden="true"><UiIcon name="carSide" /></div>
               </div>
-              <div className="splashSub">Preparing your trip</div>
+              <div className="splashSub" aria-label="Preparing your trip. Buckle up.">
+                <span className="splashMessage splashMessagePrimary" aria-hidden="true">Preparing your trip</span>
+                <span className="splashMessage splashMessageSecondary" aria-hidden="true">Buckle up</span>
+              </div>
               <div className="splashProgress" aria-hidden="true">
                 <span />
                 <span />
@@ -778,18 +814,18 @@ export default function App() {
   // MAIN APP UI
   // =========================
   return (
-    <div style={styles.page}>
+    <main className="appShell">
       {showSplash && (
         <div className="splashOverlay">
           <div className="splashCard">
-            <div className="splashHeader">
-              <div className="splashIcon">🚘</div>
-              <div className="splashTitle">RideShare</div>
-            </div>
+            <BrandMark />
             <div className="road">
-              <div className="car">🚗</div>
+              <div className="car" aria-hidden="true"><UiIcon name="carSide" /></div>
             </div>
-            <div className="splashSub">Buckle up</div>
+            <div className="splashSub" aria-label="Preparing your trip. Buckle up.">
+              <span className="splashMessage splashMessagePrimary" aria-hidden="true">Preparing your trip</span>
+              <span className="splashMessage splashMessageSecondary" aria-hidden="true">Buckle up</span>
+            </div>
             <div className="splashProgress" aria-hidden="true">
               <span />
               <span />
@@ -799,92 +835,101 @@ export default function App() {
         </div>
       )}
 
-      <div className="appHeader">
-        <BrandMark />
-      </div>
+      <div className="appAmbient appAmbientOne" aria-hidden="true" />
+      <div className="appAmbient appAmbientTwo" aria-hidden="true" />
+      <div className="appGrid" aria-hidden="true" />
 
-      <div className="topbar" style={styles.topbar}>
-        <div className="topbarRow" style={{ display: "flex", gap: 8, alignItems: "center" }}>
-          <button 
-            style={{ 
-              ...styles.btn, 
-              minWidth: "50px", 
-              padding: "10px 16px",
-              background: "linear-gradient(135deg, #a5b4fc 0%, #818cf8 100%)", 
-              color: "white", 
-              borderColor: "#818cf8",
-              borderRadius: "12px",
-              clipPath: "polygon(0% 50%, 20% 0%, 100% 0%, 100% 100%, 20% 100%, 0% 50%)"
-            }} 
-            onClick={prevMonth}
+      <div className="appContent">
+        <header className="appHeader">
+          <BrandMark />
+          <div className="workspaceStatus workspaceStatusDesktop">
+            <span className="statusDot" />
+            <span>{groupId}</span>
+          </div>
+        </header>
+
+        <section className="dashboardIntro">
+          <div>
+            <div className="dashboardTitleRow">
+              <h1>Ride calendar</h1>
+              <div className="workspaceStatus workspaceStatusMobile">
+                <UiIcon name="users" className="groupStatusIcon" />
+                <span>{groupId}</span>
+              </div>
+            </div>
+            <p>Plan rides, split each trip, and keep every balance current.</p>
+          </div>
+          <div className="dashboardStats" aria-label="Workspace summary">
+            <div><strong>{entries.length}</strong><span>Trips this month</span></div>
+            <div><strong>{members.length}</strong><span>Active members</span></div>
+            <div><strong>{transfers.length}</strong><span>Settlements</span></div>
+          </div>
+        </section>
+
+        <section className="appToolbar" aria-label="Calendar controls">
+          <div className="monthNavigator">
+            <button className="iconButton" type="button" onClick={prevMonth} aria-label="Previous month">
+              <UiIcon name="chevronLeft" />
+            </button>
+            <div className="monthTitle">
+              <span>Viewing</span>
+              <strong>{monthDisplay}</strong>
+            </div>
+            <button className="iconButton" type="button" onClick={nextMonth} aria-label="Next month">
+              <UiIcon name="chevronRight" />
+            </button>
+          </div>
+
+          <div className="toolbarActions">
+            <button className="appButton appButtonPrimary" type="button" onClick={() => { setMemberErr(""); setMemberOpen(true); }}>
+              <UiIcon name="userPlus" />
+              <span>Add member</span>
+            </button>
+            <button className="appButton" type="button" onClick={loadAll} disabled={loading}>
+              <UiIcon name="refresh" className={loading ? "isSpinning" : ""} />
+              <span>{loading ? "Refreshing" : "Refresh"}</span>
+            </button>
+            <button className="appButton appButtonQuiet" type="button" onClick={logout}>
+              <UiIcon name="logout" />
+              <span>Sign out</span>
+            </button>
+          </div>
+        </section>
+
+        {err && <div className="appError" role="alert">{err}</div>}
+
+        <section className="calendarPanel">
+          <div className="calendarPanelHeader">
+            <div><UiIcon name="calendar" /><strong>Weekday schedule</strong></div>
+            <span>Select a day to add or edit a ride</span>
+          </div>
+
+          <div
+            className="calendarContainer"
+            style={{
+              animation: transitionDirection === "prev" ? "calendarFromLeft 0.34s ease-out" : transitionDirection === "next" ? "calendarFromRight 0.34s ease-out" : "none",
+              touchAction: "pan-y",
+            }}
+            onPointerDown={handleSwipeStart}
+            onPointerUp={handleSwipeEnd}
+            onClickCapture={handleCalendarClick}
           >
-            Prev
-          </button>
-          <div style={styles.monthTitle}>{monthDisplay}</div>
-          <button 
-            style={{ 
-              ...styles.btn, 
-              minWidth: "50px", 
-              padding: "10px 16px",
-              background: "linear-gradient(135deg, #a5b4fc 0%, #818cf8 100%)", 
-              color: "white", 
-              borderColor: "#818cf8",
-              borderRadius: "12px",
-              clipPath: "polygon(0% 0%, 80% 0%, 100% 50%, 80% 100%, 0% 100%)"
-            }} 
-            onClick={nextMonth}
-          >
-            Next
-          </button>
-        </div>
-
-        <div className="topbarButtons" style={{ display: "flex", gap: 16, alignItems: "center" }}>
-          <button style={{ ...styles.btn, minWidth: "92px", background: "linear-gradient(135deg, #86efac 0%, #4ade80 100%)", color: "white", borderColor: "#4ade80", display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 6 }} onClick={() => { setMemberErr(""); setMemberOpen(true); }}>
-            <span aria-hidden="true">＋</span>
-            <span>Member</span>
-          </button>
-
-          <button style={{ ...styles.btn, minWidth: "92px", background: "linear-gradient(135deg, #93c5fd 0%, #60a5fa 100%)", color: "white", borderColor: "#60a5fa", display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 6 }} onClick={loadAll} disabled={loading}>
-            <span aria-hidden="true">↻</span>
-            <span>{loading ? "Refreshing" : "Refresh"}</span>
-          </button>
-
-          <button style={{ ...styles.btn, minWidth: "92px", background: "linear-gradient(135deg, #fca5a5 0%, #f87171 100%)", color: "white", borderColor: "#f87171", display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 6 }} onClick={logout}>
-            <span aria-hidden="true">⎋</span>
-            <span>Logout</span>
-          </button>
-        </div>
-      </div>
-
-      {err && <div style={styles.error}>{err}</div>}
-
-      <div
-        style={{
-          ...styles.calendarContainer,
-          animation: transitionDirection === "prev" ? "fadeInRight 0.3s ease-out" : transitionDirection === "next" ? "fadeInLeft 0.3s ease-out" : "none",
-          touchAction: "pan-y",
-        }}
-        onPointerDown={handleSwipeStart}
-        onPointerUp={handleSwipeEnd}
-        onClickCapture={handleCalendarClick}
-      >
-        <div style={styles.weekHeader}>
+          <div className="weekHeader">
           {["Mon", "Tue", "Wed", "Thu", "Fri"].map((label) => (
-            <div key={label} style={styles.weekHeaderCell}>
+            <div key={label} className="weekHeaderCell">
               {label}
             </div>
           ))}
-        </div>
+          </div>
 
-        {weeks.map((week, wi) => (
-          <div key={wi} style={styles.weekRow}>
+          {weeks.map((week, wi) => (
+          <div key={wi} className="weekRow">
             {week.map((d, idx) => {
               if (!d) {
                 return (
                   <div
                     key={`empty-${wi}-${idx}`}
-                    className="calendarCell"
-                    style={{ ...styles.dayCell, background: "linear-gradient(135deg, rgba(8, 12, 10, 0.96), rgba(10, 16, 12, 0.98))", border: "1px solid rgba(47, 191, 113, 0.16)" }}
+                    className="calendarCell calendarCellEmpty"
                   />
                 );
               }
@@ -899,41 +944,34 @@ export default function App() {
               return (
                 <div
                   key={dateStr}
-                  className="calendarCell"
-                  style={{
-                    ...styles.dayCell,
-                    ...(e ? styles.dayCellHasEntry : {}),
-                    ...(isHoliday ? styles.dayCellHoliday : {}),
-                    ...(isToday ? styles.dayCellToday : {}),
-                  }}
+                  className={`calendarCell${e ? " calendarCellHasEntry" : ""}${isHoliday ? " calendarCellHoliday" : ""}${isToday ? " calendarCellToday" : ""}`}
                   onClick={() => openDay(d)}
                 >
-                  <div className="dayTop" style={styles.dayTop}>
-                    <div className="dayNum" style={styles.dayNum}>
-                      {d.getDate()}
-                    </div>
+                  <div className="dayTop">
+                    <div className="dayNum">{d.getDate()}</div>
+                    {isToday && <span className="todayTag">Today</span>}
                   </div>
 
                   {e ? (
                     <>
                       <div className="cellDetails">
                         <div className="pcDriver">
-                          <span className="icon">🚗</span>
+                          <UiIcon name="car" />
                           {nameById[e.driver_id] || e.driver_id}
                         </div>
                         <div className="pcRiders">
-                          <span className="icon">👥</span>
-                          {e.riders?.length || 0}
+                          <UiIcon name="users" />
+                          {e.riders?.length || 0} riders
                         </div>
                       </div>
 
                       <div className="mobileSummary">
                         <div className="mobileDriver">
-                          <span className="icon">🚗</span>
+                          <UiIcon name="car" />
                           {nameById[e.driver_id] || e.driver_id}
                         </div>
                         <div className="mobileRiders">
-                          <span className="icon">👥</span>
+                          <UiIcon name="users" />
                           {e.riders?.length || 0}
                         </div>
                       </div>
@@ -941,7 +979,7 @@ export default function App() {
                   ) : null}
 
                   {isHoliday && (
-                    <div className="holidayTag" style={styles.holidayTag}>
+                    <div className="holidayTag">
                       {holidayName}
                     </div>
                   )}
@@ -949,81 +987,84 @@ export default function App() {
               );
             })}
           </div>
-        ))}
-      </div>
+          ))}
+          </div>
+        </section>
 
-      <div style={styles.bottomGrid}>
-        <div style={styles.cardBalances}>
-          <div style={styles.cardTitle}>Balances</div>
-          <div style={{ marginTop: 10 }}>
+        <section className="bottomGrid">
+        <article className="summaryCard balanceCard">
+          <header className="summaryCardHeader">
+            <span className="summaryIcon"><UiIcon name="wallet" /></span>
+            <div><h2>Balances</h2><p>Current position by member</p></div>
+          </header>
+          <div className="summaryRows">
             {allMembers
               .slice()
               .sort((a, b) => Number(b.active) - Number(a.active))
               .filter((m) => m.active || Math.abs(balances[m.member_id] ?? 0) > 0.005)
-              .map((m) => (
-                <div key={m.member_id} style={styles.rowLine}>
-                  <div style={{ fontWeight: 800, color: "#f8fafc", opacity: m.active ? 1 : 0.75 }}>
-                    {m.name}{m.active ? '' : ' (Inactive)'}
+              .map((m) => {
+                const balance = Number(balances[m.member_id] ?? 0);
+                return (
+                <div key={m.member_id} className={`summaryRow${m.active ? "" : " isInactive"}`}>
+                  <div className="memberIdentity">
+                    <span>{m.name?.slice(0, 1)?.toUpperCase()}</span>
+                    <div><strong>{m.name}</strong>{!m.active && <small>Inactive</small>}</div>
                   </div>
-                  <div
-                    style={{
-                      fontWeight: 900,
-                      color: (balances[m.member_id] ?? 0) >= 0 ? '#22c55e' : '#ef4444',
-                    }}
-                  >
-                    ${balances[m.member_id] ?? 0}
+                  <div className={`balanceAmount ${balance >= 0 ? "isPositive" : "isNegative"}`}>
+                    {balance >= 0 ? "+" : "−"}${Math.abs(balance).toFixed(2)}
                   </div>
                 </div>
-              ))}
+              )})}
           </div>
-        </div>
+        </article>
 
-        <div style={styles.cardSettleUp}>
-          <div style={styles.cardTitle}>Settle Up</div>
-          <div style={{ marginTop: 10 }}>
+        <article className="summaryCard settleCard">
+          <header className="summaryCardHeader">
+            <span className="summaryIcon"><UiIcon name="settle" /></span>
+            <div><h2>Settle up</h2><p>Suggested transfers</p></div>
+          </header>
+          <div className="summaryRows">
             {transfers.length === 0 ? (
-              <div style={styles.small}>No transfers needed.</div>
+              <div className="emptyState"><span>✓</span><strong>All settled</strong><p>No transfers are needed this month.</p></div>
             ) : (
               transfers.map((t, i) => (
-                <div key={i} style={styles.rowLine}>
-                  <div style={{ fontWeight: 800, color: "#f8fafc" }}>
-                    {nameById[t.from] || t.from} → {nameById[t.to] || t.to}
+                <div key={i} className="summaryRow transferRow">
+                  <div>
+                    <strong>{nameById[t.from] || t.from}</strong>
+                    <span><UiIcon name="chevronRight" /></span>
+                    <strong>{nameById[t.to] || t.to}</strong>
                   </div>
-                  <div style={{ fontWeight: 900 }}>${t.amount}</div>
+                  <div className="transferAmount">${Number(t.amount).toFixed(2)}</div>
                 </div>
               ))
             )}
           </div>
-        </div>
+        </article>
+        </section>
       </div>
 
       {/* Day modal */}
       {open && (
-        <div className="modalBackdrop" style={styles.modalBackdrop} onClick={() => setOpen(false)}>
-          <div className="modal" style={styles.modal} onClick={(e) => e.stopPropagation()}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
-              <div style={styles.modalTitle}>{activeDay ? fmtDate(activeDay) : ""}</div>
-              <button
-                type="button"
-                style={{
-                  ...styles.btn,
-                  background: "linear-gradient(135deg, #fca5a5 0%, #f87171 100%)",
-                  color: "white",
-                  borderColor: "#f87171",
-                  minWidth: "70px",
-                }}
-                onClick={onClear}
-              >
-                Clear
+        <div className="modalBackdrop" onClick={() => setOpen(false)}>
+          <div className="modal tripModal" onClick={(e) => e.stopPropagation()}>
+            <div className="modalHeader">
+              <div>
+                <span className="sectionKicker">Ride details</span>
+                <h2>{activeDay ? activeDay.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" }) : ""}</h2>
+              </div>
+              <button className="iconButton modalClose" type="button" onClick={() => setOpen(false)} aria-label="Close ride details">
+                <UiIcon name="close" />
               </button>
             </div>
 
-            <div className="formRowTight" style={styles.formRow}>
-              <div className="labelTight" style={styles.label}>Driver</div>
-              <div style={styles.selectWrapper}>
+            <div className="modalBody">
+            <section className="formSection">
+              <div className="formSectionHeader"><strong>Trip setup</strong><span>Choose the driver and trip rates.</span></div>
+              <label className="appLabel" htmlFor="driver-select">Driver</label>
+              <div className="selectControl">
                 <select
-                  className="inputTight"
-                  style={styles.select}
+                  id="driver-select"
+                  className="appControl"
                   value={driverId === "__none__" ? "" : driverId}
                   onChange={(e) => {
                     const id = e.target.value;
@@ -1042,17 +1083,15 @@ export default function App() {
                     </option>
                   ))}
                 </select>
-                <div style={styles.selectArrow}>▼</div>
+                <UiIcon name="chevronRight" />
               </div>
-            </div>
 
-            <div className="formRowTight" style={styles.formRow}>
-              <div className="labelTight" style={styles.label}>Driver Rates (Used for split)</div>
-
+              <div className="appLabel appLabelSpaced">Driver rates</div>
               <div className="rateRow">
                 <div className="rateInputWrapper">
                   <input
                     className="rateInput"
+                    inputMode="decimal"
                     placeholder=" "
                     value={driverRatesForm.two_way_total}
                     onChange={(e) => {
@@ -1070,6 +1109,7 @@ export default function App() {
                 <div className="rateInputWrapper">
                   <input
                     className="rateInput"
+                    inputMode="decimal"
                     placeholder=" "
                     value={driverRatesForm.one_way_total}
                     onChange={(e) => setDriverRatesForm((p) => ({ ...p, one_way_total: e.target.value }))}
@@ -1078,32 +1118,30 @@ export default function App() {
                 </div>
               </div>
 
-              <div style={{ marginTop: 8, display: "flex", gap: 10, alignItems: "center" }}>
-                <button type="button" style={{ ...styles.btn, background: "linear-gradient(135deg, #a5b4fc 0%, #818cf8 100%)", color: "white", borderColor: "#818cf8" }} onClick={onUpdateRates}>
+              <div className="inlineAction">
+                <button type="button" className="appButton appButtonSmall" onClick={onUpdateRates}>
                   Save Rates
                 </button>
-                <div style={styles.small}>Set once per driver.</div>
+                <span>Saved for future trips with this driver.</span>
               </div>
-            </div>
+            </section>
 
-            <div className="formRowTight" style={styles.formRow}>
-              <div className="labelTight" style={styles.label}>Riders (Trip type per person)</div>
-
-              <div className="ridersBoxTight" style={styles.ridersBox}>
+            <section className="formSection">
+              <div className="formSectionHeader"><strong>Riders</strong><span>Set each person’s trip type.</span></div>
+              <div className="ridersBoxTight ridersBox">
                 {members.map((m) => {
                   const v = riderTrip[m.member_id] || "none";
                   return (
-                    <div key={m.member_id} style={styles.riderRow}>
-                      <div style={{ fontWeight: 900, minWidth: 60, maxWidth: 80, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{m.name}</div>
-
-                      <div style={{ display: "flex", gap: 4, flexShrink: 0 }}>
-                        <button type="button" style={{ ...styles.pill, ...(v === "none" ? styles.pillOn : {}), padding: "6px 8px", fontSize: 12, minWidth: "auto" }} onClick={() => setTrip(m.member_id, "none")}>
+                    <div key={m.member_id} className="riderRow">
+                      <div className="riderName"><span>{m.name?.slice(0, 1)?.toUpperCase()}</span><strong>{m.name}</strong></div>
+                      <div className="tripSelector">
+                        <button type="button" className={`tripPill${v === "none" ? " isActive" : ""}`} onClick={() => setTrip(m.member_id, "none")}>
                           None
                         </button>
-                        <button type="button" style={{ ...styles.pill, ...(v === "one_way" ? styles.pillOn : {}), padding: "6px 8px", fontSize: 12, minWidth: "auto" }} onClick={() => setTrip(m.member_id, "one_way")}>
+                        <button type="button" className={`tripPill${v === "one_way" ? " isActive" : ""}`} onClick={() => setTrip(m.member_id, "one_way")}>
                           One-way
                         </button>
-                        <button type="button" style={{ ...styles.pill, ...(v === "two_way" ? styles.pillOn : {}), padding: "6px 8px", fontSize: 12, minWidth: "auto" }} onClick={() => setTrip(m.member_id, "two_way")}>
+                        <button type="button" className={`tripPill${v === "two_way" ? " isActive" : ""}`} onClick={() => setTrip(m.member_id, "two_way")}>
                           Two-way
                         </button>
                       </div>
@@ -1111,51 +1149,46 @@ export default function App() {
                   );
                 })}
               </div>
-            </div>
+            </section>
 
-            <div className="formRowTight" style={styles.formRow}>
-              <div className="labelTight" style={styles.label}>Notes</div>
-              <input className="notesInput" style={styles.input} value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Optional notes…" />
-            </div>
+            <section className="formSection formSectionCompact">
+              <label className="appLabel" htmlFor="ride-notes">Notes</label>
+              <input id="ride-notes" className="appControl" value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Add an optional note" />
+            </section>
 
-            <div className="formRowTight" style={styles.formRow}>
-              <div className="labelTight" style={styles.label}>Preview Split</div>
-              <div className="previewBoxTight" style={styles.previewBox}>
+            <section className="formSection splitSection">
+              <div className="formSectionHeader"><strong>Split preview</strong><span>Calculated from the selected rider trips.</span></div>
+              <div className="previewBoxTight previewBox">
                 {computedPreview.riders.length === 0 ? (
-                  <div style={styles.small}>Select riders to see charges.</div>
+                  <div className="previewEmpty">Select riders to see their charges.</div>
                 ) : (
                   computedPreview.riders.map((r) => (
-                    <div key={r.member_id} style={styles.rowLine}>
-                      <div style={{ fontWeight: 800 }}>
-                        {r.name} ({r.trip_type})
-                      </div>
-                      <div style={{ fontWeight: 900 }}>{r.charge}</div>
+                    <div key={r.member_id} className="previewRow">
+                      <div><strong>{r.name}</strong><span>{r.trip_type.replace("_", " ")}</span></div>
+                      <strong>{r.charge}</strong>
                     </div>
                   ))
                 )}
-                <div style={{ ...styles.rowLine, marginTop: 8 }}>
-                  <div style={{ fontWeight: 900 }}>Total</div>
-                  <div style={{ fontWeight: 950 }}>${computedPreview.total}</div>
+                <div className="previewTotal">
+                  <span>Total</span>
+                  <strong>${computedPreview.total}</strong>
                 </div>
               </div>
+            </section>
             </div>
 
-            <div style={{ display: "flex", gap: 10, marginTop: 12 }}>
-              <button type="button" style={styles.btn} onClick={() => setOpen(false)}>
+            <div className="modalFooter">
+              <button type="button" className="appButton appButtonDanger" onClick={onClear}>
+                <UiIcon name="trash" />
+                Clear day
+              </button>
+              <span className="modalFooterSpacer" />
+              <button type="button" className="appButton" onClick={() => setOpen(false)}>
                 Cancel
               </button>
-              <button
-                type="button"
-                style={{
-                  ...styles.btn,
-                  background: "linear-gradient(135deg, #93c5fd 0%, #3b82f6 100%)",
-                  color: "white",
-                  borderColor: "#3b82f6",
-                  boxShadow: "0 12px 24px rgba(59, 130, 246, 0.28), inset 0 1px 0 rgba(255,255,255,0.18)",
-                }}
-                onClick={onSave}
-              >
-                Save
+              <button type="button" className="appButton appButtonPrimary" onClick={onSave}>
+                <UiIcon name="save" />
+                Save ride
               </button>
             </div>
           </div>
@@ -1164,23 +1197,28 @@ export default function App() {
 
       {/* Add member modal */}
       {memberOpen && (
-        <div className="modalBackdrop" style={styles.modalBackdrop} onClick={() => setMemberOpen(false)}>
-          <div className="modal" style={styles.modal} onClick={(e) => e.stopPropagation()}>
-            <div style={styles.modalTitle}>Add member</div>
-
-            {memberErr && <div style={styles.error}>{memberErr}</div>}
-
-            <div className="formRowTight" style={styles.formRow}>
-              <div className="labelTight" style={styles.label}>Name</div>
-              <input style={styles.input} value={newMemberName} onChange={(e) => setNewMemberName(e.target.value)} placeholder="e.g., Arun" />
+        <div className="modalBackdrop" onClick={() => setMemberOpen(false)}>
+          <div className="modal memberModal" onClick={(e) => e.stopPropagation()}>
+            <div className="modalHeader">
+              <div><span className="sectionKicker">Workspace access</span><h2>Add member</h2></div>
+              <button className="iconButton modalClose" type="button" onClick={() => setMemberOpen(false)} aria-label="Close add member form"><UiIcon name="close" /></button>
             </div>
 
-            <div className="formRowTight" style={styles.formRow}>
-              <div className="labelTight" style={styles.label}>Mobile number</div>
-              <div style={{ display: "flex", gap: 8 }}>
-                <div style={{ ...styles.selectWrapper, width: 80 }}>
+            <div className="modalBody">
+            <p className="modalIntro">Add a rider to your shared ledger. Their rates can be configured when you record a trip.</p>
+            {memberErr && <div className="appError" role="alert">{memberErr}</div>}
+
+            <div className="formSection formSectionCompact">
+              <label className="appLabel" htmlFor="member-name">Full name</label>
+              <input id="member-name" className="appControl" value={newMemberName} onChange={(e) => setNewMemberName(e.target.value)} placeholder="e.g. Arun Kumar" />
+            </div>
+
+            <div className="formSection formSectionCompact">
+              <label className="appLabel" htmlFor="member-phone">Mobile number</label>
+              <div className="phoneControl">
+                <div className="selectControl countryControl">
                   <select
-                    style={{ ...styles.select, width: 80, paddingRight: 28 }}
+                    className="appControl"
                     value={newMemberCountryCode}
                     onChange={(e) => setNewMemberCountryCode(e.target.value)}
                   >
@@ -1190,278 +1228,34 @@ export default function App() {
                       </option>
                     ))}
                   </select>
-                  <div style={styles.selectArrow}>▼</div>
+                  <UiIcon name="chevronRight" />
                 </div>
                 <input
-                  style={{ ...styles.input, flex: 1 }}
+                  id="member-phone"
+                  className="appControl"
+                  inputMode="tel"
                   value={newMemberPhone}
                   onChange={(e) => setNewMemberPhone(e.target.value)}
                   placeholder="Phone number"
                 />
               </div>
-              <div style={styles.small}>Select country code, then enter number.</div>
+              <div className="fieldHint">Used only for group contact and ride coordination.</div>
+            </div>
             </div>
 
-            <div style={{ display: "flex", gap: 10, marginTop: 12 }}>
-              <button type="button" style={styles.btn} onClick={() => setMemberOpen(false)}>
+            <div className="modalFooter">
+              <span className="modalFooterSpacer" />
+              <button type="button" className="appButton" onClick={() => setMemberOpen(false)}>
                 Cancel
               </button>
-              <button type="button" style={{ ...styles.btn, ...styles.btnPrimary }} onClick={onCreateMember}>
-                Create
+              <button type="button" className="appButton appButtonPrimary" onClick={onCreateMember}>
+                <UiIcon name="userPlus" />
+                Add member
               </button>
             </div>
           </div>
         </div>
       )}
-    </div>
+    </main>
   );
 }
-
-const styles = {
-  page: {
-    maxWidth: 1000,
-    margin: "0 auto",
-    padding: 16,
-    paddingTop: "max(16px, env(safe-area-inset-top, 47px))",
-    fontFamily:
-      'ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, "Noto Sans"',
-  },
-  joinWrap: {
-    minHeight: "100vh",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    flexDirection: "column",
-    padding: 16,
-    background: "radial-gradient(circle at top left, rgba(92,103,120,0.14), transparent 28%), linear-gradient(135deg, #02050a 0%, #070b12 100%)",
-  },
-  joinCard: {
-    width: "min(430px, 92vw)",
-    border: "1px solid rgba(255, 255, 255, 0.16)",
-    background: "linear-gradient(135deg, rgba(255,255,255,0.15), rgba(255,255,255,0.07))",
-    backdropFilter: "blur(24px) saturate(150%)",
-    WebkitBackdropFilter: "blur(24px) saturate(150%)",
-    borderRadius: 22,
-    padding: 22,
-    display: "flex",
-    flexDirection: "column",
-    gap: 12,
-    boxShadow: "0 22px 48px rgba(0, 0, 0, 0.28), inset 0 1px 0 rgba(255,255,255,0.18)",
-  },
-  authBrand: { display: "flex", alignItems: "center", justifyContent: "center", gap: 10, marginBottom: 8, marginLeft: 4 },
-  authIcon: { width: 48, height: 48, borderRadius: 14, fontSize: 24, background: "transparent" },
-  authBrandTitle: { fontWeight: 800, fontSize: 22, color: "#f8fafc", letterSpacing: "0.2px", marginLeft: -6, fontFamily: "'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif" },
-  authHeaderWrap: { marginBottom: 8, textAlign: "center" },
-  joinTitle: { fontWeight: 700, fontSize: 18, color: "#f8fafc", fontFamily:"tahoma, sans-serif", marginBottom:4 },
-  joinSubtitle: { fontSize: 13, color: "#9aa4b2", marginBottom: 10, fontFamily:"tahoma, sans-serif" },
-  joinHint: { fontSize: 12, color: "#9aa4b2", fontWeight: 700, marginTop: 6 },
-  authLabel: { display: "block", fontSize: 12, fontWeight: 700, color: "#e2e8f0", marginBottom: 6, marginLeft: 6, letterSpacing: "0.04em", textTransform: "uppercase", textAlign: "left", alignSelf: "flex-start" },
-  inputGroup: { marginBottom: 4, display: "flex", flexDirection: "column", width: "100%" },
-  topbar: {
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
-    gap: 10,
-    marginBottom: 14,
-  },
-  monthTitle: { fontSize: 16, fontWeight: 950, color: "#f8fafc" },
-  btn: {
-    border: "1px solid rgba(255, 255, 255, 0.14)",
-    background: "linear-gradient(135deg, rgba(255,255,255,0.12), rgba(255,255,255,0.06))",
-    backdropFilter: "blur(18px) saturate(140%)",
-    WebkitBackdropFilter: "blur(18px) saturate(140%)",
-    color: "#f8fafc",
-    padding: "10px 12px",
-    borderRadius: 12,
-    fontWeight: 850,
-    cursor: "pointer",
-    fontSize: 16,
-    boxShadow: "0 10px 20px rgba(0, 0, 0, 0.16), inset 0 1px 0 rgba(255,255,255,0.12)",
-  },
-  btnOn: { borderColor: "rgba(255,255,255,0.22)", background: "rgba(255,255,255,0.16)", boxShadow: "0 8px 18px rgba(0, 0, 0, 0.16), inset 0 1px 0 rgba(255,255,255,0.16)" },
-  btnPrimary: { background: "linear-gradient(135deg, rgba(34, 197, 94, 0.95), rgba(22, 163, 74, 0.95))", color: "white", borderColor: "rgba(255,255,255,0.18)", boxShadow: "0 12px 24px rgba(34, 197, 94, 0.28), inset 0 1px 0 rgba(255,255,255,0.18)" },
-  error: {
-    background: "rgba(127, 29, 29, 0.24)",
-    border: "1px solid rgba(248, 113, 113, 0.35)",
-    color: "#fecaca",
-    padding: 10,
-    borderRadius: 12,
-    marginBottom: 12,
-    fontWeight: 800,
-  },
-  calendarContainer: {
-    overflow: "hidden",
-  },
-  calendar: { display: "flex", flexDirection: "column", gap: 8 },
-  weekHeader: { display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 2 },
-  weekHeaderCell: {
-    textAlign: "center",
-    fontWeight: 900,
-    color: "#cbd5e1",
-    fontSize: 12,
-  },
-  weekRow: { display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 2 },
-  dayCell: {
-    border: "1px solid rgba(255, 255, 255, 0.12)",
-    borderRadius: 14,
-    background: "linear-gradient(135deg, rgba(255,255,255,0.1), rgba(255,255,255,0.04))",
-    backdropFilter: "blur(16px) saturate(140%)",
-    WebkitBackdropFilter: "blur(16px) saturate(140%)",
-    padding: 8,
-    minHeight: 92,
-    maxHeight: 92,
-    height: 92,
-    cursor: "pointer",
-    position: "relative",
-    display: "flex",
-    flexDirection: "column",
-    overflow: "hidden",
-    boxShadow: "0 10px 22px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255,255,255,0.1)",
-  },
-  dayCellHasEntry: { borderColor: "rgba(255,255,255,0.2)", background: "linear-gradient(135deg, rgba(255,255,255,0.14), rgba(255,255,255,0.06))", boxShadow: "0 12px 26px rgba(0, 0, 0, 0.24), inset 0 1px 0 rgba(255,255,255,0.12)" },
-  dayCellHoliday: { borderColor: "rgba(245, 158, 11, 0.35)", background: "linear-gradient(135deg, rgba(245, 158, 11, 0.18), rgba(249, 115, 22, 0.1))", boxShadow: "0 10px 24px rgba(245, 158, 11, 0.12), inset 0 1px 0 rgba(255,255,255,0.1)" },
-  dayCellToday: { borderColor: "rgba(255,255,255,0.24)", boxShadow: "0 0 0 1px rgba(255,255,255,0.16), 0 10px 24px rgba(0, 0, 0, 0.16) inset" },
-  dayTop: { display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 4 },
-  dayNum: { fontWeight: 950, color: "#f8fafc", fontSize: 13 },
-  holidayTag: {
-    position: "absolute",
-    left: 10,
-    bottom: 10,
-    fontSize: 11,
-    fontWeight: 900,
-    color: "#9a3412",
-    background: "#ffedd5",
-    border: "1px solid #fed7aa",
-    padding: "3px 8px",
-    borderRadius: 999,
-    maxWidth: "calc(100% - 20px)",
-    overflow: "hidden",
-    textOverflow: "ellipsis",
-    whiteSpace: "nowrap",
-  },
-  bottomGrid: { marginTop: 16, display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 },
-  card: { border: "1px solid #e4e7ec", borderRadius: 16, padding: 12 },
-  cardBalances: { 
-    border: "1px solid rgba(255, 255, 255, 0.14)", 
-    borderRadius: 16, 
-    padding: 12,
-    background: "linear-gradient(135deg, rgba(255,255,255,0.12), rgba(255,255,255,0.06))",
-    backdropFilter: "blur(20px) saturate(140%)",
-    WebkitBackdropFilter: "blur(20px) saturate(140%)",
-    boxShadow: "0 16px 34px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255,255,255,0.12)",
-  },
-  cardSettleUp: { 
-    border: "1px solid rgba(255, 255, 255, 0.14)", 
-    borderRadius: 16, 
-    padding: 12,
-    background: "linear-gradient(135deg, rgba(255,255,255,0.12), rgba(255,255,255,0.06))",
-    backdropFilter: "blur(20px) saturate(140%)",
-    WebkitBackdropFilter: "blur(20px) saturate(140%)",
-    boxShadow: "0 16px 34px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255,255,255,0.12)",
-  },
-  cardTitle: { fontWeight: 950, color: "#f8fafc", marginBottom: 6, textAlign: "center" },
-  small: { fontSize: 12, color: "#cbd5e1", fontWeight: 700 },
-  rowLine: {
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
-    padding: "6px 0",
-    borderBottom: "1px solid rgba(226, 232, 240, 0.22)",
-  },
-  modalBackdrop: {
-    position: "fixed",
-    inset: 0,
-    background: "rgba(16,24,40,0.45)",
-    backdropFilter: "blur(6px)",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    padding: 16,
-    zIndex: 1000,
-  },
-  modal: {
-    width: "min(520px, 92vw)",
-    maxWidth: "92vw",
-    maxHeight: "90vh",
-    overflow: "auto",
-    borderRadius: 18,
-    background: "linear-gradient(135deg, rgba(255,255,255,0.14), rgba(255,255,255,0.06))",
-    backdropFilter: "blur(26px) saturate(140%)",
-    WebkitBackdropFilter: "blur(26px) saturate(140%)",
-    border: "1px solid rgba(255, 255, 255, 0.14)",
-    padding: 14,
-    boxShadow: "0 24px 60px rgba(0, 0, 0, 0.28), inset 0 1px 0 rgba(255,255,255,0.16)",
-  },
-  modalTitle: { fontWeight: 950, fontSize: 16, color: "#f8fafc", marginBottom: 10 },
-  formRow: { marginTop: 10 },
-  label: { fontWeight: 900, color: "#e2e8f0", fontSize: 12, marginBottom: 6 },
-  input: {
-    width: "100%",
-    border: "1px solid rgba(255, 255, 255, 0.16)",
-    borderRadius: 12,
-    padding: "10px 12px",
-    fontWeight: 800,
-    color: "#f8fafc",
-    outline: "none",
-    fontSize: 15,
-    background: "linear-gradient(135deg, rgba(255,255,255,0.14), rgba(255,255,255,0.06))",
-    backdropFilter: "blur(16px) saturate(140%)",
-    WebkitBackdropFilter: "blur(16px) saturate(140%)",
-    transition: "border-color 0.2s, box-shadow 0.2s, transform 0.2s ease",
-    boxShadow: "inset 0 1px 0 rgba(255,255,255,0.14)",
-  },
-  select: {
-    width: "100%",
-    appearance: "none",
-    WebkitAppearance: "none",
-    border: "1px solid rgba(47, 191, 113, 0.75)",
-    borderRadius: 12,
-    padding: "10px 40px 10px 12px",
-    fontWeight: 800,
-    color: "#f8fafc",
-    outline: "none",
-    background: "linear-gradient(135deg, rgba(47, 191, 113, 0.95), rgba(34, 197, 94, 0.9))",
-    boxShadow: "0 12px 24px rgba(34, 197, 94, 0.28), inset 0 1px 0 rgba(255,255,255,0.18)",
-  },
-  selectWrapper: {
-    position: "relative",
-    width: "100%",
-  },
-  selectArrow: {
-    pointerEvents: "none",
-    position: "absolute",
-    right: 12,
-    top: "50%",
-    transform: "translateY(-50%)",
-    fontSize: 12,
-    fontWeight: 900,
-    color: "rgba(248, 250, 252, 0.9)",
-    textShadow: "0 1px 0 rgba(0,0,0,0.25)",
-  },
-  ridersBox: { border: "1px solid #e4e7ec", borderRadius: 12, padding: 8 },
-  riderRow: {
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
-    gap: 8,
-    padding: "6px 4px",
-    borderBottom: "1px solid rgba(148, 163, 184, 0.12)",
-    minWidth: 0,
-  },
-  pill: { 
-    border: "1px solid rgba(255, 255, 255, 0.12)",
-    background: "linear-gradient(135deg, rgba(255,255,255,0.1), rgba(255,255,255,0.05))",
-    color: "#f8fafc",
-    padding: "6px 10px",
-    borderRadius: 999,
-    fontWeight: 850,
-    cursor: "pointer",
-    fontSize: 14,
-    minWidth: "70px",
-    textAlign: "center",
-    boxShadow: "0 8px 16px rgba(0, 0, 0, 0.14), inset 0 1px 0 rgba(255,255,255,0.12)",
-    transition: "all 0.2s ease",
-  },
-  pillOn: { borderColor: "rgba(255,255,255,0.34)", background: "linear-gradient(135deg, rgba(47, 191, 113, 0.95), rgba(34, 197, 94, 0.9))", color: "#fff", boxShadow: "0 10px 20px rgba(34, 197, 94, 0.28), inset 0 1px 0 rgba(255,255,255,0.24)", transform: "translateY(-1px)" },
-  previewBox: { border: "1px solid rgba(148, 163, 184, 0.16)", borderRadius: 12, padding: 10, background: "rgba(9, 10, 14, 0.88)" },
-};

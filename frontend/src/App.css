@@ -425,7 +425,7 @@ button:hover {
   z-index: 2;
   width: 18px;
   height: 18px;
-  transform: translateY(-50%);
+  transform: translateY(-50%) scaleX(-1);
   fill: none;
   stroke: #6f8378;
   stroke-width: 1.65;
@@ -1156,13 +1156,38 @@ button:hover {
   animation: pulseGlow 2.8s ease-in-out infinite;
 }
 
+.splashCard .brandLockup {
+  align-self: center;
+  justify-content: center;
+}
+
 .splashSub {
+  position: relative;
+  width: 100%;
+  height: 16px;
   margin-top: 10px;
+  overflow: hidden;
   font-size: 12px;
   font-weight: 700;
   color: #d1fae5;
   letter-spacing: 0.16em;
   text-transform: uppercase;
+}
+
+.splashMessage {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  white-space: nowrap;
+}
+
+.splashMessagePrimary {
+  animation: splashMessageOut 2.4s cubic-bezier(.4,0,.2,1) both;
+}
+
+.splashMessageSecondary {
+  animation: splashMessageIn 2.4s cubic-bezier(.4,0,.2,1) both;
 }
 
 .splashProgress {
@@ -1195,10 +1220,11 @@ button:hover {
   width: 100%;
   max-width: 320px;
   height: 46px;
-  background: linear-gradient(180deg, #3c434a, #3c434a);
+  background: linear-gradient(180deg, rgba(3, 12, 8, 0.94), rgba(9, 23, 17, 0.98));
   border-radius: 12px;
   overflow: hidden;
-  border: 1px solid #eef0f6;
+  border: 1px solid rgba(89, 231, 162, 0.2);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.04), 0 10px 24px rgba(0,0,0,0.18);
 }
 
 .road::after {
@@ -1210,8 +1236,8 @@ button:hover {
   height: 2px;
   background: repeating-linear-gradient(
     90deg,
-    #cbd5e1 0px,
-    #cbd5e1 16px,
+    rgba(190, 235, 211, 0.62) 0px,
+    rgba(190, 235, 211, 0.62) 16px,
     transparent 16px,
     transparent 28px
   );
@@ -1222,22 +1248,62 @@ button:hover {
 .car {
   position: absolute;
   top: 50%;
-  right: -40px;
+  left: -52px;
+  z-index: 2;
+  width: 48px;
+  height: 32px;
+  color: #d9ffea;
+  filter: drop-shadow(0 7px 7px rgba(0,0,0,.42)) drop-shadow(0 0 8px rgba(64, 214, 141, .22));
   transform: translateY(-50%);
-  font-size: 26px;
-  animation: carDrive 2s ease-in-out forwards;
+  will-change: left, opacity, transform;
+  animation: carDrive 2.35s cubic-bezier(.25,.46,.45,.94) forwards;
+}
+
+.car .uiIcon {
+  width: 48px;
+  height: 32px;
+  overflow: visible;
+  stroke-width: 1.15;
+}
+
+.car .sideCarBody {
+  fill: #4fd18f;
+  stroke: #caffdf;
+}
+
+.car .sideCarWindow {
+  fill: #0a2a1b;
+  stroke: rgba(218, 255, 234, .72);
+  stroke-width: .7;
+}
+
+.car .sideCarDetail {
+  fill: none;
+  stroke: #e2ffed;
+  stroke-width: .75;
+}
+
+.car .sideCarWheel {
+  fill: #030a07;
+  stroke: #8ce9b7;
+  stroke-width: .7;
+}
+
+.car .sideCarHub {
+  fill: #b9f7d4;
+  stroke: none;
 }
 
 @keyframes carDrive {
-  0% { right: -40px; opacity: 0; }
-  15% { opacity: 1; }
-  85% { right: calc(100% - 30px); }
-  100% { right: calc(100% + 10px); opacity: 1; }
+  0% { left: -52px; opacity: 0; transform: translateY(-50%) scaleX(-1); }
+  8% { opacity: 1; }
+  92% { opacity: 1; }
+  100% { left: calc(100% + 8px); opacity: 0; transform: translateY(-50%) scaleX(-1); }
 }
 
 @keyframes roadMove {
   from { transform: translateY(-50%) translateX(0); }
-  to { transform: translateY(-50%) translateX(80px); }
+  to { transform: translateY(-50%) translateX(-80px); }
 }
 
 @keyframes pulseGlow {
@@ -1260,6 +1326,16 @@ button:hover {
   }
 }
 
+@keyframes splashMessageOut {
+  0%, 40% { opacity: 1; transform: translateY(0); }
+  56%, 100% { opacity: 0; transform: translateY(-5px); }
+}
+
+@keyframes splashMessageIn {
+  0%, 40% { opacity: 0; transform: translateY(5px); }
+  56%, 100% { opacity: 1; transform: translateY(0); }
+}
+
 /* Month navigation transition animations */
 @keyframes fadeInLeft {
   from {
@@ -1280,5 +1356,1655 @@ button:hover {
   to {
     opacity: 1;
     transform: translateX(0);
+  }
+}
+
+/* =========================
+   Authenticated workspace
+   ========================= */
+.appShell {
+  --app-bg: #07100d;
+  --app-surface: rgba(13, 29, 22, 0.82);
+  --app-surface-strong: rgba(15, 35, 26, 0.94);
+  --app-surface-soft: rgba(255, 255, 255, 0.035);
+  --app-line: rgba(153, 214, 181, 0.13);
+  --app-line-strong: rgba(100, 229, 158, 0.25);
+  --app-green: #5be39b;
+  --app-green-strong: #37d986;
+  --app-green-deep: #1fb76d;
+  --app-text: #f4f8f5;
+  --app-muted: #9caaa2;
+  --app-danger: #ff8c8c;
+  position: relative;
+  isolation: isolate;
+  min-height: 100svh;
+  overflow: hidden;
+  color: var(--app-text);
+  background:
+    radial-gradient(circle at 13% 4%, rgba(44, 184, 111, 0.15), transparent 30%),
+    radial-gradient(circle at 88% 76%, rgba(28, 138, 84, 0.09), transparent 32%),
+    linear-gradient(145deg, #0a1712 0%, var(--app-bg) 52%, #050b08 100%);
+  font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+.appShell::before {
+  position: absolute;
+  inset: 0;
+  z-index: -4;
+  content: "";
+  background: linear-gradient(110deg, rgba(255,255,255,0.015), transparent 48%, rgba(0,0,0,0.14));
+  pointer-events: none;
+}
+
+.appGrid {
+  position: absolute;
+  inset: 0;
+  z-index: -3;
+  opacity: 0.035;
+  background-image:
+    linear-gradient(rgba(220, 255, 236, 0.5) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(220, 255, 236, 0.5) 1px, transparent 1px);
+  background-size: 72px 72px;
+  mask-image: linear-gradient(135deg, #000 0%, transparent 76%);
+  pointer-events: none;
+}
+
+.appAmbient {
+  position: absolute;
+  z-index: -2;
+  border-radius: 999px;
+  pointer-events: none;
+}
+
+.appAmbientOne {
+  top: -300px;
+  left: -260px;
+  width: 720px;
+  height: 720px;
+  background: radial-gradient(circle, rgba(67, 223, 145, 0.08), transparent 68%);
+}
+
+.appAmbientTwo {
+  right: -320px;
+  bottom: -420px;
+  width: 820px;
+  height: 820px;
+  background: radial-gradient(circle, rgba(47, 191, 113, 0.07), transparent 67%);
+}
+
+.appContent {
+  width: min(1280px, 100%);
+  margin: 0 auto;
+  padding: clamp(22px, 3vw, 42px) clamp(18px, 4vw, 52px) 56px;
+}
+
+.appHeader {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  margin: 0 0 clamp(34px, 5vw, 64px);
+  padding: 0;
+  font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  animation: appRise 0.55s ease-out both;
+}
+
+.appHeader .brandWords strong {
+  font-weight: 720;
+  letter-spacing: -0.04em;
+}
+
+.appHeader .brandLockup {
+  grid-column: 2;
+  align-self: auto;
+  justify-self: center;
+}
+
+.appHeader .workspaceStatus {
+  grid-column: 3;
+  justify-self: end;
+}
+
+.workspaceStatus {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  max-width: 280px;
+  padding: 8px 12px;
+  overflow: hidden;
+  border: 1px solid var(--app-line);
+  border-radius: 999px;
+  color: #b8c6be;
+  background: rgba(255,255,255,0.025);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.statusDot {
+  flex: 0 0 auto;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--app-green);
+  box-shadow: 0 0 0 4px rgba(91, 227, 155, 0.09), 0 0 16px rgba(91, 227, 155, 0.45);
+}
+
+.dashboardIntro {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 36px;
+  margin-bottom: 28px;
+  animation: appRise 0.58s 0.05s ease-out both;
+}
+
+.sectionKicker {
+  color: #70dda6;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+}
+
+.dashboardIntro h1 {
+  margin: 0 0 8px;
+  color: var(--app-text);
+  font-size: 19px;
+  font-weight: 720;
+  letter-spacing: -0.04em;
+  line-height: 1;
+}
+
+.dashboardTitleRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.workspaceStatusMobile {
+  display: none;
+}
+
+.dashboardIntro p {
+  margin: 0;
+  color: var(--app-muted);
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.dashboardStats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(105px, 1fr));
+  gap: 1px;
+  overflow: hidden;
+  border: 1px solid var(--app-line);
+  border-radius: 16px;
+  background: var(--app-line);
+  box-shadow: 0 20px 50px rgba(0,0,0,0.14);
+}
+
+.dashboardStats > div {
+  min-width: 118px;
+  padding: 15px 18px;
+  background: rgba(10, 24, 18, 0.94);
+}
+
+.dashboardStats strong,
+.dashboardStats span {
+  display: block;
+}
+
+.dashboardStats strong {
+  color: #eafff2;
+  font-size: 21px;
+  font-weight: 720;
+  line-height: 1.1;
+}
+
+.dashboardStats span {
+  margin-top: 5px;
+  color: var(--app-muted);
+  font-size: 9px;
+  font-weight: 750;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.appToolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  margin-bottom: 14px;
+  padding: 12px;
+  border: 1px solid var(--app-line);
+  border-radius: 18px;
+  background: linear-gradient(145deg, rgba(17, 38, 28, 0.82), rgba(9, 22, 16, 0.76));
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.035), 0 18px 48px rgba(0,0,0,0.12);
+  backdrop-filter: blur(20px);
+  animation: appRise 0.6s 0.1s ease-out both;
+}
+
+.monthNavigator {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.monthTitle {
+  min-width: 126px;
+  text-align: center;
+}
+
+.monthTitle span,
+.monthTitle strong {
+  display: block;
+}
+
+.monthTitle span {
+  margin-bottom: 2px;
+  color: var(--app-muted);
+  font-size: 8px;
+  font-weight: 800;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+}
+
+.monthTitle strong {
+  color: #f3fbf6;
+  font-size: 16px;
+  font-weight: 720;
+  letter-spacing: -0.02em;
+}
+
+.toolbarActions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.uiIcon {
+  display: block;
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.iconButton,
+.appButton,
+.tripPill {
+  appearance: none;
+  border: 0;
+  font: inherit;
+}
+
+.iconButton {
+  display: inline-grid;
+  width: 40px;
+  height: 40px;
+  flex: 0 0 auto;
+  place-items: center;
+  border: 1px solid var(--app-line);
+  border-radius: 12px;
+  color: #c7d5cd;
+  background: rgba(255,255,255,0.035);
+  cursor: pointer;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.035);
+  transition: color 0.2s ease, border-color 0.2s ease, background 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.iconButton:hover {
+  color: #effff6;
+  border-color: var(--app-line-strong);
+  background: rgba(91, 227, 155, 0.07);
+  box-shadow: 0 10px 24px rgba(0,0,0,0.16);
+}
+
+.appButton {
+  display: inline-flex;
+  min-height: 40px;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 0 15px;
+  border: 1px solid var(--app-line);
+  border-radius: 12px;
+  color: #d7e2dc;
+  background: rgba(255,255,255,0.035);
+  font-size: 12px;
+  font-weight: 720;
+  cursor: pointer;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.035);
+  transition: color 0.2s ease, border-color 0.2s ease, background 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.appButton:hover:not(:disabled) {
+  color: #fff;
+  border-color: var(--app-line-strong);
+  background: rgba(255,255,255,0.065);
+  box-shadow: 0 12px 26px rgba(0,0,0,0.16);
+}
+
+.appButton:active:not(:disabled),
+.iconButton:active {
+  transform: translateY(0) scale(0.98);
+}
+
+.appButton:disabled {
+  opacity: 0.55;
+  cursor: progress;
+}
+
+.appButtonPrimary {
+  color: #06150d;
+  border-color: rgba(121, 244, 176, 0.55);
+  background: linear-gradient(135deg, #72eaaa, #4bd890);
+  box-shadow: 0 12px 28px rgba(43, 190, 111, 0.17), inset 0 1px 0 rgba(255,255,255,0.42);
+}
+
+.appButtonPrimary:hover:not(:disabled) {
+  color: #031109;
+  border-color: #8af2b9;
+  background: linear-gradient(135deg, #83efb5, #55df98);
+  box-shadow: 0 16px 34px rgba(43, 190, 111, 0.24), inset 0 1px 0 rgba(255,255,255,0.5);
+}
+
+.appButtonQuiet {
+  color: #9eaaa3;
+}
+
+.appButtonDanger {
+  color: #ffb3b3;
+  border-color: rgba(255, 125, 125, 0.18);
+  background: rgba(118, 31, 31, 0.12);
+}
+
+.appButtonDanger:hover:not(:disabled) {
+  color: #ffd2d2;
+  border-color: rgba(255, 125, 125, 0.32);
+  background: rgba(142, 39, 39, 0.2);
+}
+
+.appButtonSmall {
+  min-height: 34px;
+  padding: 0 12px;
+  font-size: 11px;
+}
+
+.isSpinning {
+  animation: appSpin 0.8s linear infinite;
+}
+
+.appError {
+  margin: 0 0 14px;
+  padding: 12px 14px;
+  border: 1px solid rgba(255, 120, 120, 0.24);
+  border-radius: 13px;
+  color: #ffc2c2;
+  background: rgba(110, 28, 28, 0.18);
+  font-size: 12px;
+  font-weight: 650;
+  animation: appRise 0.3s ease-out both;
+}
+
+.calendarPanel,
+.summaryCard {
+  border: 1px solid var(--app-line);
+  background: linear-gradient(145deg, rgba(15, 34, 25, 0.88), rgba(8, 20, 15, 0.92));
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.035), 0 28px 70px rgba(0,0,0,0.16);
+  backdrop-filter: blur(22px);
+}
+
+.calendarPanel {
+  padding: 18px;
+  border-radius: 22px;
+  animation: appRise 0.62s 0.15s ease-out both;
+}
+
+.calendarPanelHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  margin-bottom: 18px;
+  padding: 0 2px;
+}
+
+.calendarPanelHeader > div {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+
+.calendarPanelHeader .uiIcon {
+  width: 17px;
+  color: var(--app-green);
+}
+
+.calendarPanelHeader strong {
+  font-size: 13px;
+  font-weight: 720;
+}
+
+.calendarPanelHeader > span {
+  color: var(--app-muted);
+  font-size: 10px;
+  font-weight: 600;
+}
+
+.calendarContainer {
+  overflow: hidden;
+}
+
+.weekHeader,
+.weekRow {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.weekHeader {
+  margin-bottom: 8px;
+}
+
+.weekRow + .weekRow {
+  margin-top: 8px;
+}
+
+.weekHeaderCell {
+  padding: 6px 8px;
+  color: #71827a;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.13em;
+  text-align: left;
+  text-transform: uppercase;
+}
+
+.calendarCell {
+  position: relative;
+  display: flex;
+  min-width: 0;
+  height: 112px;
+  min-height: 112px;
+  max-height: none;
+  flex-direction: column;
+  padding: 12px;
+  overflow: hidden;
+  border: 1px solid rgba(141, 194, 165, 0.1);
+  border-radius: 15px;
+  color: var(--app-text);
+  background: linear-gradient(145deg, rgba(255,255,255,0.035), rgba(255,255,255,0.012));
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.025);
+  cursor: pointer;
+  transition: transform 0.24s ease, border-color 0.24s ease, background 0.24s ease, box-shadow 0.24s ease;
+}
+
+.calendarCell::after {
+  position: absolute;
+  inset: 0;
+  content: "";
+  opacity: 0;
+  background: linear-gradient(125deg, transparent 25%, rgba(255,255,255,0.045), transparent 72%);
+  transform: translateX(-55%);
+  transition: opacity 0.25s ease, transform 0.45s ease;
+  pointer-events: none;
+}
+
+.calendarCell:hover {
+  z-index: 2;
+  transform: translateY(-3px);
+  border-color: rgba(91, 227, 155, 0.24);
+  background: linear-gradient(145deg, rgba(66, 175, 117, 0.09), rgba(255,255,255,0.018));
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.055), 0 16px 32px rgba(0,0,0,0.2);
+}
+
+.calendarCell:hover::after {
+  opacity: 1;
+  transform: translateX(55%);
+}
+
+.calendarCellEmpty {
+  border-style: dashed;
+  opacity: 0.3;
+  cursor: default;
+}
+
+.calendarCellEmpty:hover {
+  transform: none;
+  border-color: rgba(141, 194, 165, 0.1);
+  box-shadow: none;
+}
+
+.calendarCellHasEntry {
+  border-color: rgba(91, 227, 155, 0.19);
+  background:
+    radial-gradient(circle at 90% 10%, rgba(91, 227, 155, 0.08), transparent 42%),
+    linear-gradient(145deg, rgba(42, 130, 83, 0.13), rgba(255,255,255,0.018));
+}
+
+.calendarCellHoliday {
+  border-color: rgba(233, 184, 88, 0.23);
+  background:
+    radial-gradient(circle at 90% 10%, rgba(223, 174, 74, 0.08), transparent 44%),
+    linear-gradient(145deg, rgba(111, 78, 22, 0.12), rgba(255,255,255,0.014));
+}
+
+.calendarCellToday {
+  border-color: rgba(91, 227, 155, 0.44);
+  box-shadow: inset 0 0 0 1px rgba(91, 227, 155, 0.08), 0 0 0 3px rgba(91, 227, 155, 0.035);
+}
+
+.dayTop {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  margin: 0 0 9px;
+}
+
+.dayNum {
+  color: #eff9f3;
+  font-size: 14px;
+  font-weight: 740;
+  line-height: 1;
+}
+
+.todayTag {
+  padding: 3px 6px;
+  border-radius: 999px;
+  color: #88edb7;
+  background: rgba(91, 227, 155, 0.09);
+  font-size: 7px;
+  font-weight: 850;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.cellDetails {
+  margin-top: 0;
+  font-size: 10px;
+}
+
+.pcDriver,
+.pcRiders,
+.mobileDriver,
+.mobileRiders {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 6px;
+  color: #c9d8cf;
+  font-weight: 650;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pcRiders {
+  margin-top: 7px;
+  color: #819188;
+}
+
+.cellDetails .uiIcon,
+.mobileSummary .uiIcon {
+  width: 13px;
+  height: 13px;
+  flex: 0 0 auto;
+  color: #67d99f;
+}
+
+.mobileSummary {
+  display: none;
+}
+
+.holidayTag {
+  position: absolute;
+  right: 9px;
+  bottom: 8px;
+  left: 9px;
+  overflow: hidden;
+  color: #d9b879;
+  font-size: 7px;
+  font-weight: 750;
+  letter-spacing: 0.04em;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.bottomGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  margin-top: 16px;
+}
+
+.summaryCard {
+  min-width: 0;
+  padding: 20px;
+  border-radius: 20px;
+  animation: appRise 0.62s 0.2s ease-out both;
+}
+
+.settleCard {
+  animation-delay: 0.24s;
+}
+
+.summaryCardHeader {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.summaryIcon {
+  display: grid;
+  width: 38px;
+  height: 38px;
+  flex: 0 0 auto;
+  place-items: center;
+  border: 1px solid rgba(91, 227, 155, 0.15);
+  border-radius: 12px;
+  color: var(--app-green);
+  background: rgba(91, 227, 155, 0.055);
+}
+
+.summaryIcon .uiIcon {
+  width: 18px;
+}
+
+.summaryCardHeader h2,
+.summaryCardHeader p {
+  margin: 0;
+}
+
+.summaryCardHeader h2 {
+  color: #f1f8f4;
+  font-size: 14px;
+  font-weight: 720;
+  letter-spacing: -0.01em;
+}
+
+.summaryCardHeader p {
+  margin-top: 3px;
+  color: var(--app-muted);
+  font-size: 10px;
+}
+
+.summaryRows {
+  overflow: hidden;
+  border: 1px solid rgba(148, 199, 171, 0.08);
+  border-radius: 14px;
+  background: rgba(2, 12, 8, 0.24);
+}
+
+.summaryRow {
+  display: flex;
+  min-height: 54px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 10px 13px;
+  border-bottom: 1px solid rgba(148, 199, 171, 0.07);
+}
+
+.summaryRow:last-child {
+  border-bottom: 0;
+}
+
+.summaryRow.isInactive {
+  opacity: 0.55;
+}
+
+.memberIdentity {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 10px;
+}
+
+.memberIdentity > span,
+.riderName > span {
+  display: grid;
+  width: 28px;
+  height: 28px;
+  flex: 0 0 auto;
+  place-items: center;
+  border: 1px solid rgba(91, 227, 155, 0.14);
+  border-radius: 9px;
+  color: #8eeab8;
+  background: rgba(91, 227, 155, 0.055);
+  font-size: 10px;
+  font-weight: 800;
+}
+
+.memberIdentity strong,
+.memberIdentity small {
+  display: block;
+}
+
+.memberIdentity strong {
+  overflow: hidden;
+  color: #dce8e1;
+  font-size: 11px;
+  font-weight: 680;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.memberIdentity small {
+  margin-top: 2px;
+  color: var(--app-muted);
+  font-size: 8px;
+}
+
+.balanceAmount,
+.transferAmount {
+  flex: 0 0 auto;
+  font-size: 12px;
+  font-weight: 760;
+  font-variant-numeric: tabular-nums;
+}
+
+.balanceAmount.isPositive {
+  color: #65e5a0;
+}
+
+.balanceAmount.isNegative {
+  color: #ff9a9a;
+}
+
+.transferRow > div:first-child {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 8px;
+  color: #dce8e1;
+  font-size: 10px;
+}
+
+.transferRow > div:first-child strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.transferRow > div:first-child span {
+  display: grid;
+  width: 22px;
+  height: 22px;
+  flex: 0 0 auto;
+  place-items: center;
+  border-radius: 50%;
+  color: #6ae0a1;
+  background: rgba(91, 227, 155, 0.06);
+}
+
+.transferRow .uiIcon {
+  width: 12px;
+  height: 12px;
+}
+
+.transferAmount {
+  color: #ebfff4;
+}
+
+.emptyState {
+  display: flex;
+  min-height: 128px;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  text-align: center;
+}
+
+.emptyState > span {
+  display: grid;
+  width: 30px;
+  height: 30px;
+  margin-bottom: 9px;
+  place-items: center;
+  border-radius: 50%;
+  color: #65e5a0;
+  background: rgba(91, 227, 155, 0.08);
+  font-size: 12px;
+}
+
+.emptyState strong {
+  color: #dbe8e0;
+  font-size: 11px;
+}
+
+.emptyState p {
+  margin: 4px 0 0;
+  color: var(--app-muted);
+  font-size: 9px;
+}
+
+/* Workspace forms and dialogs */
+.appShell .modalBackdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: rgba(2, 8, 5, 0.72);
+  backdrop-filter: blur(14px) saturate(110%);
+  animation: modalFade 0.22s ease-out both;
+}
+
+.appShell .modal {
+  display: flex;
+  width: min(700px, calc(100vw - 48px));
+  max-width: none;
+  max-height: min(88svh, 900px);
+  flex-direction: column;
+  padding: 0;
+  overflow: hidden;
+  border: 1px solid rgba(130, 219, 170, 0.18);
+  border-radius: 24px;
+  color: var(--app-text);
+  background:
+    radial-gradient(circle at 90% -10%, rgba(64, 199, 126, 0.08), transparent 32%),
+    linear-gradient(150deg, #10241a 0%, #0a1812 62%, #08130e 100%);
+  box-shadow: 0 36px 100px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.045);
+  animation: modalEnter 0.32s cubic-bezier(.22,.85,.32,1) both;
+}
+
+.appShell .memberModal {
+  width: min(520px, calc(100vw - 48px));
+}
+
+.modalHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 22px 24px 18px;
+  border-bottom: 1px solid rgba(148, 205, 173, 0.09);
+}
+
+.modalHeader h2 {
+  margin: 6px 0 0;
+  color: #f3faf6;
+  font-size: 21px;
+  font-weight: 680;
+  letter-spacing: -0.025em;
+}
+
+.modalClose {
+  width: 38px;
+  height: 38px;
+}
+
+.modalBody {
+  padding: 20px 24px 22px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-color: rgba(91, 227, 155, 0.2) transparent;
+  scrollbar-width: thin;
+}
+
+.modalIntro {
+  margin: 0 0 20px;
+  color: var(--app-muted);
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.formSection {
+  padding: 17px;
+  border: 1px solid rgba(145, 202, 170, 0.09);
+  border-radius: 16px;
+  background: rgba(0, 8, 4, 0.17);
+}
+
+.formSection + .formSection {
+  margin-top: 12px;
+}
+
+.formSectionCompact {
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+
+.formSectionHeader {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 14px;
+  margin-bottom: 15px;
+}
+
+.formSectionHeader strong {
+  color: #e6f1ea;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.formSectionHeader span,
+.inlineAction > span,
+.fieldHint {
+  color: #7f9087;
+  font-size: 9px;
+  line-height: 1.45;
+}
+
+.appLabel {
+  display: block;
+  margin: 0 0 7px;
+  color: #aab9b0;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.appLabelSpaced {
+  margin-top: 14px;
+}
+
+.appControl,
+.rateInput {
+  width: 100%;
+  height: 44px;
+  min-width: 0;
+  padding: 0 13px;
+  border: 1px solid rgba(145, 202, 170, 0.13);
+  border-radius: 12px;
+  outline: none;
+  color: #e8f2ec;
+  background: rgba(2, 11, 7, 0.45);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.022);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 580;
+  transition: border-color 0.2s ease, background 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+.appControl::placeholder,
+.rateInput::placeholder {
+  color: #63736a;
+}
+
+.appControl:focus,
+.rateInput:focus {
+  border-color: rgba(91, 227, 155, 0.52);
+  background: rgba(4, 17, 11, 0.7);
+  box-shadow: 0 0 0 3px rgba(91, 227, 155, 0.07), inset 0 1px 0 rgba(255,255,255,0.03);
+  transform: none;
+}
+
+.selectControl {
+  position: relative;
+}
+
+.selectControl select {
+  padding-right: 40px;
+  appearance: none;
+  -webkit-appearance: none;
+}
+
+.selectControl > .uiIcon {
+  position: absolute;
+  top: 50%;
+  right: 13px;
+  width: 14px;
+  height: 14px;
+  color: #708178;
+  transform: translateY(-50%) rotate(90deg);
+  pointer-events: none;
+}
+
+.rateRow {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.rateInputWrapper {
+  position: relative;
+  min-width: 0;
+}
+
+.rateInput {
+  height: 52px;
+  padding: 19px 13px 4px;
+  font-size: 13px !important;
+}
+
+.rateLabel {
+  position: absolute;
+  top: 18px;
+  left: 13px;
+  color: #788a80;
+  font-size: 10px;
+  font-weight: 650;
+  pointer-events: none;
+  transition: top 0.18s ease, color 0.18s ease, font-size 0.18s ease;
+}
+
+.rateInput:focus + .rateLabel,
+.rateInput:not(:placeholder-shown) + .rateLabel {
+  top: 7px;
+  color: #69dca1;
+  font-size: 8px;
+}
+
+.inlineAction {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.ridersBox {
+  overflow: hidden;
+  border: 1px solid rgba(145, 202, 170, 0.09);
+  border-radius: 13px;
+  background: rgba(1, 9, 5, 0.2);
+}
+
+.riderRow {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px;
+  border-bottom: 1px solid rgba(145, 202, 170, 0.07);
+}
+
+.riderRow:last-child {
+  border-bottom: 0;
+}
+
+.riderName {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 9px;
+}
+
+.riderName strong {
+  overflow: hidden;
+  color: #d9e6de;
+  font-size: 11px;
+  font-weight: 650;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tripSelector {
+  display: flex;
+  flex: 0 0 auto;
+  gap: 3px;
+  padding: 3px;
+  border: 1px solid rgba(145, 202, 170, 0.08);
+  border-radius: 10px;
+  background: rgba(0,0,0,0.14);
+}
+
+.tripPill {
+  min-height: 28px;
+  padding: 0 9px;
+  border-radius: 7px;
+  color: #83938a;
+  background: transparent;
+  font-size: 9px;
+  font-weight: 720;
+  cursor: pointer;
+  transition: color 0.18s ease, background 0.18s ease, box-shadow 0.18s ease, transform 0.18s ease;
+}
+
+.tripPill:hover {
+  color: #d6e5dc;
+  background: rgba(255,255,255,0.03);
+}
+
+.tripPill.isActive {
+  color: #07130d;
+  background: #67dfa0;
+  box-shadow: 0 6px 14px rgba(41, 186, 108, 0.17), inset 0 1px 0 rgba(255,255,255,0.35);
+}
+
+.previewBox {
+  overflow: hidden;
+  border: 1px solid rgba(145, 202, 170, 0.09);
+  border-radius: 13px;
+  background: rgba(1, 9, 5, 0.22);
+}
+
+.previewRow,
+.previewTotal {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 10px 12px;
+  border-bottom: 1px solid rgba(145, 202, 170, 0.07);
+}
+
+.previewRow > div strong,
+.previewRow > div span {
+  display: block;
+}
+
+.previewRow > div strong {
+  color: #d7e4dc;
+  font-size: 10px;
+}
+
+.previewRow > div span {
+  margin-top: 2px;
+  color: #73847a;
+  font-size: 8px;
+  text-transform: capitalize;
+}
+
+.previewRow > strong {
+  color: #bdcec4;
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+}
+
+.previewTotal {
+  border-bottom: 0;
+  color: #e9fff3;
+  background: rgba(91, 227, 155, 0.045);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.previewTotal strong {
+  color: #72eaaa;
+  font-size: 14px;
+  font-variant-numeric: tabular-nums;
+}
+
+.previewEmpty {
+  padding: 18px;
+  color: #76877d;
+  font-size: 10px;
+  text-align: center;
+}
+
+.phoneControl {
+  display: grid;
+  grid-template-columns: 112px minmax(0, 1fr);
+  gap: 8px;
+}
+
+.fieldHint {
+  margin-top: 7px;
+}
+
+.modalFooter {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 24px;
+  border-top: 1px solid rgba(148, 205, 173, 0.09);
+  background: rgba(4, 13, 8, 0.58);
+  backdrop-filter: blur(18px);
+}
+
+.modalFooterSpacer {
+  flex: 1;
+}
+
+@keyframes appRise {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes appSpin {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes calendarFromLeft {
+  from { opacity: 0; transform: translateX(-18px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes calendarFromRight {
+  from { opacity: 0; transform: translateX(18px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes modalFade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes modalEnter {
+  from { opacity: 0; transform: translateY(16px) scale(0.985); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@media (max-width: 900px) {
+  .dashboardIntro {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 22px;
+  }
+
+  .dashboardStats {
+    width: 100%;
+  }
+
+  .dashboardStats > div {
+    min-width: 0;
+  }
+
+  .appToolbar {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .monthNavigator {
+    justify-content: center;
+  }
+
+  .toolbarActions {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  .appContent {
+    padding: max(18px, env(safe-area-inset-top)) 14px max(34px, env(safe-area-inset-bottom));
+  }
+
+  .appHeader {
+    margin-bottom: 34px;
+  }
+
+  .appHeader .brandLockup {
+    grid-column: 2;
+  }
+
+  .workspaceStatusDesktop {
+    display: none;
+  }
+
+  .workspaceStatusMobile {
+    display: inline-flex;
+    min-width: 0;
+    max-width: min(128px, 34vw);
+    flex: 0 1 auto;
+    justify-content: flex-end;
+    margin-left: auto;
+    padding: 7px 9px;
+    font-size: 9px;
+  }
+
+  .workspaceStatusMobile > span:last-child {
+    min-width: 0;
+    overflow: hidden;
+    text-align: right;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .workspaceStatusMobile .groupStatusIcon {
+    width: 14px;
+    height: 14px;
+    flex: 0 0 auto;
+    color: #65dca0;
+  }
+
+  .appHeader .brandSymbol {
+    width: 44px;
+    height: 44px;
+  }
+
+  .appHeader .brandSymbol img {
+    width: 40px;
+    height: 40px;
+  }
+
+  .dashboardIntro {
+    margin-bottom: 20px;
+  }
+
+  .dashboardIntro > div:first-child {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .dashboardTitleRow {
+    justify-content: space-between;
+    gap: 8px;
+  }
+
+  .dashboardIntro h1 {
+    font-size: 19px;
+  }
+
+  .dashboardIntro p {
+    max-width: none;
+    font-size: clamp(8.5px, 2.55vw, 10px);
+    letter-spacing: -0.015em;
+    white-space: nowrap;
+  }
+
+  .dashboardStats > div {
+    padding: 12px 9px;
+    text-align: center;
+  }
+
+  .dashboardStats strong {
+    font-size: 18px;
+  }
+
+  .dashboardStats span {
+    font-size: 7px;
+    letter-spacing: 0.05em;
+    white-space: normal;
+  }
+
+  .appToolbar {
+    gap: 10px;
+    padding: 10px;
+    border-radius: 16px;
+  }
+
+  .monthNavigator {
+    justify-content: space-between;
+  }
+
+  .monthTitle {
+    flex: 1;
+  }
+
+  .toolbarActions {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 6px;
+  }
+
+  .toolbarActions .appButton {
+    min-width: 0;
+    padding: 0 8px;
+    font-size: 9px;
+  }
+
+  .toolbarActions .uiIcon {
+    width: 15px;
+    height: 15px;
+  }
+
+  .calendarPanel {
+    padding: 11px 8px 9px;
+    border-radius: 18px;
+  }
+
+  .calendarPanelHeader {
+    margin-bottom: 12px;
+    padding: 0 4px;
+  }
+
+  .calendarPanelHeader > span {
+    display: none;
+  }
+
+  .weekHeader,
+  .weekRow {
+    gap: 4px !important;
+  }
+
+  .weekHeader {
+    margin-bottom: 4px;
+  }
+
+  .weekRow + .weekRow {
+    margin-top: 4px;
+  }
+
+  .weekHeaderCell {
+    padding: 4px 3px;
+    font-size: 7px !important;
+    text-align: center;
+  }
+
+  .calendarCell {
+    height: 78px !important;
+    min-height: 78px !important;
+    max-height: 78px !important;
+    margin: 0 !important;
+    padding: 7px !important;
+    border-radius: 11px;
+  }
+
+  .calendarCell:hover {
+    transform: none;
+  }
+
+  .dayTop {
+    margin-bottom: 6px;
+  }
+
+  .dayNum {
+    font-size: 12px !important;
+  }
+
+  .todayTag {
+    width: 5px;
+    height: 5px;
+    padding: 0;
+    overflow: hidden;
+    color: transparent;
+    background: var(--app-green);
+    box-shadow: 0 0 8px rgba(91, 227, 155, 0.4);
+  }
+
+  .cellDetails {
+    display: none !important;
+  }
+
+  .mobileSummary {
+    display: flex !important;
+    flex-direction: column;
+    gap: 4px;
+    margin-top: 0;
+  }
+
+  .mobileDriver,
+  .mobileRiders {
+    min-height: 0;
+    gap: 3px;
+    font-size: 7px;
+  }
+
+  .mobileSummary .uiIcon {
+    width: 9px;
+    height: 9px;
+  }
+
+  .holidayTag {
+    right: 6px !important;
+    bottom: 5px !important;
+    left: 6px !important;
+    max-width: none !important;
+    padding: 0 !important;
+    font-size: 5px !important;
+  }
+
+  .bottomGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 8px !important;
+    margin-top: 12px !important;
+  }
+
+  .summaryCard {
+    margin: 0 !important;
+    padding: 12px !important;
+    border-radius: 16px;
+  }
+
+  .summaryCardHeader {
+    gap: 7px;
+    margin-bottom: 10px;
+  }
+
+  .summaryCardHeader p {
+    display: none;
+  }
+
+  .summaryIcon {
+    width: 30px;
+    height: 30px;
+    border-radius: 9px;
+  }
+
+  .summaryCardHeader h2 {
+    font-size: 12px;
+  }
+
+  .summaryRows {
+    gap: 2px;
+  }
+
+  .summaryRow {
+    min-height: 42px;
+    gap: 6px;
+  }
+
+  .memberIdentity > span {
+    display: none;
+  }
+
+  .memberIdentity strong,
+  .transferRow strong {
+    font-size: 9px;
+  }
+
+  .balanceAmount,
+  .transferAmount {
+    font-size: 9px;
+  }
+
+  .transferRow {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .emptyState {
+    min-height: 118px;
+  }
+
+  .emptyState p {
+    font-size: 7px;
+  }
+
+  .appShell .modalBackdrop {
+    align-items: flex-end !important;
+    padding: 0;
+  }
+
+  .appShell .modal,
+  .appShell .memberModal {
+    width: 100%;
+    max-width: none;
+    max-height: 92svh !important;
+    border-right: 0;
+    border-bottom: 0;
+    border-left: 0;
+    border-radius: 24px 24px 0 0;
+    animation-name: modalSheetEnter;
+  }
+
+  .modalHeader {
+    padding: 18px 18px 15px;
+  }
+
+  .modalHeader h2 {
+    font-size: 19px;
+  }
+
+  .modalBody {
+    padding: 16px 14px 18px;
+  }
+
+  .formSection {
+    padding: 14px 12px;
+  }
+
+  .formSectionHeader {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 3px;
+  }
+
+  .riderRow {
+    align-items: stretch;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .tripSelector {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .tripPill {
+    padding: 0 5px !important;
+    font-size: 9px !important;
+  }
+
+  .phoneControl {
+    grid-template-columns: 102px minmax(0, 1fr);
+  }
+
+  .modalFooter {
+    padding: 12px 14px max(12px, env(safe-area-inset-bottom));
+  }
+
+  .modalFooter .appButton {
+    padding: 0 11px;
+    font-size: 10px;
+  }
+
+  .modalFooter .appButtonDanger {
+    padding: 0 9px;
+  }
+}
+
+@keyframes modalSheetEnter {
+  from { opacity: 0; transform: translateY(32px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .appHeader,
+  .dashboardIntro,
+  .appToolbar,
+  .calendarPanel,
+  .summaryCard,
+  .appShell .modal,
+  .appShell .modalBackdrop {
+    animation: none !important;
+  }
+
+  .calendarCell,
+  .appButton,
+  .iconButton,
+  .tripPill {
+    transition: none !important;
   }
 }
