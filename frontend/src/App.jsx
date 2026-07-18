@@ -1049,17 +1049,7 @@ export default function App() {
               <button type="button" style={styles.btn} onClick={() => setOpen(false)}>
                 Cancel
               </button>
-              <button
-                type="button"
-                style={{
-                  ...styles.btn,
-                  background: "linear-gradient(135deg, #93c5fd 0%, #3b82f6 100%)",
-                  color: "white",
-                  borderColor: "#3b82f6",
-                  boxShadow: "0 12px 24px rgba(59, 130, 246, 0.28), inset 0 1px 0 rgba(255,255,255,0.18)",
-                }}
-                onClick={onSave}
-              >
+              <button type="button" style={{ ...styles.btn, ...styles.btnPrimary }} onClick={onSave}>
                 Save
               </button>
             </div>
@@ -1168,8 +1158,8 @@ const styles = {
   },
   monthTitle: { fontSize: 16, fontWeight: 950, color: "#f8fafc" },
   btn: {
-    border: "1px solid rgba(255, 255, 255, 0.18)",
-    background: "linear-gradient(135deg, rgba(255,255,255,0.18), rgba(255,255,255,0.07))",
+    border: "1px solid rgba(255, 255, 255, 0.14)",
+    background: "linear-gradient(135deg, rgba(255,255,255,0.12), rgba(255,255,255,0.06))",
     backdropFilter: "blur(18px) saturate(140%)",
     WebkitBackdropFilter: "blur(18px) saturate(140%)",
     color: "#f8fafc",
@@ -1178,7 +1168,7 @@ const styles = {
     fontWeight: 850,
     cursor: "pointer",
     fontSize: 16,
-    boxShadow: "0 14px 30px rgba(0, 0, 0, 0.18), inset 0 1px 0 rgba(255,255,255,0.16), 0 0 0 1px rgba(255,255,255,0.06)",
+    boxShadow: "0 10px 20px rgba(0, 0, 0, 0.16), inset 0 1px 0 rgba(255,255,255,0.12)",
   },
   btnOn: { borderColor: "rgba(255,255,255,0.22)", background: "rgba(255,255,255,0.16)", boxShadow: "0 8px 18px rgba(0, 0, 0, 0.16), inset 0 1px 0 rgba(255,255,255,0.16)" },
   btnPrimary: { background: "linear-gradient(135deg, rgba(34, 197, 94, 0.95), rgba(22, 163, 74, 0.95))", color: "white", borderColor: "rgba(255,255,255,0.18)", boxShadow: "0 12px 24px rgba(34, 197, 94, 0.28), inset 0 1px 0 rgba(255,255,255,0.18)" },
