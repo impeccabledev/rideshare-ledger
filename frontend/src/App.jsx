@@ -596,7 +596,12 @@ export default function App() {
               <div className="road">
                 <div className="car">🚗</div>
               </div>
-              <div className="splashSub">Buckle Up…</div>
+              <div className="splashSub">Preparing your trip</div>
+              <div className="splashProgress" aria-hidden="true">
+                <span />
+                <span />
+                <span />
+              </div>
             </div>
           </div>
         )}
@@ -604,14 +609,15 @@ export default function App() {
         
 
         <form onSubmit={handleJoin} style={styles.joinCard}>
-          <div className="appHeader" style={{ marginBottom: 5 }}>
-            <div className="appBrand">
-              <div className="appIcon">🚘</div>
-              <div className="appTitle">RideShare</div>
-            </div>
+          <div style={styles.authBrand}>
+            <div className="appIcon" style={styles.authIcon}>🚘</div>
+            <div style={styles.authBrandTitle}>RideShare</div>
           </div>
-          <div style={styles.joinTitle}>Welcome back</div>
-          <div style={styles.joinSubtitle}>Enter your group credentials to continue</div>
+
+          <div style={styles.authHeaderWrap}>
+            <div style={styles.joinTitle}>Welcome back</div>
+            <div style={styles.joinSubtitle}>Enter your group credentials to continue</div>
+          </div>
 
           {authErr && <div style={styles.error}>{authErr}</div>}
 
@@ -620,8 +626,8 @@ export default function App() {
               style={styles.input}
               value={groupId}
               onChange={(e) => setGroupId(e.target.value)}
-              placeholder="Group ID"
               autoComplete="off"
+              placeholder="GROUP ID"
             />
           </div>
 
@@ -631,13 +637,13 @@ export default function App() {
               type="password"
               value={joinCode}
               onChange={(e) => setJoinCode(e.target.value)}
-              placeholder="Join Code"
               autoComplete="off"
               maxLength={8}
+              placeholder="JOIN CODE"
             />
           </div>
 
-          <button type="submit" style={{ ...styles.btn, ...styles.btnPrimary, width: "100%", marginTop: 8 }}>
+          <button type="submit" style={{ ...styles.btn, ...styles.btnPrimary, width: "100%", marginTop: 8, padding: "12px 14px" }}>
             Continue
           </button>
         </form>
@@ -660,7 +666,12 @@ export default function App() {
             <div className="road">
               <div className="car">🚗</div>
             </div>
-            <div className="splashSub">Buckle Up…</div>
+            <div className="splashSub">Buckle up</div>
+            <div className="splashProgress" aria-hidden="true">
+              <span />
+              <span />
+              <span />
+            </div>
           </div>
         </div>
       )}
@@ -744,7 +755,7 @@ export default function App() {
                   <div
                     key={`empty-${wi}-${idx}`}
                     className="calendarCell"
-                    style={{ ...styles.dayCell, background: "#ffffff" }}
+                    style={{ ...styles.dayCell, background: "linear-gradient(135deg, rgba(8, 12, 10, 0.96), rgba(10, 16, 12, 0.98))", border: "1px solid rgba(47, 191, 113, 0.16)" }}
                   />
                 );
               }
@@ -822,7 +833,7 @@ export default function App() {
               .filter((m) => m.active || Math.abs(balances[m.member_id] ?? 0) > 0.005)
               .map((m) => (
                 <div key={m.member_id} style={styles.rowLine}>
-                  <div style={{ fontWeight: 800, opacity: m.active ? 1 : 0.6 }}>
+                  <div style={{ fontWeight: 800, color: "#f8fafc", opacity: m.active ? 1 : 0.75 }}>
                     {m.name}{m.active ? '' : ' (Inactive)'}
                   </div>
                   <div
@@ -846,7 +857,7 @@ export default function App() {
             ) : (
               transfers.map((t, i) => (
                 <div key={i} style={styles.rowLine}>
-                  <div style={{ fontWeight: 800 }}>
+                  <div style={{ fontWeight: 800, color: "#f8fafc" }}>
                     {nameById[t.from] || t.from} → {nameById[t.to] || t.to}
                   </div>
                   <div style={{ fontWeight: 900 }}>${t.amount}</div>
@@ -1077,21 +1088,28 @@ const styles = {
     justifyContent: "center",
     flexDirection: "column",
     padding: 16,
+    background: "radial-gradient(circle at top left, rgba(92,103,120,0.14), transparent 28%), linear-gradient(135deg, #02050a 0%, #070b12 100%)",
   },
   joinCard: {
-    width: "min(420px, 92vw)",
-    border: "1px solid #e4e7ec",
-    background: "#fff",
-    borderRadius: 16,
-    padding: 14,
+    width: "min(430px, 92vw)",
+    border: "1px solid rgba(148, 163, 184, 0.16)",
+    background: "linear-gradient(135deg, rgba(10, 11, 15, 0.98), rgba(6, 7, 11, 0.99))",
+    borderRadius: 22,
+    padding: 22,
     display: "flex",
     flexDirection: "column",
-    gap: 10,
+    gap: 12,
+    boxShadow: "0 24px 60px rgba(0, 0, 0, 0.58)",
   },
-  joinTitle: { fontWeight: 600, fontSize: 16, color: "#101828", fontFamily:"tahoma, sans-serif", textAlign:"center", marginBottom:4 },
-  joinSubtitle: { fontSize: 13, color: "#667085", textAlign: "center", marginBottom: 16, fontFamily:"tahoma, sans-serif" },
-  joinHint: { fontSize: 12, color: "#667085", fontWeight: 700, marginTop: 6 },
-  inputGroup: { marginBottom: 12 },
+  authBrand: { display: "flex", alignItems: "center", justifyContent: "center", gap: 10, marginBottom: 8, marginLeft: 4 },
+  authIcon: { width: 48, height: 48, borderRadius: 14, fontSize: 24, background: "transparent" },
+  authBrandTitle: { fontWeight: 800, fontSize: 22, color: "#f8fafc", letterSpacing: "0.2px", marginLeft: -6, fontFamily: "'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif" },
+  authHeaderWrap: { marginBottom: 8, textAlign: "center" },
+  joinTitle: { fontWeight: 700, fontSize: 18, color: "#f8fafc", fontFamily:"tahoma, sans-serif", marginBottom:4 },
+  joinSubtitle: { fontSize: 13, color: "#9aa4b2", marginBottom: 10, fontFamily:"tahoma, sans-serif" },
+  joinHint: { fontSize: 12, color: "#9aa4b2", fontWeight: 700, marginTop: 6 },
+  authLabel: { display: "block", fontSize: 12, fontWeight: 700, color: "#e2e8f0", marginBottom: 6, marginLeft: 6, letterSpacing: "0.04em", textTransform: "uppercase", textAlign: "left", alignSelf: "flex-start" },
+  inputGroup: { marginBottom: 4, display: "flex", flexDirection: "column", width: "100%" },
   topbar: {
     display: "flex",
     justifyContent: "space-between",
@@ -1099,22 +1117,23 @@ const styles = {
     gap: 10,
     marginBottom: 14,
   },
-  monthTitle: { fontSize: 16, fontWeight: 950, color: "#101828" },
+  monthTitle: { fontSize: 16, fontWeight: 950, color: "#f8fafc" },
   btn: {
-    border: "1px solid #e4e7ec",
-    background: "#fff",
+    border: "1px solid rgba(148, 163, 184, 0.24)",
+    background: "rgba(15, 23, 42, 0.85)",
+    color: "#f8fafc",
     padding: "10px 12px",
     borderRadius: 12,
     fontWeight: 850,
     cursor: "pointer",
     fontSize: 16,
   },
-  btnOn: { borderColor: "#155eef", background: "#eff4ff" },
-  btnPrimary: { background: "#155eef", color: "white", borderColor: "#155eef" },
+  btnOn: { borderColor: "#7c8aa6", background: "rgba(124, 138, 166, 0.16)" },
+  btnPrimary: { background: "linear-gradient(135deg, #2fbf71 0%, #22a55e 100%)", color: "white", borderColor: "#2fbf71" },
   error: {
-    background: "#fff1f3",
-    border: "1px solid #fecdd3",
-    color: "#881337",
+    background: "rgba(127, 29, 29, 0.24)",
+    border: "1px solid rgba(248, 113, 113, 0.35)",
+    color: "#fecaca",
     padding: 10,
     borderRadius: 12,
     marginBottom: 12,
@@ -1128,14 +1147,14 @@ const styles = {
   weekHeaderCell: {
     textAlign: "center",
     fontWeight: 900,
-    color: "#475467",
+    color: "#cbd5e1",
     fontSize: 12,
   },
   weekRow: { display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 2 },
   dayCell: {
-    border: "1px solid #e4e7ec",
+    border: "1px solid rgba(148, 163, 184, 0.16)",
     borderRadius: 14,
-    background: "#ffffff",
+    background: "linear-gradient(180deg, rgba(9, 10, 14, 0.97), rgba(4, 6, 10, 0.99))",
     padding: 8,
     minHeight: 92,
     maxHeight: 92,
@@ -1146,11 +1165,11 @@ const styles = {
     flexDirection: "column",
     overflow: "hidden",
   },
-  dayCellHasEntry: { borderColor: "#c7d7fe", background: "#f5f8ff" },
-  dayCellHoliday: { borderColor: "#fed7aa", background: "#fff7ed" },
-  dayCellToday: { borderColor: "#155eef", boxShadow: "0 0 0 2px rgba(21,94,239,0.12) inset" },
+  dayCellHasEntry: { borderColor: "rgba(120, 125, 135, 0.38)", background: "linear-gradient(135deg, rgba(13, 14, 18, 0.97), rgba(7, 8, 12, 0.99))" },
+  dayCellHoliday: { borderColor: "rgba(245, 158, 11, 0.35)", background: "linear-gradient(135deg, rgba(54, 35, 10, 0.92), rgba(30, 18, 4, 0.96))" },
+  dayCellToday: { borderColor: "rgba(170, 177, 188, 0.7)", boxShadow: "0 0 0 2px rgba(170,177,188,0.16) inset" },
   dayTop: { display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 4 },
-  dayNum: { fontWeight: 950, color: "#101828", fontSize: 13 },
+  dayNum: { fontWeight: 950, color: "#f8fafc", fontSize: 13 },
   holidayTag: {
     position: "absolute",
     left: 10,
@@ -1170,19 +1189,20 @@ const styles = {
   bottomGrid: { marginTop: 16, display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 },
   card: { border: "1px solid #e4e7ec", borderRadius: 16, padding: 12 },
   cardBalances: { 
-    border: "1px solid #e4e7ec", 
+    border: "1px solid rgba(34, 197, 94, 0.18)", 
     borderRadius: 16, 
     padding: 12,
-    background: "linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 50%, #bae6fd 100%)",
+    background: "linear-gradient(135deg, rgba(13, 20, 15, 0.96), rgba(8, 13, 10, 0.98))",
   },
   cardSettleUp: { 
-    border: "1px solid #e4e7ec", 
+    border: "1px solid rgba(148, 163, 184, 0.16)", 
     borderRadius: 16, 
     padding: 12,
-    background: "linear-gradient(135deg, #faf5ff 0%, #f3e8ff 50%, #e9d5ff 100%)",
+    background: "linear-gradient(135deg, rgba(16, 14, 16, 0.94), rgba(10, 9, 12, 0.97))",
+    boxShadow: "inset 0 1px 0 rgba(255,255,255,0.03)",
   },
-  cardTitle: { fontWeight: 950, color: "#101828", marginBottom: 6, textAlign: "center" },
-  small: { fontSize: 12, color: "#667085", fontWeight: 700 },
+  cardTitle: { fontWeight: 950, color: "#f8fafc", marginBottom: 6, textAlign: "center" },
+  small: { fontSize: 12, color: "#cbd5e1", fontWeight: 700 },
   rowLine: {
     display: "flex",
     justifyContent: "space-between",
@@ -1207,33 +1227,34 @@ const styles = {
     maxHeight: "90vh",
     overflow: "auto",
     borderRadius: 18,
-    background: "#fff",
-    border: "1px solid #e4e7ec",
+    background: "linear-gradient(135deg, rgba(10, 11, 15, 0.97), rgba(6, 7, 11, 0.99))",
+    border: "1px solid rgba(148, 163, 184, 0.16)",
     padding: 14,
   },
-  modalTitle: { fontWeight: 950, fontSize: 16, color: "#101828", marginBottom: 10 },
+  modalTitle: { fontWeight: 950, fontSize: 16, color: "#f8fafc", marginBottom: 10 },
   formRow: { marginTop: 10 },
-  label: { fontWeight: 900, color: "#344054", fontSize: 12, marginBottom: 6 },
+  label: { fontWeight: 900, color: "#e2e8f0", fontSize: 12, marginBottom: 6 },
   input: {
     width: "100%",
-    border: "1px solid #e4e7ec",
+    border: "1px solid rgba(47, 191, 113, 0.24)",
     borderRadius: 12,
     padding: "10px 12px",
     fontWeight: 800,
-    color: "#101828",
+    color: "#f8fafc",
     outline: "none",
-    fontSize: 16,
+    fontSize: 15,
+    background: "rgba(12, 20, 16, 0.9)",
     transition: "border-color 0.2s, box-shadow 0.2s",
   },
   select: {
     width: "100%",
-    border: "1px solid #e4e7ec",
+    border: "1px solid rgba(47, 191, 113, 0.24)",
     borderRadius: 12,
     padding: "10px 12px",
     fontWeight: 800,
-    color: "#101828",
+    color: "#f8fafc",
     outline: "none",
-    background: "#fff",
+    background: "rgba(12, 20, 16, 0.9)",
   },
   ridersBox: { border: "1px solid #e4e7ec", borderRadius: 12, padding: 8 },
   riderRow: {
@@ -1246,8 +1267,9 @@ const styles = {
     minWidth: 0,
   },
   pill: { 
-    border: "1px solid #e4e7ec",
-    background: "#fff",
+    border: "1px solid rgba(148, 163, 184, 0.16)",
+    background: "rgba(11, 12, 17, 0.9)",
+    color: "#f8fafc",
     padding: "6px 10px",
     borderRadius: 999,
     fontWeight: 850,
@@ -1256,6 +1278,6 @@ const styles = {
     minWidth: "70px",
     textAlign: "center",
   },
-  pillOn: { borderColor: "#155eef", background: "#eff4ff" },
-  previewBox: { border: "1px solid #e4e7ec", borderRadius: 12, padding: 10, background: "#fafbff" },
+  pillOn: { borderColor: "#7c8aa6", background: "rgba(124, 138, 166, 0.16)" },
+  previewBox: { border: "1px solid rgba(148, 163, 184, 0.16)", borderRadius: 12, padding: 10, background: "rgba(9, 10, 14, 0.88)" },
 };
