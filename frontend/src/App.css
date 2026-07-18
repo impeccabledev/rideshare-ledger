@@ -2905,15 +2905,17 @@ button:hover {
   }
 
   .transferRow > div:first-child {
-    flex: 1 1 auto;
+    width: auto;
+    max-width: calc(100% - 36px);
+    flex: 0 1 auto;
     gap: 3px;
     overflow: hidden;
   }
 
   .transferRow > div:first-child strong {
     min-width: 0;
-    max-width: calc((100% - 20px) / 2);
-    flex: 1 1 0;
+    max-width: 48px;
+    flex: 0 1 auto;
   }
 
   .transferRow > div:first-child span {
