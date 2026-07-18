@@ -1049,7 +1049,17 @@ export default function App() {
               <button type="button" style={styles.btn} onClick={() => setOpen(false)}>
                 Cancel
               </button>
-              <button type="button" style={{ ...styles.btn, ...styles.btnPrimary }} onClick={onSave}>
+              <button
+                type="button"
+                style={{
+                  ...styles.btn,
+                  background: "linear-gradient(135deg, #93c5fd 0%, #3b82f6 100%)",
+                  color: "white",
+                  borderColor: "#3b82f6",
+                  boxShadow: "0 12px 24px rgba(59, 130, 246, 0.28), inset 0 1px 0 rgba(255,255,255,0.18)",
+                }}
+                onClick={onSave}
+              >
                 Save
               </button>
             </div>
