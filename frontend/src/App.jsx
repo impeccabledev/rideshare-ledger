@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState, useCallback } from "react";
+import React, { useEffect, useMemo, useState, useCallback, useRef } from "react";
 import "./App.css";
 import {
   groupCheck,
@@ -123,6 +123,8 @@ export default function App() {
 
   const [monthDate, setMonthDate] = useState(() => new Date());
   const [transitionDirection, setTransitionDirection] = useState("none");
+  const swipeStartRef = useRef(null);
+  const swipeHandledRef = useRef(false);
   const month = useMemo(() => fmtMonthApi(monthDate), [monthDate]);
   const monthDisplay = useMemo(() => fmtMonthDisplay(monthDate), [monthDate]);
 
@@ -329,6 +331,32 @@ export default function App() {
     d.setMonth(d.getMonth() + 1);
     setMonthDate(d);
     setTimeout(() => setTransitionDirection("none"), 300);
+  }
+
+  function handleSwipeStart(e) {
+    swipeStartRef.current = { x: e.clientX, y: e.clientY };
+  }
+
+  function handleSwipeEnd(e) {
+    if (!swipeStartRef.current) return;
+    const dx = e.clientX - swipeStartRef.current.x;
+    const dy = e.clientY - swipeStartRef.current.y;
+
+    if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 50) {
+      if (dx < 0) nextMonth();
+      else prevMonth();
+      swipeHandledRef.current = true;
+    }
+
+    swipeStartRef.current = null;
+  }
+
+  function handleCalendarClick(e) {
+    if (swipeHandledRef.current) {
+      swipeHandledRef.current = false;
+      e.preventDefault();
+      e.stopPropagation();
+    }
   }
 
   // ---------- Open day modal ----------
@@ -735,10 +763,16 @@ export default function App() {
 
       {err && <div style={styles.error}>{err}</div>}
 
-      <div style={{
-        ...styles.calendarContainer,
-        animation: transitionDirection === "prev" ? "fadeInRight 0.3s ease-out" : transitionDirection === "next" ? "fadeInLeft 0.3s ease-out" : "none",
-      }}>
+      <div
+        style={{
+          ...styles.calendarContainer,
+          animation: transitionDirection === "prev" ? "fadeInRight 0.3s ease-out" : transitionDirection === "next" ? "fadeInLeft 0.3s ease-out" : "none",
+          touchAction: "pan-y",
+        }}
+        onPointerDown={handleSwipeStart}
+        onPointerUp={handleSwipeEnd}
+        onClickCapture={handleCalendarClick}
+      >
         <div style={styles.weekHeader}>
           {["Mon", "Tue", "Wed", "Thu", "Fri"].map((label) => (
             <div key={label} style={styles.weekHeaderCell}>
@@ -1236,7 +1270,7 @@ const styles = {
   label: { fontWeight: 900, color: "#e2e8f0", fontSize: 12, marginBottom: 6 },
   input: {
     width: "100%",
-    border: "1px solid rgba(47, 191, 113, 0.24)",
+    border: "1px solid rgba(47, 191, 113, 0.38)",
     borderRadius: 12,
     padding: "10px 12px",
     fontWeight: 800,
@@ -1248,13 +1282,14 @@ const styles = {
   },
   select: {
     width: "100%",
-    border: "1px solid rgba(47, 191, 113, 0.24)",
+    border: "1px solid rgba(47, 191, 113, 0.85)",
     borderRadius: 12,
     padding: "10px 12px",
     fontWeight: 800,
     color: "#f8fafc",
     outline: "none",
-    background: "rgba(12, 20, 16, 0.9)",
+    background: "linear-gradient(135deg, rgba(34, 197, 94, 0.95), rgba(22, 163, 74, 0.95))",
+    boxShadow: "0 0 0 1px rgba(47, 191, 113, 0.2), inset 0 1px 0 rgba(255,255,255,0.16)",
   },
   ridersBox: { border: "1px solid #e4e7ec", borderRadius: 12, padding: 8 },
   riderRow: {
@@ -1263,7 +1298,7 @@ const styles = {
     alignItems: "center",
     gap: 8,
     padding: "6px 4px",
-    borderBottom: "1px dashed #eef2f6",
+    borderBottom: "1px solid rgba(148, 163, 184, 0.12)",
     minWidth: 0,
   },
   pill: { 
@@ -1278,6 +1313,6 @@ const styles = {
     minWidth: "70px",
     textAlign: "center",
   },
-  pillOn: { borderColor: "#7c8aa6", background: "rgba(124, 138, 166, 0.16)" },
+  pillOn: { borderColor: "rgba(47, 191, 113, 0.6)", background: "rgba(47, 191, 113, 0.16)" },
   previewBox: { border: "1px solid rgba(148, 163, 184, 0.16)", borderRadius: 12, padding: 10, background: "rgba(9, 10, 14, 0.88)" },
 };
