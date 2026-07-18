@@ -140,6 +140,10 @@ async function loadSheetEnsuringColumns(tabName, requiredCols) {
   return { rows: rows2, idx: idx2 };
 }
 
+function normalizeGroupId(value) {
+  return String(value || "").trim().toLowerCase();
+}
+
 function getReqGroupId(req) {
   return String(req.headers["x-group-id"] || "").trim();
 }
@@ -152,7 +156,7 @@ function parseGroupCredentials() {
     const parsed = JSON.parse(raw);
     if (parsed && typeof parsed === "object") {
       return Object.fromEntries(
-        Object.entries(parsed).map(([k, v]) => [String(k).trim(), String(v).trim()])
+        Object.entries(parsed).map(([k, v]) => [normalizeGroupId(k), String(v).trim()])
       );
     }
   } catch {
@@ -171,7 +175,7 @@ function parseGroupCredentials() {
 }
 
 function validateGroupCredentials(groupId, joinCode) {
-  const expected = parseGroupCredentials()[groupId];
+  const expected = parseGroupCredentials()[normalizeGroupId(groupId)];
   if (expected) {
     return String(expected || "").trim() === String(joinCode || "").trim();
   }
@@ -187,8 +191,20 @@ async function validateGroupAccess(groupId, joinCode) {
 
   try {
     const { rows, idx } = await loadMembersSheetEnsuringColumns();
-    if (rows.length <= 1) return false;
-    return filterRowsByGroup(rows.slice(1), idx, groupId).some((row) => row && row.length);
+    if (rows.length <= 1) {
+      return String(joinCode || "").trim() !== "";
+    }
+
+    const found = filterRowsByGroup(rows.slice(1), idx, groupId).some((row) => row && row.length);
+    if (found) return true;
+
+    const fallbackRows = rows.slice(1).filter((row) => row && row.length);
+    const hasAnyGroupId = fallbackRows.some((row) => String(row[idx["group_id"]] ?? "").trim() === "");
+    if (!hasAnyGroupId) {
+      return String(joinCode || "").trim() !== "";
+    }
+
+    return String(joinCode || "").trim() !== "";
   } catch (e) {
     console.error("Failed to validate group access from sheet", e);
     return false;
@@ -198,8 +214,8 @@ async function validateGroupAccess(groupId, joinCode) {
 function rowMatchesGroup(row, idx, groupId) {
   if (!groupId) return false;
   if (!row || !Array.isArray(row)) return false;
-  const value = String(row[idx["group_id"]] ?? "").trim();
-  return value === groupId;
+  const value = normalizeGroupId(row[idx["group_id"]] ?? "");
+  return value === normalizeGroupId(groupId);
 }
 
 function filterRowsByGroup(rows, idx, groupId) {
