@@ -1314,7 +1314,9 @@ const styles = {
   },
   select: {
     width: "100%",
-    border: "1px solid rgba(47, 191, 113, 0.85)",
+    appearance: "none",
+    WebkitAppearance: "none",
+    border: "1px solid rgba(59, 130, 246, 0.85)",
     borderRadius: 12,
     padding: "10px 12px",
     fontWeight: 800,
