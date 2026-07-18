@@ -100,6 +100,112 @@ function fmtDate(d) {
   return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
 }
 
+function colLabel(n) {
+  let label = "";
+  let value = n;
+  while (value > 0) {
+    value -= 1;
+    label = String.fromCharCode(65 + (value % 26)) + label;
+    value = Math.floor(value / 26);
+  }
+  return label;
+}
+
+async function loadSheetEnsuringColumns(tabName, requiredCols) {
+  const rows = await getValues(`${tabName}!A:Z`);
+  if (!rows.length) {
+    const header = [...requiredCols];
+    await setValues(`${tabName}!A1:${colLabel(header.length)}1`, [header]);
+    return { rows: [header], idx: header.reduce((a, h, i) => ((a[h] = i), a), {}) };
+  }
+
+  const header = rows[0];
+  const idx = {};
+  header.forEach((h, i) => (idx[h] = i));
+
+  const ensureCol = async (col) => {
+    if (idx[col] == null) {
+      header.push(col);
+      idx[col] = header.length - 1;
+      await setValues(`${tabName}!A1:${colLabel(header.length)}1`, [header]);
+    }
+  };
+
+  for (const col of requiredCols) await ensureCol(col);
+
+  const rows2 = await getValues(`${tabName}!A:Z`);
+  const header2 = rows2[0] || header;
+  const idx2 = {};
+  header2.forEach((h, i) => (idx2[h] = i));
+  return { rows: rows2, idx: idx2 };
+}
+
+function getReqGroupId(req) {
+  return String(req.headers["x-group-id"] || "").trim();
+}
+
+function parseGroupCredentials() {
+  const raw = process.env.GROUP_CREDENTIALS || process.env.GROUP_JOIN_CODES || "";
+  if (!raw) return {};
+
+  try {
+    const parsed = JSON.parse(raw);
+    if (parsed && typeof parsed === "object") {
+      return Object.fromEntries(
+        Object.entries(parsed).map(([k, v]) => [String(k).trim(), String(v).trim()])
+      );
+    }
+  } catch {
+    // fall back to comma-separated key=value pairs
+  }
+
+  return raw
+    .split(",")
+    .map((entry) => entry.trim())
+    .filter(Boolean)
+    .reduce((acc, entry) => {
+      const [group, code] = entry.split("=").map((part) => part.trim());
+      if (group && code) acc[group] = code;
+      return acc;
+    }, {});
+}
+
+function validateGroupCredentials(groupId, joinCode) {
+  const expected = parseGroupCredentials()[groupId];
+  if (expected) {
+    return String(expected || "").trim() === String(joinCode || "").trim();
+  }
+  return false;
+}
+
+async function validateGroupAccess(groupId, joinCode) {
+  if (!groupId || !joinCode) return false;
+
+  if (validateGroupCredentials(groupId, joinCode)) {
+    return true;
+  }
+
+  try {
+    const { rows, idx } = await loadMembersSheetEnsuringColumns();
+    if (rows.length <= 1) return false;
+    return filterRowsByGroup(rows.slice(1), idx, groupId).some((row) => row && row.length);
+  } catch (e) {
+    console.error("Failed to validate group access from sheet", e);
+    return false;
+  }
+}
+
+function rowMatchesGroup(row, idx, groupId) {
+  if (!groupId) return false;
+  if (!row || !Array.isArray(row)) return false;
+  const value = String(row[idx["group_id"]] ?? "").trim();
+  return value === groupId;
+}
+
+function filterRowsByGroup(rows, idx, groupId) {
+  return rows.filter((row) => rowMatchesGroup(row, idx, groupId));
+}
+
 function nthWeekdayOfMonth(year, monthIdx0, weekday0Sun, nth) {
   const first = new Date(year, monthIdx0, 1);
   const offset = (weekday0Sun - first.getDay() + 7) % 7;
@@ -164,15 +270,18 @@ app.get("/health", (_req, res) => res.json({ ok: true }));
 // ---- GROUP CHECK ----
 app.get("/group_check", async (req, res) => {
   try {
-    const groupId = req.headers["x-group-id"];
-    const joinCode = req.headers["x-join-code"];
+    const groupId = String(req.headers["x-group-id"] || "").trim();
+    const joinCode = String(req.headers["x-join-code"] || "").trim();
 
     if (!groupId || !joinCode) {
       return res.status(400).json({ error: "Missing x-group-id or x-join-code headers" });
     }
 
-    // For now, just validate that the headers are present
-    // In a more complete implementation, you could validate against stored groups
+    const isValid = await validateGroupAccess(groupId, joinCode);
+    if (!isValid) {
+      return res.status(401).json({ error: "Invalid group id or join code" });
+    }
+
     res.json({ ok: true, group_id: groupId });
   } catch (e) {
     console.error(e);
@@ -182,49 +291,27 @@ app.get("/group_check", async (req, res) => {
 
 /** Ensure members header has required columns. Returns {rows, idx}. */
 async function loadMembersSheetEnsuringColumns() {
-  const rows = await getValues(`${TAB_MEMBERS}!A:Z`);
-  if (!rows.length) {
-    // Create a default header row if sheet is empty
-    const header = ["member_id", "name", "phone", "active", "one_way_total", "two_way_total"];
-    await setValues(`${TAB_MEMBERS}!A1:F1`, [header]);
-    return { rows: [header], idx: header.reduce((a, h, i) => ((a[h] = i), a), {}) };
-  }
-
-  const header = rows[0];
-  const idx = {};
-  header.forEach((h, i) => (idx[h] = i));
-
-  const ensureCol = async (col) => {
-    if (idx[col] == null) {
-      header.push(col);
-      idx[col] = header.length - 1;
-      await setValues(`${TAB_MEMBERS}!A1:${String.fromCharCode(65 + header.length - 1)}1`, [header]);
-    }
-  };
-
-  await ensureCol("member_id");
-  await ensureCol("name");
-  await ensureCol("phone");
-  await ensureCol("active");
-  await ensureCol("one_way_total");
-  await ensureCol("two_way_total");
-
-  // Reload full range after header change (simple + safe)
-  const rows2 = await getValues(`${TAB_MEMBERS}!A:Z`);
-  const header2 = rows2[0] || header;
-  const idx2 = {};
-  header2.forEach((h, i) => (idx2[h] = i));
-  return { rows: rows2, idx: idx2 };
+  return loadSheetEnsuringColumns(TAB_MEMBERS, [
+    "member_id",
+    "name",
+    "phone",
+    "active",
+    "one_way_total",
+    "two_way_total",
+    "group_id",
+  ]);
 }
 
 // ---- MEMBERS ----
-app.get("/members", async (_req, res) => {
+app.get("/members", async (req, res) => {
+  const groupId = getReqGroupId(req);
+  if (!groupId) return res.status(400).json({ error: "Missing x-group-id header" });
+
   try {
     const { rows, idx } = await loadMembersSheetEnsuringColumns();
     if (rows.length <= 1) return res.json({ members: [] });
 
-    const members = rows
-      .slice(1)
+    const members = filterRowsByGroup(rows.slice(1), idx, groupId)
       .filter((r) => r && r.length)
       .map((r) => ({
         member_id: r[idx["member_id"]] ?? "",
@@ -245,6 +332,9 @@ app.get("/members", async (_req, res) => {
 
 // Create a new member (name + phone)
 app.post("/members", async (req, res) => {
+  const groupId = getReqGroupId(req);
+  if (!groupId) return res.status(400).json({ error: "Missing x-group-id header" });
+
   try {
     const { name, phone, active = true, member_id } = req.body || {};
     const n = String(name || "").trim();
@@ -254,19 +344,16 @@ app.post("/members", async (req, res) => {
     const id = String(member_id || "").trim() || genMemberId();
 
     const { rows, idx } = await loadMembersSheetEnsuringColumns();
-    const existing = rows
-      .slice(1)
-      .some((r) => String(r[idx["member_id"]] ?? "") === id);
+    const scopedRows = filterRowsByGroup(rows.slice(1), idx, groupId);
+    const existing = scopedRows.some((r) => String(r[idx["member_id"]] ?? "") === id);
     if (existing) return res.status(409).json({ error: "member_id already exists" });
 
     // Also prevent exact duplicate name+phone collisions (optional sanity)
-    const dup = rows
-      .slice(1)
-      .some(
-        (r) =>
-          String(r[idx["name"]] ?? "").trim().toLowerCase() === n.toLowerCase() &&
-          normalizePhone(r[idx["phone"]] ?? "") === p
-      );
+    const dup = scopedRows.some(
+      (r) =>
+        String(r[idx["name"]] ?? "").trim().toLowerCase() === n.toLowerCase() &&
+        normalizePhone(r[idx["phone"]] ?? "") === p
+    );
     if (dup) return res.status(409).json({ error: "Member already exists (same name + phone)" });
 
     const one_way_total = ""; // let user set later
@@ -283,6 +370,7 @@ app.post("/members", async (req, res) => {
     newRow[idx["active"]] = active ? "TRUE" : "FALSE";
     newRow[idx["one_way_total"]] = one_way_total;
     newRow[idx["two_way_total"]] = two_way_total;
+    newRow[idx["group_id"]] = groupId;
 
     await appendValues(`${TAB_MEMBERS}!A:Z`, [newRow]);
 
@@ -304,6 +392,9 @@ app.post("/members", async (req, res) => {
 
 // Update a member's rates
 app.post("/member_rates", async (req, res) => {
+  const groupId = getReqGroupId(req);
+  if (!groupId) return res.status(400).json({ error: "Missing x-group-id header" });
+
   try {
     const { member_id, one_way_total, two_way_total } = req.body || {};
     if (!member_id) return res.status(400).json({ error: "member_id required" });
@@ -318,13 +409,16 @@ app.post("/member_rates", async (req, res) => {
     const { rows, idx } = await loadMembersSheetEnsuringColumns();
     if (rows.length <= 1) return res.status(400).json({ error: "members sheet empty" });
 
-    const rowIndex = rows.findIndex((r, i) => i > 0 && String(r[idx["member_id"]] ?? "") === member_id);
+    const rowIndex = rows.findIndex(
+      (r, i) => i > 0 && String(r[idx["member_id"]] ?? "") === member_id && rowMatchesGroup(r, idx, groupId)
+    );
     if (rowIndex < 0) return res.status(404).json({ error: "member not found" });
 
     while (rows[rowIndex].length < rows[0].length) rows[rowIndex].push("");
 
     rows[rowIndex][idx["one_way_total"]] = String(one);
     rows[rowIndex][idx["two_way_total"]] = String(two);
+    rows[rowIndex][idx["group_id"]] = groupId;
 
     await setValues(`${TAB_MEMBERS}!A1:Z${rows.length}`, rows);
 
@@ -353,34 +447,50 @@ app.get("/holidays", async (req, res) => {
 
 // ---- ENTRIES ----
 app.get("/entries", async (req, res) => {
+  const groupId = getReqGroupId(req);
+  if (!groupId) return res.status(400).json({ error: "Missing x-group-id header" });
+
   try {
     const { month } = req.query;
     if (!month || !/^\d{4}-\d{2}$/.test(String(month))) {
       return res.status(400).json({ error: "month required as YYYY-MM" });
     }
 
-    const entryRows = await getValues(`${TAB_DAY_ENTRIES}!A:H`);
-    const riderRows = await getValues(`${TAB_DAY_RIDERS}!A:E`);
+    const { rows: entryRows, idx: entryIdx } = await loadSheetEnsuringColumns(TAB_DAY_ENTRIES, [
+      "entry_id",
+      "date",
+      "driver_id",
+      "day_type",
+      "day_total_used",
+      "total_amount",
+      "notes",
+      "created_at",
+      "group_id",
+    ]);
+    const { rows: riderRows, idx: riderIdx } = await loadSheetEnsuringColumns(TAB_DAY_RIDERS, [
+      "entry_id",
+      "member_id",
+      "trip_type",
+      "units",
+      "charge",
+      "group_id",
+    ]);
 
     const entries = [];
     if (entryRows.length > 1) {
-      const h = entryRows[0];
-      const idx = {};
-      h.forEach((x, i) => (idx[x] = i));
-
-      for (const r of entryRows.slice(1)) {
-        const date = r[idx["date"]] ?? "";
+      for (const r of filterRowsByGroup(entryRows.slice(1), entryIdx, groupId)) {
+        const date = r[entryIdx["date"]] ?? "";
         if (!String(date).startsWith(month)) continue;
 
         entries.push({
-          entry_id: r[idx["entry_id"]] ?? "",
+          entry_id: r[entryIdx["entry_id"]] ?? "",
           date,
-          driver_id: r[idx["driver_id"]] ?? "",
-          day_type: r[idx["day_type"]] ?? "",
-          day_total_used: Number(r[idx["day_total_used"]] ?? 0),
-          total_amount: Number(r[idx["total_amount"]] ?? 0),
-          notes: r[idx["notes"]] ?? "",
-          created_at: r[idx["created_at"]] ?? "",
+          driver_id: r[entryIdx["driver_id"]] ?? "",
+          day_type: r[entryIdx["day_type"]] ?? "",
+          day_total_used: Number(r[entryIdx["day_total_used"]] ?? 0),
+          total_amount: Number(r[entryIdx["total_amount"]] ?? 0),
+          notes: r[entryIdx["notes"]] ?? "",
+          created_at: r[entryIdx["created_at"]] ?? "",
           riders: [],
         });
       }
@@ -388,20 +498,16 @@ app.get("/entries", async (req, res) => {
 
     const byId = new Map(entries.map((e) => [e.entry_id, e]));
     if (riderRows.length > 1) {
-      const h = riderRows[0];
-      const idx = {};
-      h.forEach((x, i) => (idx[x] = i));
-
-      for (const r of riderRows.slice(1)) {
-        const entry_id = r[idx["entry_id"]] ?? "";
+      for (const r of filterRowsByGroup(riderRows.slice(1), riderIdx, groupId)) {
+        const entry_id = r[riderIdx["entry_id"]] ?? "";
         const e = byId.get(entry_id);
         if (!e) continue;
 
         e.riders.push({
-          member_id: r[idx["member_id"]] ?? "",
-          trip_type: r[idx["trip_type"]] ?? "",
-          units: Number(r[idx["units"]] ?? 0),
-          charge: Number(r[idx["charge"]] ?? 0),
+          member_id: r[riderIdx["member_id"]] ?? "",
+          trip_type: r[riderIdx["trip_type"]] ?? "",
+          units: Number(r[riderIdx["units"]] ?? 0),
+          charge: Number(r[riderIdx["charge"]] ?? 0),
         });
       }
     }
@@ -416,6 +522,9 @@ app.get("/entries", async (req, res) => {
 
 // ---- UPSERT ENTRY (per-driver total + weighted split) ----
 app.post("/entries", async (req, res) => {
+  const groupId = getReqGroupId(req);
+  if (!groupId) return res.status(400).json({ error: "Missing x-group-id header" });
+
   try {
     const { date, driver_id, day_type, riders = [], notes = "" } = req.body || {};
 
@@ -435,7 +544,7 @@ app.post("/entries", async (req, res) => {
     if (membersRows.length <= 1) return res.status(400).json({ error: "members sheet empty" });
 
     const driverRow = membersRows.find(
-      (r, i) => i > 0 && String(r[midx["member_id"]] ?? "") === driver_id
+      (r, i) => i > 0 && String(r[midx["member_id"]] ?? "") === driver_id && rowMatchesGroup(r, midx, groupId)
     );
     if (!driverRow) return res.status(400).json({ error: "Driver not found in members" });
 
@@ -449,35 +558,54 @@ app.post("/entries", async (req, res) => {
       const created_at = new Date().toISOString();
       const total_amount = 0;
 
-      const entryHeader = ["entry_id","date","driver_id","day_type","day_total_used","total_amount","notes","created_at"];
-      const entryRows = await getValues(`${TAB_DAY_ENTRIES}!A:H`);
-      const entryData = entryRows.length ? entryRows : [entryHeader];
+      const { rows: entryRows, idx: entryIdx } = await loadSheetEnsuringColumns(TAB_DAY_ENTRIES, [
+        "entry_id",
+        "date",
+        "driver_id",
+        "day_type",
+        "day_total_used",
+        "total_amount",
+        "notes",
+        "created_at",
+        "group_id",
+      ]);
+      const entryHeader = entryRows[0];
+      const entryData = entryRows;
 
-      const existingIdx = entryData.findIndex((r, i) => i > 0 && String(r[1] ?? "") === date);
-      const entryRow = [
-        date,
-        date,
-        driver_id,
-        day_type,
-        String(day_total_used),
-        String(total_amount),
-        notes,
-        created_at,
-      ];
+      const existingIdx = entryData.findIndex(
+        (r, i) => i > 0 && String(r[entryIdx["date"]] ?? "") === date && rowMatchesGroup(r, entryIdx, groupId)
+      );
+      const entryRow = new Array(entryHeader.length).fill("");
+      entryRow[entryIdx["entry_id"]] = date;
+      entryRow[entryIdx["date"]] = date;
+      entryRow[entryIdx["driver_id"]] = driver_id;
+      entryRow[entryIdx["day_type"]] = day_type;
+      entryRow[entryIdx["day_total_used"]] = String(day_total_used);
+      entryRow[entryIdx["total_amount"]] = String(total_amount);
+      entryRow[entryIdx["notes"]] = notes;
+      entryRow[entryIdx["created_at"]] = created_at;
+      entryRow[entryIdx["group_id"]] = groupId;
 
       if (existingIdx >= 1) {
         entryData[existingIdx] = entryRow;
-        await setValues(`${TAB_DAY_ENTRIES}!A1:H${entryData.length}`, entryData);
+        await setValues(`${TAB_DAY_ENTRIES}!A1:${colLabel(entryHeader.length)}${entryData.length}`, entryData);
       } else {
-        await appendValues(`${TAB_DAY_ENTRIES}!A:H`, [entryRow]);
+        await appendValues(`${TAB_DAY_ENTRIES}!A:Z`, [entryRow]);
       }
 
       // Clear riders for this date
-      const riderRows = await getValues(`${TAB_DAY_RIDERS}!A:E`);
+      const { rows: riderRows } = await loadSheetEnsuringColumns(TAB_DAY_RIDERS, [
+        "entry_id",
+        "member_id",
+        "trip_type",
+        "units",
+        "charge",
+        "group_id",
+      ]);
       if (riderRows.length > 1) {
         const riderData = riderRows;
-        const kept = [riderData[0], ...riderData.slice(1).filter((r) => String(r[0] ?? "") !== date)];
-        await setValues(`${TAB_DAY_RIDERS}!A1:E${kept.length}`, kept);
+        const kept = [riderData[0], ...riderData.slice(1).filter((r) => String(r[0] ?? "") !== date || !rowMatchesGroup(r, { group_id: 5 }, groupId))];
+        await setValues(`${TAB_DAY_RIDERS}!A1:${colLabel(riderData[0].length)}${kept.length}`, kept);
       }
 
       return res.status(201).json({
@@ -534,38 +662,57 @@ app.post("/entries", async (req, res) => {
     const total_amount = round2(computed.reduce((s, r) => s + r.charge, 0));
     const created_at = new Date().toISOString();
 
-    const entryHeader = ["entry_id","date","driver_id","day_type","day_total_used","total_amount","notes","created_at"];
-    const entryRows = await getValues(`${TAB_DAY_ENTRIES}!A:H`);
-    const entryData = entryRows.length ? entryRows : [entryHeader];
+    const { rows: entryRows, idx: entryIdx } = await loadSheetEnsuringColumns(TAB_DAY_ENTRIES, [
+      "entry_id",
+      "date",
+      "driver_id",
+      "day_type",
+      "day_total_used",
+      "total_amount",
+      "notes",
+      "created_at",
+      "group_id",
+    ]);
+    const entryHeader = entryRows[0];
+    const entryData = entryRows;
 
-    const existingIdx = entryData.findIndex((r, i) => i > 0 && String(r[1] ?? "") === date);
-    const entryRow = [
-      date,
-      date,
-      driver_id,
-      day_type,
-      String(day_total_used),
-      String(total_amount),
-      notes,
-      created_at,
-    ];
+    const existingIdx = entryData.findIndex(
+      (r, i) => i > 0 && String(r[entryIdx["date"]] ?? "") === date && rowMatchesGroup(r, entryIdx, groupId)
+    );
+    const entryRow = new Array(entryHeader.length).fill("");
+    entryRow[entryIdx["entry_id"]] = date;
+    entryRow[entryIdx["date"]] = date;
+    entryRow[entryIdx["driver_id"]] = driver_id;
+    entryRow[entryIdx["day_type"]] = day_type;
+    entryRow[entryIdx["day_total_used"]] = String(day_total_used);
+    entryRow[entryIdx["total_amount"]] = String(total_amount);
+    entryRow[entryIdx["notes"]] = notes;
+    entryRow[entryIdx["created_at"]] = created_at;
+    entryRow[entryIdx["group_id"]] = groupId;
 
     if (existingIdx >= 1) {
       entryData[existingIdx] = entryRow;
-      await setValues(`${TAB_DAY_ENTRIES}!A1:H${entryData.length}`, entryData);
+      await setValues(`${TAB_DAY_ENTRIES}!A1:${colLabel(entryHeader.length)}${entryData.length}`, entryData);
     } else {
-      await appendValues(`${TAB_DAY_ENTRIES}!A:H`, [entryRow]);
+      await appendValues(`${TAB_DAY_ENTRIES}!A:Z`, [entryRow]);
     }
 
-    const riderHeader = ["entry_id","member_id","trip_type","units","charge"];
-    const riderRows = await getValues(`${TAB_DAY_RIDERS}!A:E`);
-    const riderData = riderRows.length ? riderRows : [riderHeader];
+    const { rows: riderRows, idx: riderIdx } = await loadSheetEnsuringColumns(TAB_DAY_RIDERS, [
+      "entry_id",
+      "member_id",
+      "trip_type",
+      "units",
+      "charge",
+      "group_id",
+    ]);
+    const riderHeader = riderRows[0];
+    const riderData = riderRows;
 
-    const kept = [riderHeader, ...riderData.slice(1).filter((r) => String(r[0] ?? "") !== date)];
+    const kept = [riderHeader, ...riderData.slice(1).filter((r) => String(r[riderIdx["entry_id"]] ?? "") !== date || !rowMatchesGroup(r, riderIdx, groupId))];
     for (const c of computed) {
-      kept.push([c.entry_id, c.member_id, c.trip_type, String(c.units), String(c.charge)]);
+      kept.push([c.entry_id, c.member_id, c.trip_type, String(c.units), String(c.charge), groupId]);
     }
-    await setValues(`${TAB_DAY_RIDERS}!A1:E${kept.length}`, kept);
+    await setValues(`${TAB_DAY_RIDERS}!A1:${colLabel(riderHeader.length)}${kept.length}`, kept);
 
     res.status(201).json({
       entry: {
@@ -611,6 +758,9 @@ async function deleteRow(sheetName, rowIndex) {
 
 // ---- DELETE ENTRY ----
 app.delete("/entries/:date", async (req, res) => {
+  const groupId = getReqGroupId(req);
+  if (!groupId) return res.status(400).json({ error: "Missing x-group-id header" });
+
   try {
     const { date } = req.params;
     console.log(`[DELETE] Attempting to delete entry for date: ${date}`);
@@ -627,10 +777,22 @@ app.delete("/entries/:date", async (req, res) => {
     const ridersSheetId = ridersSheet?.properties?.sheetId || 0;
 
     // Delete from day_entries sheet
-    const entryRows = await getValues(`${TAB_DAY_ENTRIES}!A:H`);
+    const { rows: entryRows, idx: entryIdx } = await loadSheetEnsuringColumns(TAB_DAY_ENTRIES, [
+      "entry_id",
+      "date",
+      "driver_id",
+      "day_type",
+      "day_total_used",
+      "total_amount",
+      "notes",
+      "created_at",
+      "group_id",
+    ]);
     console.log(`[DELETE] entryRows length: ${entryRows.length}`);
     if (entryRows.length > 1) {
-      const existingIdx = entryRows.findIndex((r, i) => i > 0 && String(r[1] ?? "") === date);
+      const existingIdx = entryRows.findIndex(
+        (r, i) => i > 0 && String(r[entryIdx["date"]] ?? "") === date && rowMatchesGroup(r, entryIdx, groupId)
+      );
       console.log(`[DELETE] existingIdx for ${date}: ${existingIdx}`);
       if (existingIdx >= 1) {
         // Delete the row (index + 1 because header is row 0, data starts at row 1)
@@ -658,13 +820,20 @@ app.delete("/entries/:date", async (req, res) => {
     }
 
     // Delete from day_riders sheet
-    const riderRows = await getValues(`${TAB_DAY_RIDERS}!A:E`);
+    const { rows: riderRows, idx: riderIdx } = await loadSheetEnsuringColumns(TAB_DAY_RIDERS, [
+      "entry_id",
+      "member_id",
+      "trip_type",
+      "units",
+      "charge",
+      "group_id",
+    ]);
     console.log(`[DELETE] riderRows length: ${riderRows.length}`);
     if (riderRows.length > 1) {
       // Find all rows for this date (there might be multiple riders)
       const rowsToDelete = [];
       riderRows.forEach((r, i) => {
-        if (i > 0 && String(r[0] ?? "") === date) {
+        if (i > 0 && String(r[riderIdx["entry_id"]] ?? "") === date && rowMatchesGroup(r, riderIdx, groupId)) {
           rowsToDelete.push(i);
         }
       });
@@ -703,12 +872,14 @@ app.delete("/entries/:date", async (req, res) => {
 
 // ---- NOTIFY (SMS) ----
 app.post("/notify", async (req, res) => {
+  const groupId = getReqGroupId(req);
+  if (!groupId) return res.status(400).json({ error: "Missing x-group-id header" });
+
   try {
     const { message = "Reminder: please add today's ride details." } = req.body || {};
 
     const { rows, idx } = await loadMembersSheetEnsuringColumns();
-    const members = rows
-      .slice(1)
+    const members = filterRowsByGroup(rows.slice(1), idx, groupId)
       .map((r) => ({
         member_id: r[idx["member_id"]] ?? "",
         name: r[idx["name"]] ?? "",
