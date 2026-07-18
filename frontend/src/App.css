@@ -2899,9 +2899,31 @@ button:hover {
   }
 
   .transferRow {
-    align-items: flex-start;
-    flex-direction: column;
+    align-items: center;
+    flex-direction: row;
     gap: 4px;
+  }
+
+  .transferRow > div:first-child {
+    flex: 1 1 auto;
+    gap: 3px;
+    overflow: hidden;
+  }
+
+  .transferRow > div:first-child strong {
+    min-width: 0;
+    max-width: calc((100% - 20px) / 2);
+    flex: 1 1 0;
+  }
+
+  .transferRow > div:first-child span {
+    width: 16px;
+    height: 16px;
+  }
+
+  .transferRow .uiIcon {
+    width: 9px;
+    height: 9px;
   }
 
   .emptyState {
@@ -2952,19 +2974,41 @@ button:hover {
   }
 
   .riderRow {
-    align-items: stretch;
-    flex-direction: column;
-    gap: 8px;
+    align-items: center;
+    flex-direction: row;
+    gap: 6px;
+    padding: 8px;
+  }
+
+  .riderName {
+    flex: 1 1 auto;
+    gap: 6px;
+  }
+
+  .riderName > span {
+    width: 24px;
+    height: 24px;
+    border-radius: 7px;
+    font-size: 8px;
+  }
+
+  .riderName strong {
+    max-width: 72px;
+    font-size: 9px;
   }
 
   .tripSelector {
     display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(3, auto);
+    flex: 0 0 auto;
+    gap: 2px;
+    padding: 2px;
   }
 
   .tripPill {
-    padding: 0 5px !important;
-    font-size: 9px !important;
+    min-height: 30px;
+    padding: 0 6px !important;
+    font-size: 8px !important;
   }
 
   .phoneControl {
