@@ -21,6 +21,45 @@ const fmtMonthDisplay = (d) => {
 const fmtDate = (d) => `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
 const round2 = (x) => Math.round(Number(x) * 100) / 100;
 
+function BrandMark({ compact = false }) {
+  return (
+    <div className={`brandLockup${compact ? " brandLockupCompact" : ""}`}>
+      <span className="brandSymbol" aria-hidden="true">
+        <img src="/rideshare-ledger-icon.png" alt="" />
+      </span>
+      <span className="brandWords">
+        <strong>RideShare</strong>
+        {!compact && <small>Ledger</small>}
+      </span>
+    </div>
+  );
+}
+
+function AuthBenefits({ className = "" }) {
+  return (
+    <div className={`authBenefits${className ? ` ${className}` : ""}`} aria-label="RideShare benefits">
+      <div className="authBenefit">
+        <span className="authBenefitIcon" aria-hidden="true">
+          <svg viewBox="0 0 24 24"><path d="M5 17.5c1.8-4.3 4.2-6.4 7.1-6.4s5.1-2.1 6.9-6.3M6 19.5a2 2 0 1 0 0-4 2 2 0 0 0 0 4Zm12-13a2 2 0 1 0 0-4 2 2 0 0 0 0 4Z" /></svg>
+        </span>
+        <span>Track rides</span>
+      </div>
+      <div className="authBenefit">
+        <span className="authBenefitIcon" aria-hidden="true">
+          <svg viewBox="0 0 24 24"><path d="M12 3v18M5 7.5h10.5a3.5 3.5 0 0 1 0 7H8.3a3.3 3.3 0 0 0 0 6.5H19" /></svg>
+        </span>
+        <span>Split costs</span>
+      </div>
+      <div className="authBenefit">
+        <span className="authBenefitIcon" aria-hidden="true">
+          <svg viewBox="0 0 24 24"><path d="M20 11.1V12a8 8 0 1 1-4.7-7.3M8.5 11.8l2.3 2.3L20 5" /></svg>
+        </span>
+        <span>Settle up</span>
+      </div>
+    </div>
+  );
+}
+
 /**
  * Mon–Fri only grid for a month.
  * Returns array of weeks; each week is [Mon..Fri] and can contain null cells.
@@ -117,6 +156,8 @@ export default function App() {
   const [groupId, setGroupId] = useState(() => localStorage.getItem("group_id") || "");
   const [joinCode, setJoinCode] = useState(() => localStorage.getItem("join_code") || "");
   const [authErr, setAuthErr] = useState("");
+  const [showJoinCode, setShowJoinCode] = useState(false);
+  const [authPending, setAuthPending] = useState(false);
 
   // ------- App data state -------
   const [showSplash, setShowSplash] = useState(true);
@@ -268,14 +309,14 @@ export default function App() {
       return;
     }
 
+    setAuthPending(true);
+
     localStorage.setItem("group_id", gid);
     localStorage.setItem("join_code", jcode);
 
-    // show splash after join too
-    setShowSplash(true);
-
     try {
       await groupCheck();
+      setShowSplash(true);
       setGroupOk(true);
       await loadAll();
       setTimeout(() => setShowSplash(false), 1200);
@@ -283,6 +324,8 @@ export default function App() {
       setGroupOk(false);
       setAuthErr(e2.message || "Invalid group");
       setShowSplash(false);
+    } finally {
+      setAuthPending(false);
     }
   }
 
@@ -446,10 +489,9 @@ export default function App() {
 
   const computedPreview = useMemo(() => {
     // Auto-detect day type from rider selections
-    let oneWayCount = 0, twoWayCount = 0;
+    let twoWayCount = 0;
     for (const t of Object.values(riderTrip)) {
-      if (t === "one_way") oneWayCount++;
-      else if (t === "two_way") twoWayCount++;
+      if (t === "two_way") twoWayCount++;
     }
     // If any riders selected two-way, use two-way total; otherwise use one-way
     const dayType = twoWayCount > 0 ? "two_way" : "one_way";
@@ -535,10 +577,9 @@ export default function App() {
     }));
 
     // Auto-detect day type from rider selections
-    let oneWayCount = 0, twoWayCount = 0;
+    let twoWayCount = 0;
     for (const r of riders) {
-      if (r.trip_type === "one_way") oneWayCount++;
-      else if (r.trip_type === "two_way") twoWayCount++;
+      if (r.trip_type === "two_way") twoWayCount++;
     }
     const dayType = twoWayCount > 0 ? "two_way" : "one_way";
 
@@ -613,16 +654,13 @@ export default function App() {
   // =========================
   if (!groupOk) {
     return (
-      <div style={styles.joinWrap}>
+      <main className="authPage">
         {showSplash && (
           <div className="splashOverlay">
             <div className="splashCard">
-              <div className="splashHeader">
-                <div className="splashIcon">🚘</div>
-                <div className="splashTitle">RideShare</div>
-              </div>
+              <BrandMark />
               <div className="road">
-                <div className="car">🚗</div>
+                <div className="car" aria-hidden="true"><span /></div>
               </div>
               <div className="splashSub">Preparing your trip</div>
               <div className="splashProgress" aria-hidden="true">
@@ -634,48 +672,105 @@ export default function App() {
           </div>
         )}
 
-        
+        <div className="authGlow authGlowOne" aria-hidden="true" />
+        <div className="authGlow authGlowTwo" aria-hidden="true" />
+        <div className="authGrid" aria-hidden="true" />
 
-        <form onSubmit={handleJoin} style={styles.joinCard}>
-          <div style={styles.authBrand}>
-            <div className="appIcon" style={styles.authIcon}>🚘</div>
-            <div style={styles.authBrandTitle}>RideShare</div>
-          </div>
+        <div className="authLayout">
+          <section className="authStory" aria-label="RideShare Ledger overview">
+            <BrandMark />
 
-          <div style={styles.authHeaderWrap}>
-            <div style={styles.joinTitle}>Welcome!</div>
-            <div style={styles.joinSubtitle}>Enter your group credentials to login</div>
-          </div>
+            <div className="authStoryCopy">
+              <div className="authEyebrow"><span /> Shared rides, clear books</div>
+              <h1>Every ride.<br /><em>Perfectly balanced.</em></h1>
+              <p>One private place for your group to track trips, split costs, and settle up without the spreadsheet shuffle.</p>
+            </div>
 
-          {authErr && <div style={styles.error}>{authErr}</div>}
+            <AuthBenefits />
 
-          <div style={styles.inputGroup}>
-            <input
-              style={styles.input}
-              value={groupId}
-              onChange={(e) => setGroupId(e.target.value)}
-              autoComplete="off"
-              placeholder="GROUP ID"
-            />
-          </div>
+            <div className="authTrust"><span className="shieldIcon">✓</span> Private to your group · Encrypted in transit</div>
+          </section>
 
-          <div style={styles.inputGroup}>
-            <input
-              style={styles.input}
-              type="password"
-              value={joinCode}
-              onChange={(e) => setJoinCode(e.target.value)}
-              autoComplete="off"
-              maxLength={8}
-              placeholder="JOIN CODE"
-            />
-          </div>
+          <section className="authPanel">
+            <div className="authMobileBrand"><BrandMark /></div>
 
-          <button type="submit" style={{ ...styles.btn, ...styles.btnPrimary, width: "100%", marginTop: 8, padding: "12px 14px" }}>
-            Login
-          </button>
-        </form>
-      </div>
+            <form onSubmit={handleJoin} className="authCard" noValidate>
+              <div className="authCardHeader">
+                <div className="authKicker">Member access</div>
+                <h2>Welcome back</h2>
+                <p>Enter the credentials shared by your group organizer.</p>
+              </div>
+
+              {authErr && (
+                <div className="authError" role="alert">
+                  <span aria-hidden="true">!</span>
+                  <div><strong>We couldn’t sign you in</strong><small>{authErr}</small></div>
+                </div>
+              )}
+
+              <div className="authField">
+                <label htmlFor="group-id">Group ID</label>
+                <div className="authInputWrap">
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 18.5v-1.2c0-1.8-1.8-3.3-4-3.3s-4 1.5-4 3.3v1.2M12 11a3 3 0 1 0 0-6 3 3 0 0 0 0 6ZM17 9h4m-2-2v4" /></svg>
+                  <input
+                    id="group-id"
+                    value={groupId}
+                    onChange={(e) => setGroupId(e.target.value)}
+                    autoComplete="username"
+                    autoCapitalize="none"
+                    spellCheck="false"
+                    placeholder="e.g. northstar-team"
+                    aria-invalid={authErr ? "true" : "false"}
+                  />
+                </div>
+              </div>
+
+              <div className="authField">
+                <div className="authLabelRow">
+                  <label htmlFor="join-code">Join code</label>
+                  <span>Up to 8 characters</span>
+                </div>
+                <div className="authInputWrap">
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 10V8a5 5 0 0 1 10 0v2M6 10h12v9H6v-9Zm6 4v2" /></svg>
+                  <input
+                    id="join-code"
+                    type={showJoinCode ? "text" : "password"}
+                    value={joinCode}
+                    onChange={(e) => setJoinCode(e.target.value)}
+                    autoComplete="current-password"
+                    maxLength={8}
+                    placeholder="Enter your join code"
+                    aria-invalid={authErr ? "true" : "false"}
+                  />
+                  <button
+                    className="revealCode"
+                    type="button"
+                    onClick={() => setShowJoinCode((visible) => !visible)}
+                    aria-label={showJoinCode ? "Hide join code" : "Show join code"}
+                    aria-pressed={showJoinCode}
+                  >
+                    {showJoinCode ? "Hide" : "Show"}
+                  </button>
+                </div>
+              </div>
+
+              <button className="authSubmit" type="submit" disabled={authPending}>
+                <span>{authPending ? "Signing in…" : "Sign in"}</span>
+                {authPending ? <i className="authSpinner" aria-hidden="true" /> : <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 6 6 6-6 6" /></svg>}
+              </button>
+
+              <div className="authHelp">
+                <span aria-hidden="true">?</span>
+                <p><strong>Need your access details?</strong> Ask your group organizer for the Group ID and join code.</p>
+              </div>
+
+              <AuthBenefits className="authBenefitsMobile" />
+            </form>
+
+            <div className="authLegal">By continuing, you’re accessing a private group workspace.</div>
+          </section>
+        </div>
+      </main>
     );
   }
 
@@ -705,10 +800,7 @@ export default function App() {
       )}
 
       <div className="appHeader">
-        <div className="appBrand">
-          <div className="appIcon">🚘</div>
-          <div className="appTitle">RideShare</div>
-        </div>
+        <BrandMark />
       </div>
 
       <div className="topbar" style={styles.topbar}>
