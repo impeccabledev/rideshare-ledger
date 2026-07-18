@@ -643,8 +643,8 @@ export default function App() {
           </div>
 
           <div style={styles.authHeaderWrap}>
-            <div style={styles.joinTitle}>Welcome back</div>
-            <div style={styles.joinSubtitle}>Enter your group credentials to continue</div>
+            <div style={styles.joinTitle}>Welcome!</div>
+            <div style={styles.joinSubtitle}>Enter your group credentials to login</div>
           </div>
 
           {authErr && <div style={styles.error}>{authErr}</div>}
