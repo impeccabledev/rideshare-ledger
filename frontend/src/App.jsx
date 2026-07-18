@@ -797,7 +797,7 @@ export default function App() {
 
               <div className="authHelp">
                 <span aria-hidden="true">?</span>
-                <p><strong>Need your access details?</strong> Ask your group organizer for the Group ID and join code.</p>
+                <p><strong>Need your access details?</strong> Ask your group organizer for the Group ID and Join code.</p>
               </div>
 
               <AuthBenefits className="authBenefitsMobile" />
