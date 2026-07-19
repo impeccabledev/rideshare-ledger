@@ -2353,6 +2353,11 @@ html[data-theme="light"] body {
   box-shadow: 0 20px 50px rgba(0,0,0,0.14);
 }
 
+.statsCollapse,
+.statsCollapseInner {
+  display: contents;
+}
+
 .dashboardStats > div {
   min-width: 118px;
   padding: 15px 18px;
@@ -4123,7 +4128,7 @@ html[data-theme="light"] body {
     height: 14px;
     flex: 0 0 auto;
     transform: rotate(90deg);
-    transition: transform 180ms ease;
+    transition: transform 280ms cubic-bezier(.22, .8, .3, 1);
   }
 
   .statsDisclosure[aria-expanded="true"] .uiIcon { transform: rotate(-90deg); }
@@ -4135,25 +4140,38 @@ html[data-theme="light"] body {
 
   .appShell[data-theme="light"] .statsDisclosure small { color: #586e62; }
 
-  .dashboardStats {
-    transition: max-height 220ms ease, opacity 180ms ease, transform 220ms ease, margin 220ms ease;
-  }
-
-  .dashboardStats.isCollapsed {
-    max-height: 0;
-    margin: 0;
+  .statsCollapse {
+    display: grid;
+    width: 100%;
+    grid-template-rows: 0fr;
+    margin-top: -2px;
     overflow: hidden;
-    border-width: 0;
     opacity: 0;
-    transform: translateY(-5px);
+    transform: translateY(-4px);
     pointer-events: none;
+    transition:
+      grid-template-rows 300ms cubic-bezier(.22, .8, .3, 1),
+      margin 300ms cubic-bezier(.22, .8, .3, 1),
+      opacity 180ms ease,
+      transform 300ms cubic-bezier(.22, .8, .3, 1);
   }
 
-  .dashboardStats.isExpanded {
-    max-height: 88px;
+  .statsCollapseInner {
+    display: block;
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  .statsCollapse .dashboardStats {
+    width: 100%;
+  }
+
+  .statsCollapse.isExpanded {
+    grid-template-rows: 1fr;
     margin-top: 2px;
     opacity: 1;
     transform: translateY(0);
+    pointer-events: auto;
   }
 
   .appToolbar {
@@ -4248,7 +4266,7 @@ html[data-theme="light"] body {
   .authBootPulse span,
   .pullRefreshIndicator,
   .pullRefreshIndicator .uiIcon,
-  .dashboardStats,
+  .statsCollapse,
   .statsDisclosure .uiIcon {
     animation: none !important;
     transition: none !important;

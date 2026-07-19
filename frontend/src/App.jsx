@@ -1272,10 +1272,14 @@ export default function App() {
             <span><strong>Monthly summary</strong><small>{entries.length} rides · {members.length} members</small></span>
             <UiIcon name="chevronRight" />
           </button>
-          <div id="workspace-stats" className={`dashboardStats${statsExpanded ? " isExpanded" : " isCollapsed"}`} aria-label="Workspace summary">
-            <div><strong>{entries.length}</strong><span>Trips this month</span></div>
-            <div><strong>{members.length}</strong><span>Active members</span></div>
-            <div><strong>{transfers.length}</strong><span>Settlements</span></div>
+          <div id="workspace-stats" className={`statsCollapse${statsExpanded ? " isExpanded" : " isCollapsed"}`}>
+            <div className="statsCollapseInner">
+              <div className="dashboardStats" aria-label="Workspace summary">
+                <div><strong>{entries.length}</strong><span>Trips this month</span></div>
+                <div><strong>{members.length}</strong><span>Active members</span></div>
+                <div><strong>{transfers.length}</strong><span>Settlements</span></div>
+              </div>
+            </div>
           </div>
         </section>
 
