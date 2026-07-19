@@ -26,10 +26,14 @@ const shiftMonthKey = (monthKey, offset) => {
 };
 
 function BrandMark({ compact = false, theme = "dark" }) {
+  const brandIcon = theme === "light"
+    ? "/rideshare-ledger-icon-light.png?v=20260719-3"
+    : "/rideshare-ledger-icon-dark.png?v=20260719-3";
+
   return (
     <div className={`brandLockup${compact ? " brandLockupCompact" : ""}`}>
       <span className="brandSymbol" aria-hidden="true">
-        <img src={theme === "light" ? "/rideshare-ledger-icon-light.png" : "/rideshare-ledger-icon-dark.png"} alt="" />
+        <img key={theme} src={brandIcon} alt="" />
       </span>
       <span className="brandWords">
         <strong>RideShare</strong>

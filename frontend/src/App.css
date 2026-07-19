@@ -152,6 +152,9 @@ button:hover {
   overflow: hidden;
   border: 1px solid rgba(89, 235, 163, 0.27);
   border-radius: 13px;
+  isolation: isolate;
+  clip-path: inset(0 round 13px);
+  -webkit-mask-image: -webkit-radial-gradient(white, black);
   background: linear-gradient(145deg, rgba(55, 217, 137, 0.18), rgba(40, 179, 109, 0.07));
   box-shadow: inset 0 1px 0 rgba(255,255,255,0.11), 0 10px 26px rgba(12, 100, 59, 0.14);
 }
@@ -159,10 +162,10 @@ button:hover {
 .brandSymbol img {
   grid-area: 1 / 1;
   display: block;
-  width: 44px;
-  height: 44px;
-  border-radius: 10px;
-  object-fit: contain;
+  width: 100%;
+  height: 100%;
+  border-radius: inherit;
+  object-fit: cover;
 }
 
 .brandWords {
