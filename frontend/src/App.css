@@ -2353,8 +2353,8 @@ html[data-theme="light"] body {
   box-shadow: 0 20px 50px rgba(0,0,0,0.14);
 }
 
-.statsCollapse,
-.statsCollapseInner {
+.statsAccordion,
+.statsCollapse {
   display: contents;
 }
 
@@ -4089,6 +4089,15 @@ html[data-theme="light"] body {
 
   .appShell[data-theme="light"] .dashboardIntro p { color: #52695d; }
 
+  .statsAccordion {
+    display: block;
+    width: 100%;
+    overflow: hidden;
+    border: 1px solid var(--app-line);
+    border-radius: 12px;
+    background: rgba(255,255,255,0.025);
+  }
+
   .statsDisclosure {
     display: flex;
     width: 100%;
@@ -4097,10 +4106,10 @@ html[data-theme="light"] body {
     justify-content: space-between;
     gap: 10px;
     padding: 7px 10px;
-    border: 1px solid var(--app-line);
-    border-radius: 12px;
+    border: 0;
+    border-radius: 0;
     color: #c5d5cc;
-    background: rgba(255,255,255,0.025);
+    background: transparent;
   }
 
   .statsDisclosure > span {
@@ -4128,50 +4137,47 @@ html[data-theme="light"] body {
     height: 14px;
     flex: 0 0 auto;
     transform: rotate(90deg);
-    transition: transform 280ms cubic-bezier(.22, .8, .3, 1);
+    transition: transform 280ms cubic-bezier(.4, 0, .2, 1);
   }
 
   .statsDisclosure[aria-expanded="true"] .uiIcon { transform: rotate(-90deg); }
 
   .appShell[data-theme="light"] .statsDisclosure {
     color: #284a39;
-    background: rgba(255,255,255,0.68);
+    background: transparent;
   }
 
   .appShell[data-theme="light"] .statsDisclosure small { color: #586e62; }
 
-  .statsCollapse {
-    display: grid;
-    width: 100%;
-    grid-template-rows: 0fr;
-    margin-top: -2px;
-    overflow: hidden;
-    opacity: 0;
-    transform: translateY(-4px);
-    pointer-events: none;
-    transition:
-      grid-template-rows 300ms cubic-bezier(.22, .8, .3, 1),
-      margin 300ms cubic-bezier(.22, .8, .3, 1),
-      opacity 180ms ease,
-      transform 300ms cubic-bezier(.22, .8, .3, 1);
+  .appShell[data-theme="light"] .statsAccordion {
+    background: rgba(255,255,255,0.68);
   }
 
-  .statsCollapseInner {
+  .statsCollapse {
     display: block;
-    min-height: 0;
+    width: auto;
+    height: 0;
+    margin: 0 10px;
     overflow: hidden;
+    transition: height 280ms cubic-bezier(.4, 0, .2, 1);
   }
 
   .statsCollapse .dashboardStats {
     width: 100%;
+    border: 0;
+    border-top: 1px solid var(--app-line);
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
   }
 
-  .statsCollapse.isExpanded {
-    grid-template-rows: 1fr;
-    margin-top: 2px;
-    opacity: 1;
-    transform: translateY(0);
-    pointer-events: auto;
+  .statsCollapse .dashboardStats > div {
+    padding: 12px 8px;
+    background: transparent;
+  }
+
+  .statsCollapse .dashboardStats > div + div {
+    border-left: 1px solid var(--app-line);
   }
 
   .appToolbar {

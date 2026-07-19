@@ -279,6 +279,8 @@ export default function App() {
   const [toast, setToast] = useState(null);
   const toastTimerRef = useRef(null);
   const [statsExpanded, setStatsExpanded] = useState(false);
+  const [statsPanelHeight, setStatsPanelHeight] = useState(0);
+  const statsContentRef = useRef(null);
   const [pullDistance, setPullDistance] = useState(0);
   const [pullRefreshing, setPullRefreshing] = useState(false);
   const pullStartRef = useRef(null);
@@ -1262,19 +1264,27 @@ export default function App() {
             </div>
             <p>Plan rides, split each trip, and keep every balance current.</p>
           </div>
-          <button
-            className="statsDisclosure"
-            type="button"
-            onClick={() => setStatsExpanded((expanded) => !expanded)}
-            aria-expanded={statsExpanded}
-            aria-controls="workspace-stats"
-          >
-            <span><strong>Monthly summary</strong><small>{entries.length} rides · {members.length} members</small></span>
-            <UiIcon name="chevronRight" />
-          </button>
-          <div id="workspace-stats" className={`statsCollapse${statsExpanded ? " isExpanded" : " isCollapsed"}`}>
-            <div className="statsCollapseInner">
-              <div className="dashboardStats" aria-label="Workspace summary">
+          <div className="statsAccordion">
+            <button
+              className="statsDisclosure"
+              type="button"
+              onClick={() => {
+                const nextExpanded = !statsExpanded;
+                setStatsPanelHeight(nextExpanded ? (statsContentRef.current?.scrollHeight || 0) : 0);
+                setStatsExpanded(nextExpanded);
+              }}
+              aria-expanded={statsExpanded}
+              aria-controls="workspace-stats"
+            >
+              <span><strong>Monthly summary</strong><small>{entries.length} rides · {members.length} members</small></span>
+              <UiIcon name="chevronRight" />
+            </button>
+            <div
+              id="workspace-stats"
+              className="statsCollapse"
+              style={{ height: `${statsPanelHeight}px` }}
+            >
+              <div ref={statsContentRef} className="dashboardStats" aria-label="Workspace summary">
                 <div><strong>{entries.length}</strong><span>Trips this month</span></div>
                 <div><strong>{members.length}</strong><span>Active members</span></div>
                 <div><strong>{transfers.length}</strong><span>Settlements</span></div>
