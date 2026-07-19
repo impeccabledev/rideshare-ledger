@@ -20,6 +20,10 @@ const fmtMonthDisplay = (d) => {
 };
 const fmtDate = (d) => `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
 const round2 = (x) => Math.round(Number(x) * 100) / 100;
+const shiftMonthKey = (monthKey, offset) => {
+  const [year, month] = monthKey.split("-").map(Number);
+  return fmtMonthApi(new Date(year, month - 1 + offset, 1));
+};
 
 function BrandMark({ compact = false }) {
   return (
@@ -59,6 +63,7 @@ function UiIcon({ name, className = "" }) {
     calendar: <><rect x="4" y="5" width="16" height="15" rx="3" /><path d="M8 3v4m8-4v4M4 10h16" /></>,
     trash: <><path d="M4 7h16M9 7V4h6v3m3 0-1 13H7L6 7" /><path d="M10 11v5m4-5v5" /></>,
     save: <><path d="M5 4h12l2 2v14H5V4Z" /><path d="M8 4v6h8V4M8 20v-6h8v6" /></>,
+    check: <path d="m5 12.5 4.2 4.2L19 7" />,
     close: <path d="m7 7 10 10M17 7 7 17" />,
     sun: <><circle cx="12" cy="12" r="3.5" /><path d="M12 2.5v2M12 19.5v2M4.6 4.6 6 6m12 12 1.4 1.4M2.5 12h2M19.5 12h2M4.6 19.4 6 18M18 6l1.4-1.4" /></>,
     moon: <path d="M20 15.2A8.3 8.3 0 0 1 8.8 4a8.3 8.3 0 1 0 11.2 11.2Z" />,
@@ -232,14 +237,26 @@ export default function App() {
   }, []);
 
   // ------- App data state -------
-  const [showSplash, setShowSplash] = useState(true);
+  const [firstLaunchSplash, setFirstLaunchSplash] = useState(
+    () => localStorage.getItem("rideshare_splash_seen") !== "true"
+  );
+  const [networkSplash, setNetworkSplash] = useState(false);
+  const showSplash = firstLaunchSplash || networkSplash;
+  const networkSplashTimerRef = useRef(null);
 
   const [monthDate, setMonthDate] = useState(() => new Date());
-  const [transitionDirection, setTransitionDirection] = useState("none");
+  const [monthTransition, setMonthTransition] = useState("none");
   const swipeStartRef = useRef(null);
   const swipeHandledRef = useRef(false);
+  const monthTransitionLockRef = useRef(false);
+  const monthTransitionTimersRef = useRef([]);
   const month = useMemo(() => fmtMonthApi(monthDate), [monthDate]);
   const monthDisplay = useMemo(() => fmtMonthDisplay(monthDate), [monthDate]);
+  const activeMonthRef = useRef(month);
+  activeMonthRef.current = month;
+  const loadedMonthRef = useRef("");
+  const monthRequestRef = useRef(0);
+  const monthCacheRef = useRef(new Map());
 
   const [allMembers, setAllMembers] = useState([]);
   const [members, setMembers] = useState([]);
@@ -252,9 +269,14 @@ export default function App() {
 
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState("");
+  const [toast, setToast] = useState(null);
+  const toastTimerRef = useRef(null);
 
   // ------- Day modal state -------
   const [open, setOpen] = useState(false);
+  const [tripModalClosing, setTripModalClosing] = useState(false);
+  const [rideSaveState, setRideSaveState] = useState("idle");
+  const [rateSaveState, setRateSaveState] = useState("idle");
   const [activeDay, setActiveDay] = useState(null);
   const [driverId, setDriverId] = useState("");
   const [riderTrip, setRiderTrip] = useState({});
@@ -269,10 +291,14 @@ export default function App() {
 
   // ------- Add member modal state -------
   const [memberOpen, setMemberOpen] = useState(false);
+  const [memberModalClosing, setMemberModalClosing] = useState(false);
+  const [memberSaveState, setMemberSaveState] = useState("idle");
   const [newMemberName, setNewMemberName] = useState("");
   const [newMemberCountryCode, setNewMemberCountryCode] = useState("+1");
   const [newMemberPhone, setNewMemberPhone] = useState("");
   const [memberErr, setMemberErr] = useState("");
+  const tripCloseTimerRef = useRef(null);
+  const memberCloseTimerRef = useRef(null);
 
   // Country codes with flags
   const countryCodes = [
@@ -300,12 +326,66 @@ export default function App() {
     { code: "+55", country: "BR", flag: "🇧🇷" },
   ];
 
-  // ---- Boot: splash + auto-check stored creds ----
-  useEffect(() => {
-    // Allow the full car and caption sequence to finish before the splash closes.
-    const t = setTimeout(() => setShowSplash(false), 2400);
-    return () => clearTimeout(t);
+  const showToast = useCallback((message, type = "success") => {
+    window.clearTimeout(toastTimerRef.current);
+    setToast({ id: Date.now(), message, type });
+    toastTimerRef.current = window.setTimeout(() => setToast(null), 3000);
   }, []);
+
+  const closeTripModal = useCallback(() => {
+    if (tripModalClosing) return;
+    setTripModalClosing(true);
+    window.clearTimeout(tripCloseTimerRef.current);
+    tripCloseTimerRef.current = window.setTimeout(() => {
+      setOpen(false);
+      setTripModalClosing(false);
+      setRideSaveState("idle");
+    }, 220);
+  }, [tripModalClosing]);
+
+  const closeMemberModal = useCallback(() => {
+    if (memberModalClosing) return;
+    setMemberModalClosing(true);
+    window.clearTimeout(memberCloseTimerRef.current);
+    memberCloseTimerRef.current = window.setTimeout(() => {
+      setMemberOpen(false);
+      setMemberModalClosing(false);
+      setMemberSaveState("idle");
+    }, 220);
+  }, [memberModalClosing]);
+
+  async function runWithContextualSplash(task) {
+    window.clearTimeout(networkSplashTimerRef.current);
+    networkSplashTimerRef.current = window.setTimeout(() => setNetworkSplash(true), 400);
+    try {
+      return await task();
+    } finally {
+      window.clearTimeout(networkSplashTimerRef.current);
+      setNetworkSplash(false);
+    }
+  }
+
+  function prefetchMonth(targetMonth) {
+    if (monthCacheRef.current.has(targetMonth)) return;
+    Promise.all([getEntries(targetMonth), getHolidays(targetMonth)])
+      .then(([monthEntries, monthHolidays]) => {
+        monthCacheRef.current.set(targetMonth, {
+          entries: monthEntries || [],
+          holidays: monthHolidays || [],
+        });
+      })
+      .catch(() => {
+        // Prefetch is opportunistic; the foreground request will surface errors.
+      });
+  }
+
+  // ---- Boot: first-launch splash + auto-check stored creds ----
+  useEffect(() => {
+    if (!firstLaunchSplash) return undefined;
+    localStorage.setItem("rideshare_splash_seen", "true");
+    const timer = window.setTimeout(() => setFirstLaunchSplash(false), 1100);
+    return () => window.clearTimeout(timer);
+  }, [firstLaunchSplash]);
 
   useEffect(() => {
     async function bootAuth() {
@@ -318,7 +398,10 @@ export default function App() {
       }
 
       try {
-        await groupCheck();
+        await runWithContextualSplash(async () => {
+          await groupCheck();
+          await loadAll({ targetMonth: month, force: true, throwOnError: true });
+        });
         setGroupOk(true);
       } catch (e) {
         localStorage.removeItem("group_id");
@@ -330,35 +413,83 @@ export default function App() {
       }
     }
     bootAuth();
+    // Authentication boot intentionally runs once with the initial month.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  async function loadAll(skipDriverReset = false) {
-    setLoading(true);
+  async function loadAll({
+    targetMonth = month,
+    force = false,
+    skipDriverReset = false,
+    throwOnError = false,
+  } = {}) {
+    const requestId = ++monthRequestRef.current;
+    const cached = monthCacheRef.current.get(targetMonth);
+
+    if (cached && !force && activeMonthRef.current === targetMonth) {
+      setEntries(cached.entries);
+      setHolidays(cached.holidays);
+    }
+
+    setLoading(force || !cached);
     setErr("");
     try {
-      const [m, e, h] = await Promise.all([getMembers(), getEntries(month), getHolidays(month)]);
+      const [m, e, h] = await Promise.all([
+        getMembers(),
+        getEntries(targetMonth),
+        getHolidays(targetMonth),
+      ]);
+
+      monthCacheRef.current.set(targetMonth, {
+        entries: e || [],
+        holidays: h || [],
+      });
+
+      if (requestId !== monthRequestRef.current || activeMonthRef.current !== targetMonth) {
+        return false;
+      }
+
       setAllMembers(m || []);
       const active = (m || []).filter((x) => x.active);
       setMembers(active);
       setEntries(e || []);
       setHolidays(h || []);
+      loadedMonthRef.current = targetMonth;
       // Only auto-select first driver if driverId is truly empty (not __none__)
       if (!skipDriverReset && !driverId && !driverId.startsWith("__") && active.length) {
         setDriverId(active[0].member_id);
       }
+
+      prefetchMonth(shiftMonthKey(targetMonth, -1));
+      prefetchMonth(shiftMonthKey(targetMonth, 1));
+      return true;
     } catch (e) {
-      setErr(e.message || "Failed to load");
+      if (requestId === monthRequestRef.current && activeMonthRef.current === targetMonth) {
+        setErr(e.message || "Failed to load");
+      }
+      if (throwOnError) throw e;
+      return false;
     } finally {
-      setLoading(false);
+      if (requestId === monthRequestRef.current && activeMonthRef.current === targetMonth) {
+        setLoading(false);
+      }
     }
   }
 
   // load data only when groupOk is true
   useEffect(() => {
-    if (!groupOk) return;
-    loadAll();
+    if (!groupOk || loadedMonthRef.current === month) return;
+    loadAll({ targetMonth: month });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [groupOk, month]);
+
+  useEffect(() => () => {
+    window.clearTimeout(networkSplashTimerRef.current);
+    window.clearTimeout(toastTimerRef.current);
+    window.clearTimeout(tripCloseTimerRef.current);
+    window.clearTimeout(memberCloseTimerRef.current);
+    monthTransitionTimersRef.current.forEach((timer) => window.clearTimeout(timer));
+  }, []);
 
   function logout() {
     localStorage.removeItem("group_id");
@@ -387,15 +518,16 @@ export default function App() {
     localStorage.setItem("join_code", jcode);
 
     try {
-      await groupCheck();
-      setShowSplash(true);
+      await runWithContextualSplash(async () => {
+        await groupCheck();
+        await loadAll({ targetMonth: month, force: true, throwOnError: true });
+      });
       setGroupOk(true);
-      await loadAll();
-      setTimeout(() => setShowSplash(false), 2400);
     } catch (e2) {
+      localStorage.removeItem("group_id");
+      localStorage.removeItem("join_code");
       setGroupOk(false);
       setAuthErr(e2.message || "Invalid group");
-      setShowSplash(false);
     } finally {
       setAuthPending(false);
     }
@@ -432,20 +564,52 @@ export default function App() {
     [monthDate]
   );
 
+  function navigateMonth(offset) {
+    if (monthTransitionLockRef.current) return;
+    monthTransitionLockRef.current = true;
+    monthRequestRef.current += 1;
+
+    const targetDate = new Date(monthDate);
+    targetDate.setDate(1);
+    targetDate.setMonth(targetDate.getMonth() + offset);
+    const targetMonth = fmtMonthApi(targetDate);
+
+    prefetchMonth(targetMonth);
+    setMonthTransition(offset > 0 ? "calendarExitLeft" : "calendarExitRight");
+
+    const swapTimer = window.setTimeout(() => {
+      const cached = monthCacheRef.current.get(targetMonth);
+      activeMonthRef.current = targetMonth;
+      loadedMonthRef.current = "";
+
+      if (cached) {
+        setEntries(cached.entries);
+        setHolidays(cached.holidays);
+        setLoading(false);
+      } else {
+        setEntries([]);
+        setHolidays([]);
+        setLoading(true);
+      }
+
+      setMonthDate(targetDate);
+      setMonthTransition(offset > 0 ? "calendarEnterRight" : "calendarEnterLeft");
+    }, 140);
+
+    const finishTimer = window.setTimeout(() => {
+      setMonthTransition("none");
+      monthTransitionLockRef.current = false;
+    }, 360);
+
+    monthTransitionTimersRef.current = [swapTimer, finishTimer];
+  }
+
   function prevMonth() {
-    setTransitionDirection("prev");
-    const d = new Date(monthDate);
-    d.setMonth(d.getMonth() - 1);
-    setMonthDate(d);
-    setTimeout(() => setTransitionDirection("none"), 300);
+    navigateMonth(-1);
   }
 
   function nextMonth() {
-    setTransitionDirection("next");
-    const d = new Date(monthDate);
-    d.setMonth(d.getMonth() + 1);
-    setMonthDate(d);
-    setTimeout(() => setTransitionDirection("none"), 300);
+    navigateMonth(1);
   }
 
   function handleSwipeStart(e) {
@@ -478,6 +642,10 @@ export default function App() {
   function openDay(d) {
     const dateStr = fmtDate(d);
     const existing = entryByDate.get(dateStr);
+
+    window.clearTimeout(tripCloseTimerRef.current);
+    setTripModalClosing(false);
+    setRideSaveState("idle");
 
     // Reset the clear flag when opening a new day
     setShouldClear(false);
@@ -606,7 +774,8 @@ export default function App() {
 
   async function onSave() {
     setErr("");
-    if (!activeDay) return;
+    if (!activeDay || rideSaveState === "saving") return;
+    setRideSaveState("saving");
 
     const date = fmtDate(activeDay);
     console.log("onSave called, shouldClear:", shouldClear, "driverId:", driverId);
@@ -627,17 +796,21 @@ export default function App() {
         const filteredEntries = entries.filter((e) => e.date !== date);
         console.log("Filtered entries after delete:", filteredEntries.map(e => e.date));
         setEntries(filteredEntries);
+        monthCacheRef.current.set(month, { entries: filteredEntries, holidays });
         
         // Reset the clear flag
         setShouldClear(false);
         
-        // Close the modal
-        setOpen(false);
+        setRideSaveState("success");
+        showToast("Ride removed");
+        window.setTimeout(closeTripModal, 420);
         
         console.log("Clear complete - entry removed from UI");
       } catch (e) {
         console.error("Clear error:", e);
         setErr(e.message || "Failed to clear entry");
+        setRideSaveState("idle");
+        showToast(e.message || "Failed to clear entry", "error");
       }
       return;
     }
@@ -664,32 +837,44 @@ export default function App() {
         notes,
       });
 
-      setEntries((prev) => {
-        const rest = prev.filter((e) => e.date !== date);
-        return [...rest, entry].sort((a, b) => a.date.localeCompare(b.date));
-      });
+      const nextEntries = [
+        ...entries.filter((existingEntry) => existingEntry.date !== date),
+        entry,
+      ].sort((a, b) => a.date.localeCompare(b.date));
+      setEntries(nextEntries);
+      monthCacheRef.current.set(month, { entries: nextEntries, holidays });
 
-      setOpen(false);
-      
-      // Reload all data to refresh the memoized entryByDate map
-      await loadAll();
+      setRideSaveState("success");
+      showToast("Ride saved");
+      window.setTimeout(closeTripModal, 420);
+
+      // Revalidate in the background while the optimistic result remains visible.
+      loadAll({ targetMonth: month, force: true, skipDriverReset: true });
     } catch (e) {
       setErr(e.message || "Failed to save entry");
+      setRideSaveState("idle");
+      showToast(e.message || "Failed to save entry", "error");
     }
   }
 
   async function onUpdateRates() {
     setErr("");
-    if (!driverId) return;
+    if (!driverId || rateSaveState !== "idle") return;
+    setRateSaveState("saving");
     try {
       await updateMemberRates({
         member_id: driverId,
         one_way_total: Number(driverRatesForm.one_way_total),
         two_way_total: Number(driverRatesForm.two_way_total),
       });
-      await loadAll();
+      await loadAll({ targetMonth: month, force: true, skipDriverReset: true, throwOnError: true });
+      setRateSaveState("success");
+      showToast("Driver rates saved");
+      window.setTimeout(() => setRateSaveState("idle"), 1400);
     } catch (e) {
       setErr(e.message || "Failed to update rates");
+      setRateSaveState("idle");
+      showToast(e.message || "Failed to update rates", "error");
     }
   }
 
@@ -703,14 +888,21 @@ export default function App() {
     // Combine country code with phone number
     const fullPhone = `${newMemberCountryCode}${phone}`;
 
+    if (memberSaveState === "saving") return;
+    setMemberSaveState("saving");
+
     try {
       await createMember({ name, phone: fullPhone, active: true });
       setNewMemberName("");
       setNewMemberPhone("");
-      setMemberOpen(false);
-      await loadAll();
+      setMemberSaveState("success");
+      showToast("Member added");
+      window.setTimeout(closeMemberModal, 420);
+      loadAll({ targetMonth: month, force: true, skipDriverReset: true });
     } catch (e) {
       setMemberErr(e.message || "Failed to create member");
+      setMemberSaveState("idle");
+      showToast(e.message || "Failed to create member", "error");
     }
   }
 
@@ -878,6 +1070,18 @@ export default function App() {
         </div>
       )}
 
+      {toast && (
+        <div
+          key={toast.id}
+          className={`appToast appToast${toast.type === "error" ? "Error" : "Success"}`}
+          role={toast.type === "error" ? "alert" : "status"}
+          aria-live={toast.type === "error" ? "assertive" : "polite"}
+        >
+          <span aria-hidden="true">{toast.type === "error" ? "!" : <UiIcon name="check" />}</span>
+          <strong>{toast.message}</strong>
+        </div>
+      )}
+
       <div className="appAmbient appAmbientOne" aria-hidden="true" />
       <div className="appAmbient appAmbientTwo" aria-hidden="true" />
       <div className="appGrid" aria-hidden="true" />
@@ -914,24 +1118,30 @@ export default function App() {
 
         <section className="appToolbar" aria-label="Calendar controls">
           <div className="monthNavigator">
-            <button className="iconButton" type="button" onClick={prevMonth} aria-label="Previous month">
+            <button className="iconButton" type="button" onClick={prevMonth} disabled={monthTransition !== "none"} aria-label="Previous month">
               <UiIcon name="chevronLeft" />
             </button>
             <div className="monthTitle">
               <span>Viewing</span>
               <strong>{monthDisplay}</strong>
             </div>
-            <button className="iconButton" type="button" onClick={nextMonth} aria-label="Next month">
+            <button className="iconButton" type="button" onClick={nextMonth} disabled={monthTransition !== "none"} aria-label="Next month">
               <UiIcon name="chevronRight" />
             </button>
           </div>
 
           <div className="toolbarActions">
-            <button className="appButton appButtonPrimary" type="button" onClick={() => { setMemberErr(""); setMemberOpen(true); }}>
+            <button className="appButton appButtonPrimary" type="button" onClick={() => {
+              window.clearTimeout(memberCloseTimerRef.current);
+              setMemberErr("");
+              setMemberModalClosing(false);
+              setMemberSaveState("idle");
+              setMemberOpen(true);
+            }}>
               <UiIcon name="userPlus" />
               <span>Add member</span>
             </button>
-            <button className="appButton" type="button" onClick={loadAll} disabled={loading}>
+            <button className="appButton" type="button" onClick={() => loadAll({ targetMonth: month, force: true })} disabled={loading}>
               <UiIcon name="refresh" className={loading ? "isSpinning" : ""} />
               <span>{loading ? "Refreshing" : "Refresh"}</span>
             </button>
@@ -944,22 +1154,24 @@ export default function App() {
 
         {err && <div className="appError" role="alert">{err}</div>}
 
-        <section className="calendarPanel">
+        <section className="calendarPanel" aria-busy={loading}>
           <div className="calendarPanelHeader">
             <div><UiIcon name="calendar" /><strong>Weekday schedule</strong></div>
             <span>Select a day to add or edit a ride</span>
           </div>
 
           <div
-            className="calendarContainer"
-            style={{
-              animation: transitionDirection === "prev" ? "calendarFromLeft 0.34s ease-out" : transitionDirection === "next" ? "calendarFromRight 0.34s ease-out" : "none",
-              touchAction: "pan-y",
-            }}
+            className={`calendarContainer${monthTransition !== "none" ? ` ${monthTransition}` : ""}${loading ? " isMonthLoading" : ""}`}
+            style={{ touchAction: "pan-y" }}
             onPointerDown={handleSwipeStart}
             onPointerUp={handleSwipeEnd}
             onClickCapture={handleCalendarClick}
           >
+          {loading && (
+            <div className="calendarLoading" aria-hidden="true">
+              <span /><span /><span />
+            </div>
+          )}
           <div className="weekHeader">
           {["Mon", "Tue", "Wed", "Thu", "Fri"].map((label) => (
             <div key={label} className="weekHeaderCell">
@@ -1091,14 +1303,15 @@ export default function App() {
 
       {/* Day modal */}
       {open && (
-        <div className="modalBackdrop" onClick={() => setOpen(false)}>
+        <div className={`modalBackdrop${tripModalClosing ? " isClosing" : ""}`} onClick={closeTripModal}>
           <div className="modal tripModal" onClick={(e) => e.stopPropagation()}>
+            <div className="modalDragHandle" aria-hidden="true" />
             <div className="modalHeader">
               <div>
                 <span className="sectionKicker">Ride details</span>
                 <h2>{activeDay ? activeDay.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" }) : ""}</h2>
               </div>
-              <button className="iconButton modalClose" type="button" onClick={() => setOpen(false)} aria-label="Close ride details">
+              <button className="iconButton modalClose" type="button" onClick={closeTripModal} aria-label="Close ride details">
                 <UiIcon name="close" />
               </button>
             </div>
@@ -1165,8 +1378,10 @@ export default function App() {
               </div>
 
               <div className="inlineAction">
-                <button type="button" className="appButton appButtonSmall" onClick={onUpdateRates}>
-                  Save Rates
+                <button type="button" className={`appButton appButtonSmall actionStateButton${rateSaveState === "success" ? " isSuccess" : ""}`} onClick={onUpdateRates} disabled={rateSaveState !== "idle"}>
+                  {rateSaveState === "saving" && <i className="actionSpinner" aria-hidden="true" />}
+                  {rateSaveState === "success" && <UiIcon name="check" />}
+                  {rateSaveState === "saving" ? "Saving…" : rateSaveState === "success" ? "Saved" : "Save rates"}
                 </button>
                 <span>Saved for future trips with this driver.</span>
               </div>
@@ -1224,17 +1439,19 @@ export default function App() {
             </div>
 
             <div className="modalFooter">
-              <button type="button" className="appButton appButtonDanger" onClick={onClear}>
+              <button type="button" className="appButton appButtonDanger" onClick={onClear} disabled={rideSaveState !== "idle"}>
                 <UiIcon name="trash" />
                 Clear day
               </button>
               <span className="modalFooterSpacer" />
-              <button type="button" className="appButton" onClick={() => setOpen(false)}>
+              <button type="button" className="appButton" onClick={closeTripModal} disabled={rideSaveState === "saving"}>
                 Cancel
               </button>
-              <button type="button" className="appButton appButtonPrimary" onClick={onSave}>
-                <UiIcon name="save" />
-                Save ride
+              <button type="button" className={`appButton appButtonPrimary actionStateButton${rideSaveState === "success" ? " isSuccess" : ""}`} onClick={onSave} disabled={rideSaveState !== "idle"}>
+                {rideSaveState === "idle" && <UiIcon name="save" />}
+                {rideSaveState === "saving" && <i className="actionSpinner" aria-hidden="true" />}
+                {rideSaveState === "success" && <UiIcon name="check" />}
+                {rideSaveState === "saving" ? "Saving…" : rideSaveState === "success" ? "Saved" : "Save ride"}
               </button>
             </div>
           </div>
@@ -1243,11 +1460,12 @@ export default function App() {
 
       {/* Add member modal */}
       {memberOpen && (
-        <div className="modalBackdrop" onClick={() => setMemberOpen(false)}>
+        <div className={`modalBackdrop${memberModalClosing ? " isClosing" : ""}`} onClick={closeMemberModal}>
           <div className="modal memberModal" onClick={(e) => e.stopPropagation()}>
+            <div className="modalDragHandle" aria-hidden="true" />
             <div className="modalHeader">
               <div><span className="sectionKicker">Add member</span></div>
-              <button className="iconButton modalClose" type="button" onClick={() => setMemberOpen(false)} aria-label="Close add member form"><UiIcon name="close" /></button>
+              <button className="iconButton modalClose" type="button" onClick={closeMemberModal} aria-label="Close add member form"><UiIcon name="close" /></button>
             </div>
 
             <div className="modalBody">
@@ -1291,12 +1509,14 @@ export default function App() {
 
             <div className="modalFooter">
               <span className="modalFooterSpacer" />
-              <button type="button" className="appButton" onClick={() => setMemberOpen(false)}>
+              <button type="button" className="appButton" onClick={closeMemberModal} disabled={memberSaveState === "saving"}>
                 Cancel
               </button>
-              <button type="button" className="appButton appButtonPrimary" onClick={onCreateMember}>
-                <UiIcon name="userPlus" />
-                Add member
+              <button type="button" className={`appButton appButtonPrimary actionStateButton${memberSaveState === "success" ? " isSuccess" : ""}`} onClick={onCreateMember} disabled={memberSaveState !== "idle"}>
+                {memberSaveState === "idle" && <UiIcon name="userPlus" />}
+                {memberSaveState === "saving" && <i className="actionSpinner" aria-hidden="true" />}
+                {memberSaveState === "success" && <UiIcon name="check" />}
+                {memberSaveState === "saving" ? "Adding…" : memberSaveState === "success" ? "Added" : "Add member"}
               </button>
             </div>
           </div>

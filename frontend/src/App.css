@@ -664,6 +664,299 @@ button:hover {
 }
 
 /* =========================
+   Refined application motion
+   ========================= */
+.calendarContainer {
+  position: relative;
+  will-change: opacity, transform;
+}
+
+.calendarContainer.calendarExitLeft {
+  pointer-events: none;
+  animation: calendarExitLeft 140ms cubic-bezier(.4, 0, 1, 1) both;
+}
+
+.calendarContainer.calendarExitRight {
+  pointer-events: none;
+  animation: calendarExitRight 140ms cubic-bezier(.4, 0, 1, 1) both;
+}
+
+.calendarContainer.calendarEnterLeft {
+  pointer-events: none;
+  animation: calendarEnterLeft 220ms cubic-bezier(.16, .8, .28, 1) both;
+}
+
+.calendarContainer.calendarEnterRight {
+  pointer-events: none;
+  animation: calendarEnterRight 220ms cubic-bezier(.16, .8, .28, 1) both;
+}
+
+.calendarContainer.isMonthLoading > .weekHeader,
+.calendarContainer.isMonthLoading > .weekRow {
+  opacity: 0.38;
+  transition: opacity 180ms ease;
+}
+
+.calendarLoading {
+  position: absolute;
+  inset: 0;
+  z-index: 8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border-radius: 16px;
+  background: rgba(5, 18, 12, 0.16);
+  backdrop-filter: blur(1.5px);
+  pointer-events: none;
+}
+
+.calendarLoading span {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--app-green);
+  box-shadow: 0 0 12px rgba(91, 227, 155, 0.28);
+  animation: calendarLoadingPulse 900ms ease-in-out infinite;
+}
+
+.calendarLoading span:nth-child(2) { animation-delay: 120ms; }
+.calendarLoading span:nth-child(3) { animation-delay: 240ms; }
+
+.appButton:active:not(:disabled),
+.iconButton:active:not(:disabled),
+.tripPill:active:not(:disabled),
+.calendarCell:active {
+  transform: scale(0.975);
+}
+
+.actionStateButton {
+  min-width: 106px;
+}
+
+.actionStateButton.isSuccess,
+.actionStateButton.isSuccess:disabled {
+  opacity: 1;
+  color: #06150d;
+  border-color: rgba(137, 246, 185, 0.68);
+  background: linear-gradient(135deg, #83efb5, #55df98);
+  cursor: default;
+}
+
+.actionSpinner {
+  width: 14px;
+  height: 14px;
+  flex: 0 0 auto;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  border-radius: 50%;
+  opacity: 0.72;
+  animation: appSpin 700ms linear infinite;
+}
+
+.appToast {
+  position: fixed;
+  top: max(18px, calc(env(safe-area-inset-top) + 12px));
+  right: max(18px, calc(env(safe-area-inset-right) + 12px));
+  z-index: 12000;
+  display: flex;
+  min-width: 210px;
+  max-width: min(360px, calc(100vw - 36px));
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  border: 1px solid rgba(105, 226, 161, 0.28);
+  border-radius: 14px;
+  color: #eafff3;
+  background: rgba(10, 35, 23, 0.96);
+  box-shadow: 0 18px 46px rgba(0, 0, 0, 0.34), inset 0 1px 0 rgba(255,255,255,0.06);
+  backdrop-filter: blur(18px);
+  animation: toastIn 260ms cubic-bezier(.18, .86, .28, 1) both,
+             toastOut 220ms ease-in 2.7s forwards;
+}
+
+.appToast > span {
+  display: grid;
+  width: 25px;
+  height: 25px;
+  flex: 0 0 auto;
+  place-items: center;
+  border-radius: 50%;
+  color: #082014;
+  background: #67dfa0;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.appToast .uiIcon {
+  width: 14px;
+  height: 14px;
+  stroke-width: 2.4;
+}
+
+.appToast strong {
+  font-size: 12px;
+  font-weight: 720;
+}
+
+.appToastError {
+  border-color: rgba(255, 133, 133, 0.32);
+  color: #fff0f0;
+  background: rgba(58, 18, 20, 0.96);
+}
+
+.appToastError > span {
+  color: #4b1014;
+  background: #ff9e9e;
+}
+
+.appShell[data-theme="light"] .calendarLoading {
+  background: rgba(225, 239, 230, 0.38);
+}
+
+.appShell[data-theme="light"] .appToast {
+  color: #153b29;
+  border-color: rgba(31, 143, 81, 0.22);
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: 0 18px 46px rgba(43, 75, 57, 0.18);
+}
+
+.appShell[data-theme="light"] .appToastError {
+  color: #7a2529;
+  border-color: rgba(190, 63, 68, 0.2);
+  background: rgba(255, 247, 247, 0.98);
+}
+
+.appShell .modal {
+  position: relative;
+}
+
+.modalDragHandle {
+  display: none;
+}
+
+.appShell .modalBackdrop.isClosing {
+  pointer-events: none;
+  animation: modalFadeOut 220ms ease-in both;
+}
+
+.appShell .modalBackdrop.isClosing .modal {
+  animation: modalExit 220ms cubic-bezier(.4, 0, 1, 1) both;
+}
+
+@keyframes calendarExitLeft {
+  from { opacity: 1; transform: translateX(0); }
+  to { opacity: 0; transform: translateX(-14px); }
+}
+
+@keyframes calendarExitRight {
+  from { opacity: 1; transform: translateX(0); }
+  to { opacity: 0; transform: translateX(14px); }
+}
+
+@keyframes calendarEnterLeft {
+  from { opacity: 0; transform: translateX(-14px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes calendarEnterRight {
+  from { opacity: 0; transform: translateX(14px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes calendarLoadingPulse {
+  0%, 100% { opacity: 0.3; transform: translateY(0) scale(0.88); }
+  50% { opacity: 1; transform: translateY(-2px) scale(1); }
+}
+
+@keyframes modalFadeOut {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
+@keyframes modalExit {
+  from { opacity: 1; transform: translateY(0) scale(1); }
+  to { opacity: 0; transform: translateY(10px) scale(0.985); }
+}
+
+@keyframes toastIn {
+  from { opacity: 0; transform: translateY(-10px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes toastOut {
+  from { opacity: 1; transform: translateY(0); }
+  to { opacity: 0; transform: translateY(-7px); }
+}
+
+@media (max-width: 640px) {
+  .modalDragHandle {
+    position: absolute;
+    top: 8px;
+    left: 50%;
+    z-index: 2;
+    display: block;
+    width: 38px;
+    height: 4px;
+    border-radius: 999px;
+    background: rgba(167, 202, 183, 0.26);
+    transform: translateX(-50%);
+  }
+
+  .modalHeader {
+    padding-top: 24px;
+  }
+
+  .appShell .modalBackdrop.isClosing .modal {
+    animation-name: modalSheetExit;
+  }
+
+  .appToast {
+    top: auto;
+    right: max(14px, env(safe-area-inset-right));
+    bottom: max(16px, calc(env(safe-area-inset-bottom) + 12px));
+    left: max(14px, env(safe-area-inset-left));
+    width: auto;
+    min-width: 0;
+    max-width: none;
+    justify-content: center;
+    animation-name: toastMobileIn, toastMobileOut;
+  }
+}
+
+@keyframes modalSheetExit {
+  from { opacity: 1; transform: translateY(0); }
+  to { opacity: 0; transform: translateY(34px); }
+}
+
+@keyframes toastMobileIn {
+  from { opacity: 0; transform: translateY(12px) scale(0.985); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes toastMobileOut {
+  from { opacity: 1; transform: translateY(0); }
+  to { opacity: 0; transform: translateY(8px); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .calendarContainer,
+  .calendarLoading span,
+  .actionSpinner,
+  .appToast,
+  .appShell .modalBackdrop.isClosing,
+  .appShell .modalBackdrop.isClosing .modal {
+    animation: none !important;
+  }
+
+  .calendarContainer.isMonthLoading > .weekHeader,
+  .calendarContainer.isMonthLoading > .weekRow,
+  .actionStateButton {
+    transition: none !important;
+  }
+}
+
+/* =========================
    Theme control + light mode
    ========================= */
 .themeToggle {
@@ -1686,11 +1979,11 @@ html[data-theme="light"] body {
 }
 
 .splashMessagePrimary {
-  animation: splashMessageOut 2.4s cubic-bezier(.4,0,.2,1) both;
+  animation: splashMessageOut 1.05s cubic-bezier(.4,0,.2,1) both;
 }
 
 .splashMessageSecondary {
-  animation: splashMessageIn 2.4s cubic-bezier(.4,0,.2,1) both;
+  animation: splashMessageIn 1.05s cubic-bezier(.4,0,.2,1) both;
 }
 
 .splashProgress {
@@ -1759,7 +2052,7 @@ html[data-theme="light"] body {
   filter: drop-shadow(0 7px 7px rgba(0,0,0,.42)) drop-shadow(0 0 8px rgba(64, 214, 141, .22));
   transform: translateY(-50%);
   will-change: left, opacity, transform;
-  animation: carDrive 2.35s cubic-bezier(.25,.46,.45,.94) forwards;
+  animation: carDrive 1.05s cubic-bezier(.25,.46,.45,.94) forwards;
 }
 
 .car .uiIcon {
