@@ -25,11 +25,11 @@ const shiftMonthKey = (monthKey, offset) => {
   return fmtMonthApi(new Date(year, month - 1 + offset, 1));
 };
 
-function BrandMark({ compact = false, smallGlyph = false }) {
+function BrandMark({ compact = false, theme = "dark" }) {
   return (
-    <div className={`brandLockup${compact ? " brandLockupCompact" : ""}${smallGlyph ? " brandLockupSmallGlyph" : ""}`}>
+    <div className={`brandLockup${compact ? " brandLockupCompact" : ""}`}>
       <span className="brandSymbol" aria-hidden="true">
-        <img src={smallGlyph ? "/rideshare-ledger-glyph.svg" : "/rideshare-ledger-icon.png"} alt="" />
+        <img src={theme === "light" ? "/rideshare-ledger-icon-light.png" : "/rideshare-ledger-icon-dark.png"} alt="" />
       </span>
       <span className="brandWords">
         <strong>RideShare</strong>
@@ -1018,7 +1018,7 @@ export default function App() {
         {showSplash ? (
           <div className="splashOverlay">
             <div className="splashCard">
-              <BrandMark />
+              <BrandMark theme={theme} />
               <div className="road">
                 <div className="car" aria-hidden="true"><UiIcon name="carSide" /></div>
               </div>
@@ -1031,7 +1031,7 @@ export default function App() {
           </div>
         ) : (
           <div className="authBootState" role="status" aria-live="polite">
-            <BrandMark smallGlyph />
+            <BrandMark theme={theme} />
             <div className="authBootPulse" aria-hidden="true"><span /><span /><span /></div>
             <span>Opening your workspace</span>
           </div>
@@ -1049,7 +1049,7 @@ export default function App() {
         {showSplash && (
           <div className="splashOverlay">
             <div className="splashCard">
-              <BrandMark />
+              <BrandMark theme={theme} />
               <div className="road">
                 <div className="car" aria-hidden="true"><UiIcon name="carSide" /></div>
               </div>
@@ -1073,7 +1073,7 @@ export default function App() {
 
         <div className="authLayout">
           <section className="authStory" aria-label="RideShare Ledger overview">
-            <BrandMark />
+            <BrandMark theme={theme} />
 
             <div className="authStoryCopy">
               <div className="authEyebrow"><span /> Shared rides, clear books</div>
@@ -1088,7 +1088,7 @@ export default function App() {
 
           <section className="authPanel">
             <div className="authMobileBrand">
-              <BrandMark />
+              <BrandMark theme={theme} />
               <ThemeSwitch theme={theme} onToggle={toggleTheme} className="themeToggleAuthMobile" />
             </div>
 
@@ -1187,7 +1187,7 @@ export default function App() {
       {showSplash && (
         <div className="splashOverlay">
           <div className="splashCard">
-            <BrandMark />
+            <BrandMark theme={theme} />
             <div className="road">
               <div className="car" aria-hidden="true"><UiIcon name="carSide" /></div>
             </div>
@@ -1235,7 +1235,7 @@ export default function App() {
 
       <div className="appContent">
         <header className="appHeader">
-          <BrandMark />
+          <BrandMark theme={theme} />
           <div className="appHeaderActions">
             <ThemeSwitch theme={theme} onToggle={toggleTheme} />
             <button

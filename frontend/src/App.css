@@ -149,6 +149,7 @@ button:hover {
   width: 48px;
   height: 48px;
   place-items: center;
+  overflow: hidden;
   border: 1px solid rgba(89, 235, 163, 0.27);
   border-radius: 13px;
   background: linear-gradient(145deg, rgba(55, 217, 137, 0.18), rgba(40, 179, 109, 0.07));
@@ -156,9 +157,11 @@ button:hover {
 }
 
 .brandSymbol img {
+  grid-area: 1 / 1;
   display: block;
   width: 44px;
   height: 44px;
+  border-radius: 10px;
   object-fit: contain;
 }
 
@@ -3943,10 +3946,6 @@ html[data-theme="light"] body {
 
 .authBootPulse span:nth-child(2) { animation-delay: 120ms; }
 .authBootPulse span:nth-child(3) { animation-delay: 240ms; }
-
-.brandLockupSmallGlyph .brandSymbol img {
-  object-fit: contain;
-}
 
 .mobileHeaderSignOut,
 .statsDisclosure,
