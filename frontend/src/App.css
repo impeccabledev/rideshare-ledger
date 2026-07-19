@@ -2258,6 +2258,19 @@ html[data-theme="light"] body {
 .appHeader .workspaceStatus {
   grid-column: 3;
   justify-self: end;
+  height: 32px;
+  box-sizing: border-box;
+}
+
+.appHeader .themeToggle {
+  width: 64px;
+  height: 32px;
+}
+
+.appHeader .themeToggleThumb {
+  width: 24px;
+  height: 24px;
+  transform: translateX(34px);
 }
 
 .workspaceStatus {
@@ -2279,13 +2292,11 @@ html[data-theme="light"] body {
   white-space: nowrap;
 }
 
-.statusDot {
+.workspaceStatus .groupStatusIcon {
   flex: 0 0 auto;
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: var(--app-green);
-  box-shadow: 0 0 0 4px rgba(91, 227, 155, 0.09), 0 0 16px rgba(91, 227, 155, 0.45);
+  width: 15px;
+  height: 15px;
+  color: var(--app-green);
 }
 
 .dashboardIntro {
@@ -3932,150 +3943,10 @@ html[data-theme="light"] body {
   object-fit: contain;
 }
 
-.mobileAccountButton,
+.mobileHeaderSignOut,
 .statsDisclosure,
 .pullRefreshIndicator {
   display: none;
-}
-
-.accountSheetBackdrop {
-  position: fixed;
-  inset: 0;
-  z-index: 1100;
-  display: flex;
-  align-items: flex-end;
-  justify-content: center;
-  padding: 18px;
-  background: rgba(2, 9, 6, 0.66);
-  backdrop-filter: blur(12px);
-  animation: modalFade 180ms ease-out both;
-}
-
-.accountSheetBackdrop.isClosing {
-  pointer-events: none;
-  animation: modalFadeOut 200ms ease-in both;
-}
-
-.accountSheet {
-  position: relative;
-  display: grid;
-  width: min(420px, 100%);
-  gap: 13px;
-  padding: 25px 16px max(16px, env(safe-area-inset-bottom));
-  border: 1px solid rgba(121, 213, 162, 0.2);
-  border-radius: 22px;
-  color: var(--app-text);
-  background: linear-gradient(150deg, #10241a, #08140e);
-  box-shadow: 0 28px 80px rgba(0,0,0,0.48), inset 0 1px 0 rgba(255,255,255,0.05);
-  animation: modalSheetEnter 260ms cubic-bezier(.18,.84,.28,1) both;
-}
-
-.accountSheetBackdrop.isClosing .accountSheet {
-  animation: modalSheetExit 200ms ease-in both;
-}
-
-.accountSheetHandle {
-  position: absolute;
-  top: 8px;
-  left: 50%;
-  width: 38px;
-  height: 4px;
-  border-radius: 999px;
-  background: rgba(166, 202, 182, 0.25);
-  transform: translateX(-50%);
-}
-
-.accountSheet header {
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto;
-  align-items: center;
-  gap: 11px;
-}
-
-.accountSheetIcon {
-  display: grid;
-  width: 38px;
-  height: 38px;
-  place-items: center;
-  border: 1px solid rgba(91, 227, 155, 0.2);
-  border-radius: 12px;
-  color: #66dfa0;
-  background: rgba(91, 227, 155, 0.07);
-}
-
-.accountSheet header small,
-.accountSheet header strong {
-  display: block;
-}
-
-.accountSheet header small {
-  margin-bottom: 3px;
-  color: #81948a;
-  font-size: 8px;
-  font-weight: 800;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-}
-
-.accountSheet header strong {
-  overflow: hidden;
-  color: #edf8f1;
-  font-size: 14px;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.accountSheetHint {
-  display: flex;
-  align-items: center;
-  gap: 9px;
-  padding: 11px 12px;
-  border: 1px solid rgba(134, 198, 162, 0.1);
-  border-radius: 12px;
-  color: #91a39a;
-  background: rgba(255,255,255,0.025);
-  font-size: 10px;
-  line-height: 1.4;
-}
-
-.accountSheetHint .uiIcon {
-  width: 15px;
-  height: 15px;
-  flex: 0 0 auto;
-  color: #5bdc99;
-}
-
-.accountSignOutButton {
-  display: flex;
-  min-height: 46px;
-  align-items: center;
-  justify-content: center;
-  gap: 9px;
-  border: 1px solid rgba(255, 130, 130, 0.18);
-  border-radius: 13px;
-  color: #ffb8b8;
-  background: rgba(133, 37, 40, 0.13);
-  font-size: 12px;
-  font-weight: 750;
-}
-
-.accountSignOutButton .uiIcon {
-  width: 17px;
-  height: 17px;
-}
-
-.appShell[data-theme="light"] .accountSheet {
-  border-color: rgba(34, 117, 70, 0.18);
-  background: linear-gradient(150deg, #ffffff, #eff7f2);
-  box-shadow: 0 28px 80px rgba(34, 67, 47, 0.22), inset 0 1px 0 #fff;
-}
-
-.appShell[data-theme="light"] .accountSheet header strong { color: #17382a; }
-.appShell[data-theme="light"] .accountSheet header small,
-.appShell[data-theme="light"] .accountSheetHint { color: #52695d; }
-.appShell[data-theme="light"] .accountSheetHint {
-  border-color: rgba(38, 101, 65, 0.13);
-  background: rgba(230, 240, 234, 0.72);
 }
 
 /* Higher-contrast light mode while retaining its soft palette. */
@@ -4175,7 +4046,7 @@ html[data-theme="light"] body {
 
   .appHeader .themeToggle.isLight .themeToggleThumb { transform: translateX(0); }
 
-  .mobileAccountButton {
+  .mobileHeaderSignOut {
     display: grid;
     width: 32px;
     height: 32px;
@@ -4186,12 +4057,12 @@ html[data-theme="light"] body {
     background: rgba(255,255,255,0.035);
   }
 
-  .mobileAccountButton .uiIcon {
+  .mobileHeaderSignOut .uiIcon {
     width: 17px;
     height: 17px;
   }
 
-  .appShell[data-theme="light"] .mobileAccountButton {
+  .appShell[data-theme="light"] .mobileHeaderSignOut {
     color: #3f5d4d;
     background: rgba(255,255,255,0.72);
   }
@@ -4375,8 +4246,6 @@ html[data-theme="light"] body {
 
 @media (prefers-reduced-motion: reduce) {
   .authBootPulse span,
-  .accountSheetBackdrop,
-  .accountSheet,
   .pullRefreshIndicator,
   .pullRefreshIndicator .uiIcon,
   .dashboardStats,

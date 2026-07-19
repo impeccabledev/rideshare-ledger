@@ -309,11 +309,8 @@ export default function App() {
   const [newMemberCountryCode, setNewMemberCountryCode] = useState("+1");
   const [newMemberPhone, setNewMemberPhone] = useState("");
   const [memberErr, setMemberErr] = useState("");
-  const [accountMenuOpen, setAccountMenuOpen] = useState(false);
-  const [accountMenuClosing, setAccountMenuClosing] = useState(false);
   const tripCloseTimerRef = useRef(null);
   const memberCloseTimerRef = useRef(null);
-  const accountCloseTimerRef = useRef(null);
 
   // Country codes with flags
   const countryCodes = [
@@ -368,16 +365,6 @@ export default function App() {
       setMemberSaveState("idle");
     }, 220);
   }, [memberModalClosing]);
-
-  const closeAccountMenu = useCallback(() => {
-    if (accountMenuClosing) return;
-    setAccountMenuClosing(true);
-    window.clearTimeout(accountCloseTimerRef.current);
-    accountCloseTimerRef.current = window.setTimeout(() => {
-      setAccountMenuOpen(false);
-      setAccountMenuClosing(false);
-    }, 200);
-  }, [accountMenuClosing]);
 
   async function runWithContextualSplash(task) {
     window.clearTimeout(networkSplashTimerRef.current);
@@ -541,7 +528,6 @@ export default function App() {
     window.clearTimeout(toastTimerRef.current);
     window.clearTimeout(tripCloseTimerRef.current);
     window.clearTimeout(memberCloseTimerRef.current);
-    window.clearTimeout(accountCloseTimerRef.current);
     monthTransitionTimersRef.current.forEach((timer) => window.clearTimeout(timer));
   }, []);
 
@@ -552,16 +538,7 @@ export default function App() {
     setJoinCode("");
     setAuthErr("");
     setErr("");
-    setAccountMenuOpen(false);
-    setAccountMenuClosing(false);
     setGroupOk(false);
-  }
-
-  function handleAccountSignOut() {
-    if (accountMenuClosing) return;
-    setAccountMenuClosing(true);
-    window.clearTimeout(accountCloseTimerRef.current);
-    accountCloseTimerRef.current = window.setTimeout(logout, 180);
   }
 
   function handlePullStart(e) {
@@ -571,7 +548,6 @@ export default function App() {
       window.scrollY > 1 ||
       open ||
       memberOpen ||
-      accountMenuOpen ||
       pullRefreshing
     ) return;
 
@@ -1257,24 +1233,19 @@ export default function App() {
 
       <div className="appContent">
         <header className="appHeader">
-          <BrandMark smallGlyph />
+          <BrandMark />
           <div className="appHeaderActions">
             <ThemeSwitch theme={theme} onToggle={toggleTheme} />
             <button
-              className="mobileAccountButton"
+              className="mobileHeaderSignOut"
               type="button"
-              onClick={() => {
-                window.clearTimeout(accountCloseTimerRef.current);
-                setAccountMenuClosing(false);
-                setAccountMenuOpen(true);
-              }}
-              aria-label="Open account menu"
-              aria-expanded={accountMenuOpen}
+              onClick={logout}
+              aria-label="Sign out"
             >
-              <UiIcon name="more" />
+              <UiIcon name="logout" />
             </button>
             <div className="workspaceStatus workspaceStatusDesktop">
-              <span className="statusDot" />
+              <UiIcon name="users" className="groupStatusIcon" />
               <span>{groupId}</span>
             </div>
           </div>
@@ -1492,24 +1463,6 @@ export default function App() {
         </article>
         </section>
       </div>
-
-      {accountMenuOpen && (
-        <div className={`accountSheetBackdrop${accountMenuClosing ? " isClosing" : ""}`} onClick={closeAccountMenu}>
-          <section className="accountSheet" aria-label="Account menu" onClick={(e) => e.stopPropagation()}>
-            <div className="accountSheetHandle" aria-hidden="true" />
-            <header>
-              <span className="accountSheetIcon"><UiIcon name="users" /></span>
-              <div><small>Current group</small><strong>{groupId}</strong></div>
-              <button className="iconButton" type="button" onClick={closeAccountMenu} aria-label="Close account menu"><UiIcon name="close" /></button>
-            </header>
-            <div className="accountSheetHint"><UiIcon name="refresh" /><span>Pull down from the top of the calendar to refresh.</span></div>
-            <button className="accountSignOutButton" type="button" onClick={handleAccountSignOut}>
-              <UiIcon name="logout" />
-              <span>Sign out</span>
-            </button>
-          </section>
-        </div>
-      )}
 
       {/* Day modal */}
       {open && (
