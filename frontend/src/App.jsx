@@ -43,6 +43,7 @@ function UiIcon({ name, className = "" }) {
     refresh: <><path d="M20 7v5h-5" /><path d="M19 12a7 7 0 1 0-1.5 4.3" /></>,
     logout: <><path d="M10 5H5v14h5" /><path d="m14 8 4 4-4 4m4-4H9" /></>,
     car: <><path d="M5 17v-5l2-5h10l2 5v5" /><path d="M5 13h14M8 17v2m8-2v2" /><circle cx="8" cy="14.5" r="1" /><circle cx="16" cy="14.5" r="1" /></>,
+    rideCar: <><path d="M3 15v-2.4c0-.8.5-1.4 1.3-1.6l3.1-.8 2.4-3.5h5.3l3.3 3.5 1.5.4c.7.2 1.1.8 1.1 1.5V15h-1.7M4.7 15h-.9m5.2 0h6" /><path d="M8 10.2h10.4M10 6.7v3.5m5.1-3.5v3.5" /><circle cx="6.8" cy="15" r="2.1" /><circle cx="17.2" cy="15" r="2.1" /></>,
     carSide: <>
       <path className="sideCarBody" d="M2.3 16.1v-3c0-.9.6-1.6 1.5-1.8l3.1-.6 2.6-4h6.4l3.5 3.9 1.4.3c.8.2 1.3.9 1.3 1.7v3.5h-2.4a2.6 2.6 0 0 0-5.1 0H9.3a2.6 2.6 0 0 0-5.1 0H2.3Z" />
       <path className="sideCarWindow" d="m10 8.1-1.8 2.7h4V8.1H10Zm3.3 0h2l2.4 2.7h-4.4V8.1Z" />
@@ -749,7 +750,7 @@ export default function App() {
         <div className="authGlow authGlowOne" aria-hidden="true" />
         <div className="authGlow authGlowTwo" aria-hidden="true" />
         <div className="authGrid" aria-hidden="true" />
-        <ThemeSwitch theme={theme} onToggle={toggleTheme} className="themeToggleAuth" />
+        <ThemeSwitch theme={theme} onToggle={toggleTheme} className="themeToggleAuth themeToggleAuthDesktop" />
 
         <div className="authLayout">
           <section className="authStory" aria-label="RideShare Ledger overview">
@@ -767,7 +768,10 @@ export default function App() {
           </section>
 
           <section className="authPanel">
-            <div className="authMobileBrand"><BrandMark /></div>
+            <div className="authMobileBrand">
+              <BrandMark />
+              <ThemeSwitch theme={theme} onToggle={toggleTheme} className="themeToggleAuthMobile" />
+            </div>
 
             <form onSubmit={handleJoin} className="authCard" noValidate>
               <div className="authCardHeader">
@@ -998,8 +1002,8 @@ export default function App() {
                     <>
                       <div className="cellDetails">
                         <div className="pcDriver">
-                          <UiIcon name="car" />
-                          {nameById[e.driver_id] || e.driver_id}
+                          <UiIcon name="rideCar" className="calendarCarIcon" />
+                          <span className="calendarDriverName">{nameById[e.driver_id] || e.driver_id}</span>
                         </div>
                         <div className="pcRiders">
                           <UiIcon name="users" />
@@ -1009,8 +1013,8 @@ export default function App() {
 
                       <div className="mobileSummary">
                         <div className="mobileDriver">
-                          <UiIcon name="car" />
-                          {nameById[e.driver_id] || e.driver_id}
+                          <UiIcon name="rideCar" className="calendarCarIcon" />
+                          <span className="calendarDriverName">{nameById[e.driver_id] || e.driver_id}</span>
                         </div>
                         <div className="mobileRiders">
                           <UiIcon name="users" />
