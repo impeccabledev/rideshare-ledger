@@ -1246,6 +1246,7 @@ export default function App() {
         <div className="modalBackdrop" onClick={() => setMemberOpen(false)}>
           <div className="modal memberModal" onClick={(e) => e.stopPropagation()}>
             <div className="modalHeader">
+              <div><span className="sectionKicker">Add member</span></div>
               <button className="iconButton modalClose" type="button" onClick={() => setMemberOpen(false)} aria-label="Close add member form"><UiIcon name="close" /></button>
             </div>
 
