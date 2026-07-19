@@ -59,12 +59,33 @@ function UiIcon({ name, className = "" }) {
     trash: <><path d="M4 7h16M9 7V4h6v3m3 0-1 13H7L6 7" /><path d="M10 11v5m4-5v5" /></>,
     save: <><path d="M5 4h12l2 2v14H5V4Z" /><path d="M8 4v6h8V4M8 20v-6h8v6" /></>,
     close: <path d="m7 7 10 10M17 7 7 17" />,
+    sun: <><circle cx="12" cy="12" r="3.5" /><path d="M12 2.5v2M12 19.5v2M4.6 4.6 6 6m12 12 1.4 1.4M2.5 12h2M19.5 12h2M4.6 19.4 6 18M18 6l1.4-1.4" /></>,
+    moon: <path d="M20 15.2A8.3 8.3 0 0 1 8.8 4a8.3 8.3 0 1 0 11.2 11.2Z" />,
   };
 
   return (
     <svg className={`uiIcon${className ? ` ${className}` : ""}`} viewBox="0 0 24 24" aria-hidden="true">
       {paths[name]}
     </svg>
+  );
+}
+
+function ThemeSwitch({ theme, onToggle, className = "" }) {
+  const isLight = theme === "light";
+
+  return (
+    <button
+      className={`themeToggle${isLight ? " isLight" : ""}${className ? ` ${className}` : ""}`}
+      type="button"
+      onClick={onToggle}
+      aria-label={`Switch to ${isLight ? "dark" : "light"} theme`}
+      aria-pressed={isLight}
+      title={`Switch to ${isLight ? "dark" : "light"} theme`}
+    >
+      <span className="themeToggleThumb" aria-hidden="true" />
+      <UiIcon name="sun" className="themeSun" />
+      <UiIcon name="moon" className="themeMoon" />
+    </button>
   );
 }
 
@@ -184,6 +205,10 @@ function suggestTransfers(balances) {
 }
 
 export default function App() {
+  const [theme, setTheme] = useState(() =>
+    localStorage.getItem("rideshare_theme") === "light" ? "light" : "dark"
+  );
+
   // ------- Auth state (JOIN screen) -------
   const [groupOk, setGroupOk] = useState(false);
   const [groupId, setGroupId] = useState(() => localStorage.getItem("group_id") || "");
@@ -191,6 +216,19 @@ export default function App() {
   const [authErr, setAuthErr] = useState("");
   const [showJoinCode, setShowJoinCode] = useState(false);
   const [authPending, setAuthPending] = useState(false);
+
+  useEffect(() => {
+    document.documentElement.dataset.theme = theme;
+    document.documentElement.style.colorScheme = theme;
+    localStorage.setItem("rideshare_theme", theme);
+
+    const themeMeta = document.querySelector('meta[name="theme-color"]');
+    themeMeta?.setAttribute("content", theme === "light" ? "#f3f7f4" : "#07100d");
+  }, [theme]);
+
+  const toggleTheme = useCallback(() => {
+    setTheme((currentTheme) => currentTheme === "light" ? "dark" : "light");
+  }, []);
 
   // ------- App data state -------
   const [showSplash, setShowSplash] = useState(true);
@@ -687,7 +725,7 @@ export default function App() {
   // =========================
   if (!groupOk) {
     return (
-      <main className="authPage">
+      <main className="authPage" data-theme={theme}>
         {showSplash && (
           <div className="splashOverlay">
             <div className="splashCard">
@@ -711,6 +749,7 @@ export default function App() {
         <div className="authGlow authGlowOne" aria-hidden="true" />
         <div className="authGlow authGlowTwo" aria-hidden="true" />
         <div className="authGrid" aria-hidden="true" />
+        <ThemeSwitch theme={theme} onToggle={toggleTheme} className="themeToggleAuth" />
 
         <div className="authLayout">
           <section className="authStory" aria-label="RideShare Ledger overview">
@@ -814,7 +853,7 @@ export default function App() {
   // MAIN APP UI
   // =========================
   return (
-    <main className="appShell">
+    <main className="appShell" data-theme={theme}>
       {showSplash && (
         <div className="splashOverlay">
           <div className="splashCard">
@@ -842,9 +881,12 @@ export default function App() {
       <div className="appContent">
         <header className="appHeader">
           <BrandMark />
-          <div className="workspaceStatus workspaceStatusDesktop">
-            <span className="statusDot" />
-            <span>{groupId}</span>
+          <div className="appHeaderActions">
+            <ThemeSwitch theme={theme} onToggle={toggleTheme} />
+            <div className="workspaceStatus workspaceStatusDesktop">
+              <span className="statusDot" />
+              <span>{groupId}</span>
+            </div>
           </div>
         </header>
 
