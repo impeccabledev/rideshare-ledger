@@ -630,7 +630,7 @@ button:hover {
     justify-content: flex-start;
     padding: max(25px, env(safe-area-inset-top)) 16px max(24px, env(safe-area-inset-bottom));
   }
-  .authMobileBrand { margin-bottom: 22px; }
+  .authMobileBrand { margin: 12px auto 22px; }
   .authCard { padding: 27px 21px; border-radius: 20px; }
   .authCardHeader { margin-bottom: 25px; }
   .authCardHeader h2 { font-size: 29px; }
@@ -3090,7 +3090,7 @@ html[data-theme="light"] body {
 
 @media (max-width: 640px) {
   .appContent {
-    padding: max(18px, env(safe-area-inset-top)) 14px max(34px, env(safe-area-inset-bottom));
+    padding: max(30px, calc(env(safe-area-inset-top) + 12px)) 14px max(34px, env(safe-area-inset-bottom));
   }
 
   .appHeader {
