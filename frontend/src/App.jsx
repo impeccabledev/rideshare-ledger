@@ -25,11 +25,11 @@ const shiftMonthKey = (monthKey, offset) => {
   return fmtMonthApi(new Date(year, month - 1 + offset, 1));
 };
 
-function BrandMark({ compact = false }) {
+function BrandMark({ compact = false, smallGlyph = false }) {
   return (
-    <div className={`brandLockup${compact ? " brandLockupCompact" : ""}`}>
+    <div className={`brandLockup${compact ? " brandLockupCompact" : ""}${smallGlyph ? " brandLockupSmallGlyph" : ""}`}>
       <span className="brandSymbol" aria-hidden="true">
-        <img src="/rideshare-ledger-icon.png" alt="" />
+        <img src={smallGlyph ? "/rideshare-ledger-glyph.svg" : "/rideshare-ledger-icon.png"} alt="" />
       </span>
       <span className="brandWords">
         <strong>RideShare</strong>
@@ -64,6 +64,7 @@ function UiIcon({ name, className = "" }) {
     trash: <><path d="M4 7h16M9 7V4h6v3m3 0-1 13H7L6 7" /><path d="M10 11v5m4-5v5" /></>,
     save: <><path d="M5 4h12l2 2v14H5V4Z" /><path d="M8 4v6h8V4M8 20v-6h8v6" /></>,
     check: <path d="m5 12.5 4.2 4.2L19 7" />,
+    more: <><circle cx="5" cy="12" r="1" /><circle cx="12" cy="12" r="1" /><circle cx="19" cy="12" r="1" /></>,
     close: <path d="m7 7 10 10M17 7 7 17" />,
     sun: <><circle cx="12" cy="12" r="3.5" /><path d="M12 2.5v2M12 19.5v2M4.6 4.6 6 6m12 12 1.4 1.4M2.5 12h2M19.5 12h2M4.6 19.4 6 18M18 6l1.4-1.4" /></>,
     moon: <path d="M20 15.2A8.3 8.3 0 0 1 8.8 4a8.3 8.3 0 1 0 11.2 11.2Z" />,
@@ -222,6 +223,10 @@ export default function App() {
   const [authErr, setAuthErr] = useState("");
   const [showJoinCode, setShowJoinCode] = useState(false);
   const [authPending, setAuthPending] = useState(false);
+  const [authBooting, setAuthBooting] = useState(() => Boolean(
+    (localStorage.getItem("group_id") || "").trim() &&
+    (localStorage.getItem("join_code") || "").trim()
+  ));
 
   useEffect(() => {
     document.documentElement.dataset.theme = theme;
@@ -257,6 +262,8 @@ export default function App() {
   const loadedMonthRef = useRef("");
   const monthRequestRef = useRef(0);
   const monthCacheRef = useRef(new Map());
+  const prefetchQueueRef = useRef(Promise.resolve());
+  const prefetchPendingRef = useRef(new Set());
 
   const [allMembers, setAllMembers] = useState([]);
   const [members, setMembers] = useState([]);
@@ -271,6 +278,11 @@ export default function App() {
   const [err, setErr] = useState("");
   const [toast, setToast] = useState(null);
   const toastTimerRef = useRef(null);
+  const [statsExpanded, setStatsExpanded] = useState(false);
+  const [pullDistance, setPullDistance] = useState(0);
+  const [pullRefreshing, setPullRefreshing] = useState(false);
+  const pullStartRef = useRef(null);
+  const pullDistanceRef = useRef(0);
 
   // ------- Day modal state -------
   const [open, setOpen] = useState(false);
@@ -297,8 +309,11 @@ export default function App() {
   const [newMemberCountryCode, setNewMemberCountryCode] = useState("+1");
   const [newMemberPhone, setNewMemberPhone] = useState("");
   const [memberErr, setMemberErr] = useState("");
+  const [accountMenuOpen, setAccountMenuOpen] = useState(false);
+  const [accountMenuClosing, setAccountMenuClosing] = useState(false);
   const tripCloseTimerRef = useRef(null);
   const memberCloseTimerRef = useRef(null);
+  const accountCloseTimerRef = useRef(null);
 
   // Country codes with flags
   const countryCodes = [
@@ -354,6 +369,16 @@ export default function App() {
     }, 220);
   }, [memberModalClosing]);
 
+  const closeAccountMenu = useCallback(() => {
+    if (accountMenuClosing) return;
+    setAccountMenuClosing(true);
+    window.clearTimeout(accountCloseTimerRef.current);
+    accountCloseTimerRef.current = window.setTimeout(() => {
+      setAccountMenuOpen(false);
+      setAccountMenuClosing(false);
+    }, 200);
+  }, [accountMenuClosing]);
+
   async function runWithContextualSplash(task) {
     window.clearTimeout(networkSplashTimerRef.current);
     networkSplashTimerRef.current = window.setTimeout(() => setNetworkSplash(true), 400);
@@ -366,17 +391,31 @@ export default function App() {
   }
 
   function prefetchMonth(targetMonth) {
-    if (monthCacheRef.current.has(targetMonth)) return;
-    Promise.all([getEntries(targetMonth), getHolidays(targetMonth)])
-      .then(([monthEntries, monthHolidays]) => {
-        monthCacheRef.current.set(targetMonth, {
-          entries: monthEntries || [],
-          holidays: monthHolidays || [],
-        });
-      })
-      .catch(() => {
-        // Prefetch is opportunistic; the foreground request will surface errors.
+    if (monthCacheRef.current.has(targetMonth) || prefetchPendingRef.current.has(targetMonth)) {
+      return prefetchQueueRef.current;
+    }
+
+    prefetchPendingRef.current.add(targetMonth);
+    prefetchQueueRef.current = prefetchQueueRef.current
+      .catch(() => undefined)
+      .then(async () => {
+        try {
+          const [monthEntries, monthHolidays] = await Promise.all([
+            getEntries(targetMonth),
+            getHolidays(targetMonth),
+          ]);
+          monthCacheRef.current.set(targetMonth, {
+            entries: monthEntries || [],
+            holidays: monthHolidays || [],
+          });
+        } catch {
+          // Prefetch is opportunistic; the foreground request will surface errors.
+        } finally {
+          prefetchPendingRef.current.delete(targetMonth);
+        }
       });
+
+    return prefetchQueueRef.current;
   }
 
   // ---- Boot: first-launch splash + auto-check stored creds ----
@@ -394,13 +433,14 @@ export default function App() {
 
       if (!gid || !jcode) {
         setGroupOk(false);
+        setAuthBooting(false);
         return;
       }
 
       try {
         await runWithContextualSplash(async () => {
           await groupCheck();
-          await loadAll({ targetMonth: month, force: true, throwOnError: true });
+          await loadAll({ targetMonth: month, force: true });
         });
         setGroupOk(true);
       } catch (e) {
@@ -410,6 +450,8 @@ export default function App() {
         setJoinCode("");
         setGroupOk(false);
         setAuthErr(e.message || "Invalid group");
+      } finally {
+        setAuthBooting(false);
       }
     }
     bootAuth();
@@ -424,7 +466,16 @@ export default function App() {
     throwOnError = false,
   } = {}) {
     const requestId = ++monthRequestRef.current;
-    const cached = monthCacheRef.current.get(targetMonth);
+    let cached = monthCacheRef.current.get(targetMonth);
+
+    if (prefetchPendingRef.current.size > 0) {
+      if (force || !cached) setLoading(true);
+      await prefetchQueueRef.current.catch(() => undefined);
+      cached = monthCacheRef.current.get(targetMonth);
+      if (requestId !== monthRequestRef.current || activeMonthRef.current !== targetMonth) {
+        return false;
+      }
+    }
 
     if (cached && !force && activeMonthRef.current === targetMonth) {
       setEntries(cached.entries);
@@ -434,11 +485,13 @@ export default function App() {
     setLoading(force || !cached);
     setErr("");
     try {
-      const [m, e, h] = await Promise.all([
-        getMembers(),
-        getEntries(targetMonth),
-        getHolidays(targetMonth),
-      ]);
+      const [m, e, h] = cached && !force
+        ? [await getMembers(), cached.entries, cached.holidays]
+        : await Promise.all([
+          getMembers(),
+          getEntries(targetMonth),
+          getHolidays(targetMonth),
+        ]);
 
       monthCacheRef.current.set(targetMonth, {
         entries: e || [],
@@ -488,6 +541,7 @@ export default function App() {
     window.clearTimeout(toastTimerRef.current);
     window.clearTimeout(tripCloseTimerRef.current);
     window.clearTimeout(memberCloseTimerRef.current);
+    window.clearTimeout(accountCloseTimerRef.current);
     monthTransitionTimersRef.current.forEach((timer) => window.clearTimeout(timer));
   }, []);
 
@@ -498,7 +552,74 @@ export default function App() {
     setJoinCode("");
     setAuthErr("");
     setErr("");
+    setAccountMenuOpen(false);
+    setAccountMenuClosing(false);
     setGroupOk(false);
+  }
+
+  function handleAccountSignOut() {
+    if (accountMenuClosing) return;
+    setAccountMenuClosing(true);
+    window.clearTimeout(accountCloseTimerRef.current);
+    accountCloseTimerRef.current = window.setTimeout(logout, 180);
+  }
+
+  function handlePullStart(e) {
+    if (
+      e.pointerType === "mouse" ||
+      window.innerWidth > 640 ||
+      window.scrollY > 1 ||
+      open ||
+      memberOpen ||
+      accountMenuOpen ||
+      pullRefreshing
+    ) return;
+
+    pullStartRef.current = { x: e.clientX, y: e.clientY };
+  }
+
+  function handlePullMove(e) {
+    if (!pullStartRef.current) return;
+    const dx = e.clientX - pullStartRef.current.x;
+    const dy = e.clientY - pullStartRef.current.y;
+
+    if (dy <= 0 || Math.abs(dx) > Math.abs(dy)) {
+      pullStartRef.current = null;
+      pullDistanceRef.current = 0;
+      setPullDistance(0);
+      return;
+    }
+
+    if (dy > 8) e.preventDefault();
+    const distance = Math.min(72, Math.max(0, (dy - 4) * 0.42));
+    pullDistanceRef.current = distance;
+    setPullDistance(distance);
+  }
+
+  async function handlePullEnd() {
+    if (!pullStartRef.current) return;
+    pullStartRef.current = null;
+    const shouldRefresh = pullDistanceRef.current >= 56;
+    pullDistanceRef.current = 0;
+
+    if (!shouldRefresh) {
+      setPullDistance(0);
+      return;
+    }
+
+    setPullRefreshing(true);
+    setPullDistance(56);
+    const refreshed = await loadAll({ targetMonth: month, force: true });
+    if (refreshed) showToast("Calendar updated");
+    else showToast("Couldn’t refresh. Showing saved data.", "error");
+    setPullRefreshing(false);
+    setPullDistance(0);
+  }
+
+  function handlePullCancel() {
+    pullStartRef.current = null;
+    pullDistanceRef.current = 0;
+    if (!pullRefreshing) setPullDistance(0);
   }
 
   async function handleJoin(e) {
@@ -520,7 +641,7 @@ export default function App() {
     try {
       await runWithContextualSplash(async () => {
         await groupCheck();
-        await loadAll({ targetMonth: month, force: true, throwOnError: true });
+        await loadAll({ targetMonth: month, force: true });
       });
       setGroupOk(true);
     } catch (e2) {
@@ -913,6 +1034,34 @@ export default function App() {
 
   const todayStr = fmtDate(new Date());
 
+  if (authBooting) {
+    return (
+      <main className="authBootPage" data-theme={theme}>
+        {showSplash ? (
+          <div className="splashOverlay">
+            <div className="splashCard">
+              <BrandMark />
+              <div className="road">
+                <div className="car" aria-hidden="true"><UiIcon name="carSide" /></div>
+              </div>
+              <div className="splashSub" aria-label="Preparing your trip. Buckle up.">
+                <span className="splashMessage splashMessagePrimary" aria-hidden="true">Preparing your trip</span>
+                <span className="splashMessage splashMessageSecondary" aria-hidden="true">Buckle up</span>
+              </div>
+              <div className="splashProgress" aria-hidden="true"><span /><span /><span /></div>
+            </div>
+          </div>
+        ) : (
+          <div className="authBootState" role="status" aria-live="polite">
+            <BrandMark smallGlyph />
+            <div className="authBootPulse" aria-hidden="true"><span /><span /><span /></div>
+            <span>Opening your workspace</span>
+          </div>
+        )}
+      </main>
+    );
+  }
+
   // =========================
   // JOIN SCREEN
   // =========================
@@ -1049,7 +1198,14 @@ export default function App() {
   // MAIN APP UI
   // =========================
   return (
-    <main className="appShell" data-theme={theme}>
+    <main
+      className={`appShell${pullDistance > 0 ? " isPulling" : ""}`}
+      data-theme={theme}
+      onPointerDown={handlePullStart}
+      onPointerMove={handlePullMove}
+      onPointerUp={handlePullEnd}
+      onPointerCancel={handlePullCancel}
+    >
       {showSplash && (
         <div className="splashOverlay">
           <div className="splashCard">
@@ -1082,15 +1238,41 @@ export default function App() {
         </div>
       )}
 
+      <div
+        className={`pullRefreshIndicator${pullDistance >= 56 ? " isReady" : ""}${pullRefreshing ? " isRefreshing" : ""}`}
+        style={{
+          opacity: pullRefreshing ? 1 : Math.min(1, pullDistance / 44),
+          transform: `translate(-50%, ${Math.min(18, pullDistance * 0.22) - 10}px)`,
+        }}
+        role="status"
+        aria-live="polite"
+      >
+        <UiIcon name="refresh" />
+        <span>{pullRefreshing ? "Refreshing…" : pullDistance >= 56 ? "Release to refresh" : "Pull to refresh"}</span>
+      </div>
+
       <div className="appAmbient appAmbientOne" aria-hidden="true" />
       <div className="appAmbient appAmbientTwo" aria-hidden="true" />
       <div className="appGrid" aria-hidden="true" />
 
       <div className="appContent">
         <header className="appHeader">
-          <BrandMark />
+          <BrandMark smallGlyph />
           <div className="appHeaderActions">
             <ThemeSwitch theme={theme} onToggle={toggleTheme} />
+            <button
+              className="mobileAccountButton"
+              type="button"
+              onClick={() => {
+                window.clearTimeout(accountCloseTimerRef.current);
+                setAccountMenuClosing(false);
+                setAccountMenuOpen(true);
+              }}
+              aria-label="Open account menu"
+              aria-expanded={accountMenuOpen}
+            >
+              <UiIcon name="more" />
+            </button>
             <div className="workspaceStatus workspaceStatusDesktop">
               <span className="statusDot" />
               <span>{groupId}</span>
@@ -1109,7 +1291,17 @@ export default function App() {
             </div>
             <p>Plan rides, split each trip, and keep every balance current.</p>
           </div>
-          <div className="dashboardStats" aria-label="Workspace summary">
+          <button
+            className="statsDisclosure"
+            type="button"
+            onClick={() => setStatsExpanded((expanded) => !expanded)}
+            aria-expanded={statsExpanded}
+            aria-controls="workspace-stats"
+          >
+            <span><strong>Monthly summary</strong><small>{entries.length} rides · {members.length} members</small></span>
+            <UiIcon name="chevronRight" />
+          </button>
+          <div id="workspace-stats" className={`dashboardStats${statsExpanded ? " isExpanded" : " isCollapsed"}`} aria-label="Workspace summary">
             <div><strong>{entries.length}</strong><span>Trips this month</span></div>
             <div><strong>{members.length}</strong><span>Active members</span></div>
             <div><strong>{transfers.length}</strong><span>Settlements</span></div>
@@ -1141,11 +1333,11 @@ export default function App() {
               <UiIcon name="userPlus" />
               <span>Add member</span>
             </button>
-            <button className="appButton" type="button" onClick={() => loadAll({ targetMonth: month, force: true })} disabled={loading}>
+            <button className="appButton mobileRefreshAction" type="button" onClick={() => loadAll({ targetMonth: month, force: true })} disabled={loading}>
               <UiIcon name="refresh" className={loading ? "isSpinning" : ""} />
               <span>{loading ? "Refreshing" : "Refresh"}</span>
             </button>
-            <button className="appButton appButtonQuiet" type="button" onClick={logout}>
+            <button className="appButton appButtonQuiet mobileSignOutAction" type="button" onClick={logout}>
               <UiIcon name="logout" />
               <span>Sign out</span>
             </button>
@@ -1300,6 +1492,24 @@ export default function App() {
         </article>
         </section>
       </div>
+
+      {accountMenuOpen && (
+        <div className={`accountSheetBackdrop${accountMenuClosing ? " isClosing" : ""}`} onClick={closeAccountMenu}>
+          <section className="accountSheet" aria-label="Account menu" onClick={(e) => e.stopPropagation()}>
+            <div className="accountSheetHandle" aria-hidden="true" />
+            <header>
+              <span className="accountSheetIcon"><UiIcon name="users" /></span>
+              <div><small>Current group</small><strong>{groupId}</strong></div>
+              <button className="iconButton" type="button" onClick={closeAccountMenu} aria-label="Close account menu"><UiIcon name="close" /></button>
+            </header>
+            <div className="accountSheetHint"><UiIcon name="refresh" /><span>Pull down from the top of the calendar to refresh.</span></div>
+            <button className="accountSignOutButton" type="button" onClick={handleAccountSignOut}>
+              <UiIcon name="logout" />
+              <span>Sign out</span>
+            </button>
+          </section>
+        </div>
+      )}
 
       {/* Day modal */}
       {open && (

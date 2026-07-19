@@ -3880,3 +3880,508 @@ html[data-theme="light"] body {
     transition: none !important;
   }
 }
+
+/* =========================
+   Compact mobile workspace
+   ========================= */
+.authBootPage {
+  display: grid;
+  min-height: 100svh;
+  place-items: center;
+  color: #f2fbf6;
+  background:
+    radial-gradient(circle at 25% 10%, rgba(45, 190, 111, 0.13), transparent 34%),
+    linear-gradient(145deg, #07130d, #030a07);
+}
+
+.authBootPage[data-theme="light"] {
+  color: #183126;
+  background:
+    radial-gradient(circle at 25% 10%, rgba(45, 190, 111, 0.14), transparent 34%),
+    linear-gradient(145deg, #eff7f2, #fbfdfc);
+}
+
+.authBootState {
+  display: grid;
+  justify-items: center;
+  gap: 14px;
+  color: #8fa299;
+  font-size: 11px;
+  font-weight: 720;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.authBootPulse {
+  display: flex;
+  gap: 5px;
+}
+
+.authBootPulse span {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #58de98;
+  animation: calendarLoadingPulse 900ms ease-in-out infinite;
+}
+
+.authBootPulse span:nth-child(2) { animation-delay: 120ms; }
+.authBootPulse span:nth-child(3) { animation-delay: 240ms; }
+
+.brandLockupSmallGlyph .brandSymbol img {
+  object-fit: contain;
+}
+
+.mobileAccountButton,
+.statsDisclosure,
+.pullRefreshIndicator {
+  display: none;
+}
+
+.accountSheetBackdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1100;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding: 18px;
+  background: rgba(2, 9, 6, 0.66);
+  backdrop-filter: blur(12px);
+  animation: modalFade 180ms ease-out both;
+}
+
+.accountSheetBackdrop.isClosing {
+  pointer-events: none;
+  animation: modalFadeOut 200ms ease-in both;
+}
+
+.accountSheet {
+  position: relative;
+  display: grid;
+  width: min(420px, 100%);
+  gap: 13px;
+  padding: 25px 16px max(16px, env(safe-area-inset-bottom));
+  border: 1px solid rgba(121, 213, 162, 0.2);
+  border-radius: 22px;
+  color: var(--app-text);
+  background: linear-gradient(150deg, #10241a, #08140e);
+  box-shadow: 0 28px 80px rgba(0,0,0,0.48), inset 0 1px 0 rgba(255,255,255,0.05);
+  animation: modalSheetEnter 260ms cubic-bezier(.18,.84,.28,1) both;
+}
+
+.accountSheetBackdrop.isClosing .accountSheet {
+  animation: modalSheetExit 200ms ease-in both;
+}
+
+.accountSheetHandle {
+  position: absolute;
+  top: 8px;
+  left: 50%;
+  width: 38px;
+  height: 4px;
+  border-radius: 999px;
+  background: rgba(166, 202, 182, 0.25);
+  transform: translateX(-50%);
+}
+
+.accountSheet header {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 11px;
+}
+
+.accountSheetIcon {
+  display: grid;
+  width: 38px;
+  height: 38px;
+  place-items: center;
+  border: 1px solid rgba(91, 227, 155, 0.2);
+  border-radius: 12px;
+  color: #66dfa0;
+  background: rgba(91, 227, 155, 0.07);
+}
+
+.accountSheet header small,
+.accountSheet header strong {
+  display: block;
+}
+
+.accountSheet header small {
+  margin-bottom: 3px;
+  color: #81948a;
+  font-size: 8px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.accountSheet header strong {
+  overflow: hidden;
+  color: #edf8f1;
+  font-size: 14px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.accountSheetHint {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 11px 12px;
+  border: 1px solid rgba(134, 198, 162, 0.1);
+  border-radius: 12px;
+  color: #91a39a;
+  background: rgba(255,255,255,0.025);
+  font-size: 10px;
+  line-height: 1.4;
+}
+
+.accountSheetHint .uiIcon {
+  width: 15px;
+  height: 15px;
+  flex: 0 0 auto;
+  color: #5bdc99;
+}
+
+.accountSignOutButton {
+  display: flex;
+  min-height: 46px;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  border: 1px solid rgba(255, 130, 130, 0.18);
+  border-radius: 13px;
+  color: #ffb8b8;
+  background: rgba(133, 37, 40, 0.13);
+  font-size: 12px;
+  font-weight: 750;
+}
+
+.accountSignOutButton .uiIcon {
+  width: 17px;
+  height: 17px;
+}
+
+.appShell[data-theme="light"] .accountSheet {
+  border-color: rgba(34, 117, 70, 0.18);
+  background: linear-gradient(150deg, #ffffff, #eff7f2);
+  box-shadow: 0 28px 80px rgba(34, 67, 47, 0.22), inset 0 1px 0 #fff;
+}
+
+.appShell[data-theme="light"] .accountSheet header strong { color: #17382a; }
+.appShell[data-theme="light"] .accountSheet header small,
+.appShell[data-theme="light"] .accountSheetHint { color: #52695d; }
+.appShell[data-theme="light"] .accountSheetHint {
+  border-color: rgba(38, 101, 65, 0.13);
+  background: rgba(230, 240, 234, 0.72);
+}
+
+/* Higher-contrast light mode while retaining its soft palette. */
+.authPage[data-theme="light"] .authInputWrap input::placeholder { color: #687a70; }
+.authPage[data-theme="light"] .authLabelRow > span { color: #64776c; }
+.authPage[data-theme="light"] .authHelp p { color: #53685d; }
+.authPage[data-theme="light"] .authHelp strong { color: #294638; }
+.authPage[data-theme="light"] .authLegal { color: #586d61; }
+.authPage[data-theme="light"] .authTrust { color: #536a5e; }
+
+.appShell[data-theme="light"] {
+  --app-muted: #52685c;
+}
+
+.appShell[data-theme="light"] .weekHeaderCell { color: #50675b; }
+.appShell[data-theme="light"] .calendarCellEmpty {
+  border-color: rgba(38, 94, 62, 0.18);
+  background: rgba(225, 236, 229, 0.64);
+}
+.appShell[data-theme="light"] .mobileDriver { color: #173d2b; }
+.appShell[data-theme="light"] .mobileRiders { color: #285e42; }
+.appShell[data-theme="light"] .holidayTag { color: #7b520a; }
+.appShell[data-theme="light"] .emptyState p,
+.appShell[data-theme="light"] .summaryCardHeader p,
+.appShell[data-theme="light"] .fieldHint,
+.appShell[data-theme="light"] .inlineAction > span,
+.appShell[data-theme="light"] .formSectionHeader span { color: #586d61; }
+.appShell[data-theme="light"] .appControl::placeholder,
+.appShell[data-theme="light"] .rateInput::placeholder { color: #687a70; }
+
+@media (max-width: 640px) {
+  html,
+  body,
+  #root,
+  .appShell {
+    overscroll-behavior-y: contain;
+  }
+
+  .appContent {
+    padding: max(12px, calc(env(safe-area-inset-top) + 8px)) 14px max(34px, env(safe-area-inset-bottom));
+  }
+
+  .appHeader {
+    position: sticky;
+    top: max(6px, env(safe-area-inset-top));
+    z-index: 60;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 10px;
+    margin: 0 0 14px;
+    padding: 7px 8px;
+    border: 1px solid var(--app-line);
+    border-radius: 15px;
+    background: rgba(7, 20, 14, 0.84);
+    box-shadow: 0 12px 32px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.04);
+    backdrop-filter: blur(18px) saturate(120%);
+  }
+
+  .appShell[data-theme="light"] .appHeader {
+    background: rgba(248, 252, 249, 0.88);
+    box-shadow: 0 12px 32px rgba(39, 74, 53, 0.12), inset 0 1px 0 #fff;
+  }
+
+  .appHeader .brandLockup {
+    grid-column: 1;
+    justify-self: start;
+  }
+
+  .appHeaderActions {
+    grid-column: 2;
+    gap: 6px;
+  }
+
+  .appHeader .brandSymbol,
+  .appHeader .brandSymbol img {
+    width: 34px;
+    height: 34px;
+  }
+
+  .appHeader .brandWords strong {
+    font-size: 17px;
+  }
+
+  .appHeader .brandWords small {
+    display: none;
+  }
+
+  .appHeader .themeToggle {
+    width: 56px;
+    height: 32px;
+  }
+
+  .appHeader .themeToggleThumb {
+    width: 24px;
+    height: 24px;
+    transform: translateX(26px);
+  }
+
+  .appHeader .themeToggle.isLight .themeToggleThumb { transform: translateX(0); }
+
+  .mobileAccountButton {
+    display: grid;
+    width: 32px;
+    height: 32px;
+    place-items: center;
+    border: 1px solid var(--app-line);
+    border-radius: 10px;
+    color: #b8c9c0;
+    background: rgba(255,255,255,0.035);
+  }
+
+  .mobileAccountButton .uiIcon {
+    width: 17px;
+    height: 17px;
+  }
+
+  .appShell[data-theme="light"] .mobileAccountButton {
+    color: #3f5d4d;
+    background: rgba(255,255,255,0.72);
+  }
+
+  .dashboardIntro {
+    gap: 8px;
+    margin-bottom: 10px;
+  }
+
+  .dashboardIntro h1 {
+    margin-bottom: 5px;
+    font-size: 18px;
+  }
+
+  .dashboardIntro p {
+    color: #9bada3;
+    line-height: 1.35;
+  }
+
+  .appShell[data-theme="light"] .dashboardIntro p { color: #52695d; }
+
+  .statsDisclosure {
+    display: flex;
+    width: 100%;
+    min-height: 42px;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 7px 10px;
+    border: 1px solid var(--app-line);
+    border-radius: 12px;
+    color: #c5d5cc;
+    background: rgba(255,255,255,0.025);
+  }
+
+  .statsDisclosure > span {
+    display: flex;
+    min-width: 0;
+    align-items: baseline;
+    gap: 8px;
+  }
+
+  .statsDisclosure strong {
+    font-size: 10px;
+    font-weight: 760;
+  }
+
+  .statsDisclosure small {
+    overflow: hidden;
+    color: #80938a;
+    font-size: 8px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .statsDisclosure .uiIcon {
+    width: 14px;
+    height: 14px;
+    flex: 0 0 auto;
+    transform: rotate(90deg);
+    transition: transform 180ms ease;
+  }
+
+  .statsDisclosure[aria-expanded="true"] .uiIcon { transform: rotate(-90deg); }
+
+  .appShell[data-theme="light"] .statsDisclosure {
+    color: #284a39;
+    background: rgba(255,255,255,0.68);
+  }
+
+  .appShell[data-theme="light"] .statsDisclosure small { color: #586e62; }
+
+  .dashboardStats {
+    transition: max-height 220ms ease, opacity 180ms ease, transform 220ms ease, margin 220ms ease;
+  }
+
+  .dashboardStats.isCollapsed {
+    max-height: 0;
+    margin: 0;
+    overflow: hidden;
+    border-width: 0;
+    opacity: 0;
+    transform: translateY(-5px);
+    pointer-events: none;
+  }
+
+  .dashboardStats.isExpanded {
+    max-height: 88px;
+    margin-top: 2px;
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  .appToolbar {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 10px;
+    padding: 8px;
+  }
+
+  .monthNavigator {
+    min-width: 0;
+    gap: 4px;
+  }
+
+  .monthNavigator .iconButton {
+    width: 36px;
+    height: 36px;
+  }
+
+  .monthTitle {
+    min-width: 0;
+  }
+
+  .monthTitle strong { font-size: 14px; }
+
+  .toolbarActions {
+    display: block;
+  }
+
+  .toolbarActions .appButtonPrimary {
+    min-height: 38px;
+    padding: 0 11px;
+    font-size: 9px;
+    white-space: nowrap;
+  }
+
+  .mobileRefreshAction,
+  .mobileSignOutAction {
+    display: none !important;
+  }
+
+  .pullRefreshIndicator {
+    position: fixed;
+    top: max(58px, calc(env(safe-area-inset-top) + 50px));
+    left: 50%;
+    z-index: 58;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 10px;
+    border: 1px solid rgba(101, 222, 156, 0.24);
+    border-radius: 999px;
+    color: #bcebd1;
+    background: rgba(7, 29, 18, 0.94);
+    box-shadow: 0 10px 24px rgba(0,0,0,0.25);
+    font-size: 9px;
+    font-weight: 740;
+    pointer-events: none;
+    transition: opacity 100ms linear, transform 100ms linear;
+  }
+
+  .pullRefreshIndicator .uiIcon {
+    width: 13px;
+    height: 13px;
+  }
+
+  .pullRefreshIndicator.isReady {
+    color: #07170e;
+    background: #68dfa0;
+  }
+
+  .pullRefreshIndicator.isRefreshing .uiIcon {
+    animation: appSpin 760ms linear infinite;
+  }
+
+  .appShell[data-theme="light"] .pullRefreshIndicator {
+    color: #28533c;
+    border-color: rgba(28, 137, 77, 0.22);
+    background: rgba(255,255,255,0.96);
+    box-shadow: 0 10px 24px rgba(36,70,49,0.16);
+  }
+
+  .appShell[data-theme="light"] .pullRefreshIndicator.isReady {
+    color: #082c19;
+    background: #54d590;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .authBootPulse span,
+  .accountSheetBackdrop,
+  .accountSheet,
+  .pullRefreshIndicator,
+  .pullRefreshIndicator .uiIcon,
+  .dashboardStats,
+  .statsDisclosure .uiIcon {
+    animation: none !important;
+    transition: none !important;
+  }
+}

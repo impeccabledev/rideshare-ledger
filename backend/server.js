@@ -123,15 +123,24 @@ async function loadSheetEnsuringColumns(tabName, requiredCols) {
   const idx = {};
   header.forEach((h, i) => (idx[h] = i));
 
-  const ensureCol = async (col) => {
+  let headerChanged = false;
+  const ensureCol = (col) => {
     if (idx[col] == null) {
       header.push(col);
       idx[col] = header.length - 1;
-      await setValues(`${tabName}!A1:${colLabel(header.length)}1`, [header]);
+      headerChanged = true;
     }
   };
 
-  for (const col of requiredCols) await ensureCol(col);
+  for (const col of requiredCols) ensureCol(col);
+
+  // Most reads already have the expected schema. Reuse that response instead
+  // of immediately issuing the same Google Sheets read a second time.
+  if (!headerChanged) return { rows, idx };
+
+  // If migration is needed, write the complete header once, then re-read so
+  // callers receive the normalized sheet shape.
+  await setValues(`${tabName}!A1:${colLabel(header.length)}1`, [header]);
 
   const rows2 = await getValues(`${tabName}!A:Z`);
   const header2 = rows2[0] || header;
@@ -998,4 +1007,3 @@ if (process.env.NODE_ENV !== 'test') {
 app.listen(PORT, "0.0.0.0", () => {
   console.log(`Backend running on port ${PORT}`);
 });
-

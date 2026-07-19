@@ -18,10 +18,18 @@ async function handle(res) {
   return data;
 }
 
-// Helper: fetch with Abort timeout and retries (exponential backoff)
+// Helper: fetch with Abort timeout and retries (exponential backoff).
+// Only callers using safe/idempotent methods should enable retries.
 async function fetchWithTimeoutAndRetry(url, options = {}, timeoutMs = 15000, maxRetries = 2) {
   let attempt = 0;
   const baseDelay = 300;
+  const retryableStatuses = new Set([408, 429, 500, 502, 503, 504]);
+
+  const waitBeforeRetry = async () => {
+    const delay = baseDelay * Math.pow(2, Math.max(0, attempt - 1));
+    const jitter = Math.floor(Math.random() * 100);
+    await new Promise((resolve) => setTimeout(resolve, delay + jitter));
+  };
 
   while (true) {
     const controller = new AbortController();
@@ -29,6 +37,13 @@ async function fetchWithTimeoutAndRetry(url, options = {}, timeoutMs = 15000, ma
     try {
       const res = await fetch(url, { ...options, signal: controller.signal });
       clearTimeout(id);
+
+      if (retryableStatuses.has(res.status) && attempt < maxRetries) {
+        attempt += 1;
+        await waitBeforeRetry();
+        continue;
+      }
+
       return res;
     } catch (err) {
       clearTimeout(id);
@@ -42,10 +57,7 @@ async function fetchWithTimeoutAndRetry(url, options = {}, timeoutMs = 15000, ma
         throw err;
       }
 
-      // exponential backoff with jitter
-      const delay = baseDelay * Math.pow(2, attempt - 1);
-      const jitter = Math.floor(Math.random() * 100);
-      await new Promise((r) => setTimeout(r, delay + jitter));
+      await waitBeforeRetry();
       // continue to next attempt
     }
   }
@@ -62,7 +74,8 @@ async function request(path, { method = "GET", body } = {}) {
 
   const url = `${API_BASE}${path}`;
   const timeoutMs = Number(import.meta.env.VITE_API_TIMEOUT_MS || 15000);
-  const maxRetries = Number(import.meta.env.VITE_API_MAX_RETRIES || 2);
+  const configuredRetries = Number(import.meta.env.VITE_API_MAX_RETRIES || 2);
+  const maxRetries = method === "GET" ? configuredRetries : 0;
 
   console.log("request:", method, url, { timeoutMs, maxRetries });
 
