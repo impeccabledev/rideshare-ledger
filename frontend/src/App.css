@@ -2180,7 +2180,8 @@ html[data-theme="light"] body {
   position: relative;
   isolation: isolate;
   min-height: 100svh;
-  overflow: hidden;
+  overflow-x: clip;
+  overflow-y: visible;
   color: var(--app-text);
   background:
     radial-gradient(circle at 13% 4%, rgba(44, 184, 111, 0.15), transparent 30%),
@@ -3986,14 +3987,31 @@ html[data-theme="light"] body {
 
 @media (max-width: 640px) {
   html,
-  body,
-  #root,
+  body {
+    height: auto;
+    min-height: 100%;
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior-y: auto;
+  }
+
+  #root {
+    min-height: 100dvh;
+    overflow: visible;
+  }
+
   .appShell {
-    overscroll-behavior-y: contain;
+    width: 100%;
+    height: auto;
+    min-height: 100dvh;
+    overflow-x: clip;
+    overflow-y: visible;
+    overscroll-behavior-y: auto;
+    touch-action: pan-y;
   }
 
   .appContent {
-    padding: max(12px, calc(env(safe-area-inset-top) + 8px)) 14px max(34px, env(safe-area-inset-bottom));
+    padding: max(12px, calc(env(safe-area-inset-top) + 8px)) 14px max(20px, env(safe-area-inset-bottom));
   }
 
   .appHeader {
