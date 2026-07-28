@@ -2180,8 +2180,7 @@ html[data-theme="light"] body {
   position: relative;
   isolation: isolate;
   min-height: 100svh;
-  overflow-x: clip;
-  overflow-y: visible;
+  overflow: clip;
   color: var(--app-text);
   background:
     radial-gradient(circle at 13% 4%, rgba(44, 184, 111, 0.15), transparent 30%),
@@ -4004,8 +4003,7 @@ html[data-theme="light"] body {
     width: 100%;
     height: auto;
     min-height: 100dvh;
-    overflow-x: clip;
-    overflow-y: visible;
+    overflow: clip;
     overscroll-behavior-y: auto;
     touch-action: pan-y;
   }
