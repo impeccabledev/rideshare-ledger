@@ -154,7 +154,6 @@ button:hover {
   border-radius: 13px;
   isolation: isolate;
   clip-path: inset(0 round 13px);
-  mask-image: radial-gradient(white, black);
   -webkit-mask-image: -webkit-radial-gradient(white, black);
   background: linear-gradient(145deg, rgba(55, 217, 137, 0.18), rgba(40, 179, 109, 0.07));
   box-shadow: inset 0 1px 0 rgba(255,255,255,0.11), 0 10px 26px rgba(12, 100, 59, 0.14);
@@ -1268,7 +1267,7 @@ html[data-theme="light"] body {
   color: #17372a;
   border-color: rgba(25, 143, 79, 0.31);
   background: rgba(225, 246, 234, 0.92);
-  box-shadow: 0 10px 24px rgba(39, 76, 55, 0.1);
+  box-shadow: 0 10px 24px rgba(39,76,55,0.1);
 }
 
 .appShell[data-theme="light"] .appButtonPrimary,
@@ -1299,16 +1298,16 @@ html[data-theme="light"] body {
 }
 
 .appShell[data-theme="light"] .calendarCellEmpty {
-  border-color: rgba(38, 94, 62, 0.18);
-  background: rgba(225, 236, 229, 0.64);
+  background: rgba(230, 239, 233, 0.45);
+  border-color: rgba(44, 101, 70, 0.12);
 }
 
 .appShell[data-theme="light"] .calendarCellHasEntry {
-  border-color: rgba(91, 227, 155, 0.3);
+  border-color: rgba(18, 137, 72, 0.58);
   background:
-    radial-gradient(circle at 90% 10%, rgba(91, 227, 155, 0.14), transparent 44%),
-    linear-gradient(145deg, rgba(42, 130, 83, 0.22), rgba(25, 82, 53, 0.09));
-  box-shadow: inset 0 1px 0 rgba(151, 244, 194, 0.07);
+    radial-gradient(circle at 90% 10%, rgba(43, 180, 101, 0.27), transparent 46%),
+    linear-gradient(145deg, #c9edd6, #e0f5e7);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.82), 0 5px 14px rgba(26, 117, 66, 0.09);
 }
 
 .appShell[data-theme="light"] .calendarCellHoliday {
@@ -1321,6 +1320,1406 @@ html[data-theme="light"] body {
 .appShell[data-theme="light"] .calendarCellToday {
   border-color: rgba(24, 145, 80, 0.52);
   box-shadow: inset 0 0 0 1px rgba(24,145,80,0.08), 0 0 0 3px rgba(24,145,80,0.06);
+}
+
+.appShell[data-theme="light"] .dayNum { color: #19372b; }
+.appShell[data-theme="light"] .pcDriver,
+.appShell[data-theme="light"] .mobileDriver { color: #173f2c; }
+.appShell[data-theme="light"] .pcRiders,
+.appShell[data-theme="light"] .mobileRiders { color: #326b4c; }
+.appShell[data-theme="light"] .calendarCellHasEntry .mobileDriver,
+.appShell[data-theme="light"] .calendarCellHasEntry .mobileRiders { font-weight: 800; }
+.appShell[data-theme="light"] .calendarCellHasEntry .mobileSummary .uiIcon { color: #117a45; }
+.appShell[data-theme="light"] .holidayTag { color: #966915; }
+
+.appShell[data-theme="light"] .summaryRows,
+.appShell[data-theme="light"] .ridersBox,
+.appShell[data-theme="light"] .previewBox {
+  border-color: rgba(39, 95, 64, 0.12);
+  background: rgba(247,250,248,0.86);
+}
+
+.appShell[data-theme="light"] .summaryRow,
+.appShell[data-theme="light"] .riderRow,
+.appShell[data-theme="light"] .previewRow,
+.appShell[data-theme="light"] .previewTotal {
+  border-bottom-color: rgba(39, 95, 64, 0.1);
+}
+
+.appShell[data-theme="light"] .summaryCardHeader h2,
+.appShell[data-theme="light"] .memberIdentity strong,
+.appShell[data-theme="light"] .riderName strong,
+.appShell[data-theme="light"] .transferRow > div:first-child,
+.appShell[data-theme="light"] .emptyState strong { color: #213e31; }
+.appShell[data-theme="light"] .transferAmount { color: #173c2b; }
+.appShell[data-theme="light"] .balanceAmount.isPositive { color: #16814d; }
+.appShell[data-theme="light"] .balanceAmount.isNegative { color: #c64848; }
+
+.appShell[data-theme="light"] .modalBackdrop {
+  background: rgba(28, 48, 37, 0.42);
+}
+
+.appShell[data-theme="light"] .modal {
+  color: var(--app-text);
+  border-color: rgba(35, 116, 72, 0.2);
+  background:
+    radial-gradient(circle at 90% -10%, rgba(64, 199, 126, 0.1), transparent 32%),
+    linear-gradient(150deg, #ffffff 0%, #f5faf7 62%, #eef6f1 100%);
+  box-shadow: 0 34px 90px rgba(31, 59, 42, 0.25), inset 0 1px 0 #fff;
+}
+
+.appShell[data-theme="light"] .modalHeader,
+.appShell[data-theme="light"] .modalFooter {
+  border-color: rgba(39, 95, 64, 0.12);
+}
+
+.appShell[data-theme="light"] .modalHeader h2,
+.appShell[data-theme="light"] .formSectionHeader strong { color: #1d392d; }
+
+.appShell[data-theme="light"] .formSection {
+  border-color: rgba(39, 95, 64, 0.11);
+  background: rgba(245,249,246,0.82);
+}
+
+.appShell[data-theme="light"] .formSectionCompact { background: transparent; }
+.appShell[data-theme="light"] .appLabel { color: #536b5e; }
+.appShell[data-theme="light"] .formSectionHeader span,
+.appShell[data-theme="light"] .inlineAction > span,
+.appShell[data-theme="light"] .fieldHint { color: #72847a; }
+
+.appShell[data-theme="light"] .appControl,
+.appShell[data-theme="light"] .rateInput {
+  color: #183127;
+  border-color: rgba(39, 95, 64, 0.17);
+  background: rgba(255,255,255,0.92);
+  box-shadow: inset 0 1px 1px rgba(34, 71, 49, 0.04);
+}
+
+.appShell[data-theme="light"] .appControl::placeholder,
+.appShell[data-theme="light"] .rateInput::placeholder { color: #89988f; }
+.appShell[data-theme="light"] .appControl:focus,
+.appShell[data-theme="light"] .rateInput:focus {
+  border-color: rgba(24, 145, 80, 0.48);
+  background: #fff;
+  box-shadow: 0 0 0 3px rgba(24,145,80,0.09);
+}
+
+.appShell[data-theme="light"] .rateLabel { color: #71857a; }
+.appShell[data-theme="light"] .tripSelector {
+  border-color: rgba(39, 95, 64, 0.11);
+  background: rgba(222, 232, 226, 0.64);
+}
+.appShell[data-theme="light"] .tripPill { color: #61766a; }
+.appShell[data-theme="light"] .tripPill:hover { color: #244638; background: rgba(255,255,255,0.7); }
+.appShell[data-theme="light"] .tripPill.isActive { color: #07311c; background: #4fd28c; }
+.appShell[data-theme="light"] .previewRow > div strong { color: #29473a; }
+.appShell[data-theme="light"] .previewRow > div span,
+.appShell[data-theme="light"] .previewEmpty { color: #74867c; }
+.appShell[data-theme="light"] .previewRow > strong { color: #405c4e; }
+.appShell[data-theme="light"] .previewTotal { color: #244638; background: rgba(50, 177, 105, 0.07); }
+.appShell[data-theme="light"] .previewTotal strong { color: #16814d; }
+.appShell[data-theme="light"] .modalFooter { background: rgba(246,250,247,0.92); }
+
+@media (max-width: 820px) {
+  .themeToggleAuthDesktop {
+    display: none;
+  }
+
+  .authMobileBrand {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+    align-items: center;
+  }
+
+  .authMobileBrand .brandLockup {
+    grid-column: 2;
+    justify-self: center;
+  }
+
+  .themeToggleAuthMobile {
+    display: grid;
+    grid-column: 3;
+    justify-self: end;
+  }
+}
+
+@media (max-width: 640px) {
+  .themeToggle {
+    width: 64px;
+    height: 34px;
+  }
+
+  .themeToggleThumb {
+    width: 26px;
+    height: 26px;
+    transform: translateX(30px);
+  }
+
+  .themeToggle.isLight .themeToggleThumb { transform: translateX(0); }
+  .themeToggleAuth { right: max(12px, env(safe-area-inset-right)); }
+  .appHeaderActions { gap: 7px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .themeToggle,
+  .themeToggleThumb,
+  .themeToggle .uiIcon {
+    transition: none !important;
+  }
+}
+
+/* =========================
+   App header (persistent)
+   ========================= */
+.appHeader {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 12px;
+  font-family: 'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif;
+  padding-top: env(safe-area-inset-top, 20px);
+  padding-left: env(safe-area-inset-left, 16px);
+  padding-right: env(safe-area-inset-right, 16px);
+}
+
+.appBrand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.appIcon {
+  font-size: 30px;
+  color: var(--text);
+  width: 42px;
+  height: 42px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  background: transparent;
+  box-shadow: none;
+}
+
+.appTitle {
+  font-size: 30px;
+  font-weight: 950;
+  color: var(--text);
+  letter-spacing: 0.4px;
+  text-shadow: 0 1px 0 rgba(255,255,255,0.06);
+}
+
+/* =========================
+   Calendar cells + details
+   ========================= */
+.calendarCell {
+  position: relative;
+  overflow: hidden;
+  border-radius: 14px;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.09), rgba(255, 255, 255, 0.04));
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(18px) saturate(140%);
+  -webkit-backdrop-filter: blur(18px) saturate(140%);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.12), 0 10px 24px rgba(0, 0, 0, 0.2);
+  transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+}
+
+.calendarCell:hover {
+  transform: translateY(-2px);
+  border-color: rgba(255,255,255,0.24);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.18), 0 10px 24px rgba(0, 0, 0, 0.28);
+}
+
+/* Icons */
+.icon {
+  display: inline-block;
+  margin-right: 1px;
+  margin-bottom: 2px;
+  width: 12px;
+  text-align: center;
+  font-size: 10px;
+}
+
+/* Desktop/tablet details inside calendar cells */
+.cellDetails {
+  margin-top: 6px;
+  font-size: 12px;
+  line-height: 1.2;
+  color: var(--text-muted);
+}
+
+.pcDriver {
+  font-weight: 900;
+  color: var(--text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  line-height: 1.3;
+  min-height: 18px;
+}
+
+.pcRiders {
+  margin-top: 4px;
+  color: #e2e8f0;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  line-height: 1.3;
+  min-height: 18px;
+}
+
+/* Ensure icon and text are vertically centered */
+.pcDriver .icon,
+.pcRiders .icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 14px;
+  height: 14px;
+  font-size: 11px;
+  line-height: 1;
+  margin: 0;
+}
+
+/* Mobile summary block */
+.mobileSummary {
+  display: none !important;
+}
+
+/* Hide amounts everywhere in calendar */
+.amountTag {
+  display: none !important;
+}
+
+/* =========================
+   Driver rate inputs
+   ========================= */
+.rateRow {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  flex-wrap: wrap;
+}
+
+.rateInputWrapper {
+  flex: 1;
+  min-width: 140px;
+  position: relative;
+}
+
+.rateInput {
+  width: 100%;
+  padding: 10px 12px;
+  padding-top: 28px;
+  font-size: 14px !important;
+  height: 42px;
+  min-width: 0;
+  font-weight: 800;
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  outline: none;
+  background: rgba(15, 23, 42, 0.75);
+  transition: border-color 0.2s, box-shadow 0.2s, transform 0.2s ease;
+}
+
+.rateInput:focus {
+  border-color: rgba(96,165,250,0.7);
+  box-shadow: 0 0 0 3px rgba(96,165,250,0.16);
+  transform: translateY(-1px);
+}
+
+.rateLabel {
+  position: absolute;
+  top: 10px;
+  left: 12px;
+  font-size: 12px;
+  font-weight: 900;
+  color: var(--text-muted);
+  pointer-events: none;
+  transition: all 0.2s ease;
+}
+
+.rateInput:focus + .rateLabel,
+.rateInput:not(:placeholder-shown) + .rateLabel {
+  top: 4px;
+  font-size: 10px;
+  color: var(--accent);
+}
+
+.rateInput::placeholder {
+  color: transparent;
+}
+
+/* Notes input consistent sizing */
+.notesInput {
+  width: 100%;
+  padding: 10px !important;
+  height: 42px;
+  font-size: 14px;
+}
+
+/* =========================
+   Modal sizing + tighter form
+   ========================= */
+.modal {
+  width: min(520px, 92vw);
+  max-height: 80vh;
+  overflow: auto;
+}
+
+/* Center modal on all screens */
+.modalBackdrop {
+  display: flex;
+  align-items: center !important;
+  justify-content: center;
+  padding: 16px;
+}
+
+.modal .formRowTight {
+  margin-top: 10px;
+}
+
+.modal .labelTight {
+  margin-bottom: 6px;
+}
+
+.modal .inputTight {
+  height: 40px;
+  padding: 8px 10px;
+  font-size: 14px;
+}
+
+.modal .ridersBoxTight {
+  max-height: 240px;
+  overflow: auto;
+  padding: 4px;
+}
+
+.modal .previewBoxTight {
+  max-height: 180px;
+  overflow: auto;
+}
+
+/* =========================
+   Mobile layout
+   ========================= */
+@media (max-width: 640px) {
+  .appHeader {
+    margin-bottom: 8px;
+    font-family: 'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif;
+  }
+
+  .appTitle {
+    font-size: 18px;
+  }
+
+  .appIcon {
+    width: 34px;
+    height: 34px;
+    font-size: 22px;
+  }
+
+  .appBrand {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+
+  /* Top bar stack */
+  .topbar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+    padding: 8px 0 !important;
+  }
+
+  .topbarRow {
+    display: flex;
+    width: 100%;
+    justify-content: space-between;
+    gap: 4px;
+  }
+
+  .topbarButtons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .topbarButtons button {
+    flex: 1 1 0;
+    min-width: 0;
+    max-width: none;
+  }
+
+  .ratesPill {
+    width: 100%;
+    text-align: center;
+  }
+
+  /* Calendar: tighter cells - all cells same height */
+  .calendarCell {
+    min-height: 72px !important;
+    max-height: 72px !important;
+    height: 72px !important;
+    padding: 6px !important;
+    margin: 1px !important;
+    overflow: hidden !important;
+  }
+
+  /* Add space around calendar container */
+  .calendar {
+    padding: 2px !important;
+  }
+
+  /* Add space around calendar container wrapper */
+  .calendarContainer {
+    padding: 2px !important;
+  }
+
+  /* Calendar header tighter */
+  .weekHeader {
+    gap: 1px !important;
+  }
+
+  .weekHeaderCell {
+    font-size: 11px !important;
+  }
+
+  /* Calendar rows tighter */
+  .weekRow {
+    gap: 1px !important;
+    margin-bottom: 1px !important;
+  }
+
+  /* Day number more visible on mobile */
+  .dayNum {
+    font-size: 13px !important;
+  }
+
+  /* Use mobile summary instead of desktop details */
+  .cellDetails {
+    display: none !important;
+  }
+
+  .mobileSummary {
+    display: flex !important;
+    flex-direction: column;
+    gap: 2px;
+    margin-top: 4px;
+    font-size: 10px;
+    color: #e2e8f0;
+    line-height: 1.2;
+  }
+
+  .mobileDriver,
+  .mobileRiders {
+    font-weight: 900;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    line-height: 1.3;
+    font-size: 10px;
+    min-height: 16px;
+    color: #f8fafc;
+  }
+
+  .mobileRiders {
+    color: #cbd5e1;
+  }
+
+  /* Ensure icons are properly sized and aligned in mobile */
+  .mobileSummary .icon,
+  .mobileDriver .icon,
+  .mobileRiders .icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 12px;
+    height: 12px;
+    font-size: 10px;
+    line-height: 1;
+    margin: 0;
+  }
+
+  /* Move rider icon slightly up for better visual alignment */
+  .mobileRiders .icon {
+    transform: translateY(-1px);
+  }
+
+  /* Holiday chip tighter */
+  .holidayTag {
+    left: 8px !important;
+    bottom: 8px !important;
+    font-size: 6px !important;
+    padding: 2px 6px !important;
+    max-width: calc(100% - 16px) !important;
+  }
+
+  /* Bottom cards stack */
+  .bottomGrid {
+    grid-template-columns: 1fr !important;
+    gap: 12px !important;
+    margin-top: 12px !important;
+  }
+
+  .cardBalances,
+  .cardSettleUp {
+    padding: 12px !important;
+    margin: 4px !important;
+  }
+
+  .modal {
+    width: min(520px, 94vw) !important;
+    max-height: 85vh !important;
+    border-radius: 18px;
+  }
+
+  /* Rate inputs - keep side by side */
+  .rateInput {
+    width: 100%;
+  }
+
+  /* Rider trip buttons - prevent wrapping */
+  .riderRow button {
+    padding: 6px 6px !important;
+    font-size: 11px !important;
+    min-width: auto !important;
+    white-space: nowrap;
+  }
+}
+
+/* Tablet/desktop: rate inputs side by side */
+@media (min-width: 641px) {
+  .rateRow {
+    flex-direction: row;
+    flex-wrap: nowrap;
+  }
+}
+
+/* =========================
+   Splash screen animation
+   ========================= */
+.splashHeader {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin-bottom: 10px;
+  font-family: 'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif;
+}
+
+.splashIcon {
+  font-size: 50px;
+  line-height: 1;
+}
+
+.splashTitle {
+  font-weight: 950;
+  font-size: 22px;
+  color: #f8fafc;
+  letter-spacing: 0.4px;
+  text-shadow: 0 1px 0 rgba(255,255,255,0.06);
+}
+.splashOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: rgba(2, 6, 23, 0.78);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(12px);
+}
+
+.splashCard {
+  width: 280px;
+  height: 280px;
+  background: linear-gradient(135deg, rgba(8, 12, 10, 0.96), rgba(13, 20, 16, 0.95));
+  border-radius: 50%;
+  padding: 24px;
+  text-align: center;
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.58);
+  border: 1px solid rgba(47, 191, 113, 0.24);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  opacity: 95%;
+  animation: pulseGlow 2.8s ease-in-out infinite;
+}
+
+.splashCard .brandLockup {
+  align-self: center;
+  justify-content: center;
+}
+
+.splashSub {
+  position: relative;
+  width: 100%;
+  height: 16px;
+  margin-top: 10px;
+  overflow: hidden;
+  font-size: 12px;
+  font-weight: 700;
+  color: #d1fae5;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.splashMessage {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  white-space: nowrap;
+}
+
+.splashMessagePrimary {
+  animation: splashMessageOut 1.05s cubic-bezier(.4,0,.2,1) both;
+}
+
+.splashMessageSecondary {
+  animation: splashMessageIn 1.05s cubic-bezier(.4,0,.2,1) both;
+}
+
+.splashProgress {
+  display: flex;
+  gap: 6px;
+  margin-top: 10px;
+}
+
+.splashProgress span {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #2fbf71, #6ee7b7);
+  opacity: 0.8;
+  animation: splashPulse 1.1s ease-in-out infinite;
+}
+
+.splashProgress span:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.splashProgress span:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+/* Road + car animation */
+.road {
+  position: relative;
+  margin: 16px auto 0;
+  width: 100%;
+  max-width: 320px;
+  height: 46px;
+  background: linear-gradient(180deg, rgba(3, 12, 8, 0.94), rgba(9, 23, 17, 0.98));
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid rgba(89, 231, 162, 0.2);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.04), 0 10px 24px rgba(0,0,0,0.18);
+}
+
+.road::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: -50%;
+  width: 200%;
+  height: 2px;
+  background: repeating-linear-gradient(
+    90deg,
+    rgba(190, 235, 211, 0.62) 0px,
+    rgba(190, 235, 211, 0.62) 16px,
+    transparent 16px,
+    transparent 28px
+  );
+  transform: translateY(-50%);
+  animation: roadMove 1s linear infinite;
+}
+
+.car {
+  position: absolute;
+  top: 50%;
+  left: -52px;
+  z-index: 2;
+  width: 48px;
+  height: 32px;
+  color: #d9ffea;
+  filter: drop-shadow(0 7px 7px rgba(0,0,0,.42)) drop-shadow(0 0 8px rgba(64, 214, 141, .22));
+  transform: translateY(-50%);
+  will-change: left, opacity, transform;
+  animation: carDrive 1.05s cubic-bezier(.25,.46,.45,.94) forwards;
+}
+
+.car .uiIcon {
+  width: 48px;
+  height: 32px;
+  overflow: visible;
+  stroke-width: 1.15;
+}
+
+.car .sideCarBody {
+  fill: #4fd18f;
+  stroke: #caffdf;
+}
+
+.car .sideCarWindow {
+  fill: #0a2a1b;
+  stroke: rgba(218, 255, 234, .72);
+  stroke-width: .7;
+}
+
+.car .sideCarDetail {
+  fill: none;
+  stroke: #e2ffed;
+  stroke-width: .75;
+}
+
+.car .sideCarWheel {
+  fill: #030a07;
+  stroke: #8ce9b7;
+  stroke-width: .7;
+}
+
+.car .sideCarHub {
+  fill: #b9f7d4;
+  stroke: none;
+}
+
+@keyframes carDrive {
+  0% { left: -52px; opacity: 0; transform: translateY(-50%) scaleX(-1); }
+  8% { opacity: 1; }
+  92% { opacity: 1; }
+  100% { left: calc(100% + 8px); opacity: 0; transform: translateY(-50%) scaleX(-1); }
+}
+
+@keyframes roadMove {
+  from { transform: translateY(-50%) translateX(0); }
+  to { transform: translateY(-50%) translateX(-80px); }
+}
+
+@keyframes pulseGlow {
+  0%, 100% {
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5), 0 0 0 0 rgba(47, 191, 113, 0.16);
+  }
+  50% {
+    box-shadow: 0 25px 70px rgba(0, 0, 0, 0.6), 0 0 0 12px rgba(47, 191, 113, 0.1);
+  }
+}
+
+@keyframes splashPulse {
+  0%, 80%, 100% {
+    transform: scale(0.8);
+    opacity: 0.45;
+  }
+  40% {
+    transform: scale(1.15);
+    opacity: 1;
+  }
+}
+
+@keyframes splashMessageOut {
+  0%, 40% { opacity: 1; transform: translateY(0); }
+  56%, 100% { opacity: 0; transform: translateY(-5px); }
+}
+
+@keyframes splashMessageIn {
+  0%, 40% { opacity: 0; transform: translateY(5px); }
+  56%, 100% { opacity: 1; transform: translateY(0); }
+}
+
+/* Month navigation transition animations */
+@keyframes fadeInLeft {
+  from {
+    opacity: 0;
+    transform: translateX(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes fadeInRight {
+  from {
+    opacity: 0;
+    transform: translateX(-30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* =========================
+   Authenticated workspace
+   ========================= */
+.appShell {
+  --app-bg: #07100d;
+  --app-surface: rgba(13, 29, 22, 0.82);
+  --app-surface-strong: rgba(15, 35, 26, 0.94);
+  --app-surface-soft: rgba(255, 255, 255, 0.035);
+  --app-line: rgba(153, 214, 181, 0.13);
+  --app-line-strong: rgba(100, 229, 158, 0.25);
+  --app-green: #5be39b;
+  --app-green-strong: #37d986;
+  --app-green-deep: #1fb76d;
+  --app-text: #f4f8f5;
+  --app-muted: #9caaa2;
+  --app-danger: #ff8c8c;
+  position: relative;
+  isolation: isolate;
+  min-height: 100svh;
+  overflow: clip;
+  color: var(--app-text);
+  background:
+    radial-gradient(circle at 13% 4%, rgba(44, 184, 111, 0.15), transparent 30%),
+    radial-gradient(circle at 88% 76%, rgba(28, 138, 84, 0.09), transparent 32%),
+    linear-gradient(145deg, #0a1712 0%, var(--app-bg) 52%, #050b08 100%);
+  font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+.appShell::before {
+  position: absolute;
+  inset: 0;
+  z-index: -4;
+  content: "";
+  background: linear-gradient(110deg, rgba(255,255,255,0.015), transparent 48%, rgba(0,0,0,0.14));
+  pointer-events: none;
+}
+
+.appGrid {
+  position: absolute;
+  inset: 0;
+  z-index: -3;
+  opacity: 0.035;
+  background-image:
+    linear-gradient(rgba(220, 255, 236, 0.5) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(220, 255, 236, 0.5) 1px, transparent 1px);
+  background-size: 72px 72px;
+  mask-image: linear-gradient(135deg, #000 0%, transparent 76%);
+  pointer-events: none;
+}
+
+.appAmbient {
+  position: absolute;
+  z-index: -2;
+  border-radius: 999px;
+  pointer-events: none;
+}
+
+.appAmbientOne {
+  top: -300px;
+  left: -260px;
+  width: 720px;
+  height: 720px;
+  background: radial-gradient(circle, rgba(67, 223, 145, 0.08), transparent 68%);
+}
+
+.appAmbientTwo {
+  right: -320px;
+  bottom: -420px;
+  width: 820px;
+  height: 820px;
+  background: radial-gradient(circle, rgba(47, 191, 113, 0.07), transparent 67%);
+}
+
+.appContent {
+  width: min(1280px, 100%);
+  margin: 0 auto;
+  padding: clamp(22px, 3vw, 42px) clamp(18px, 4vw, 52px) 56px;
+}
+
+.appHeader {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  margin: 0 0 clamp(34px, 5vw, 64px);
+  padding: 0;
+  font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  animation: appRise 0.55s ease-out both;
+}
+
+.appHeader .brandWords strong {
+  font-weight: 720;
+  letter-spacing: -0.04em;
+}
+
+.appHeader .brandLockup {
+  grid-column: 2;
+  align-self: auto;
+  justify-self: center;
+}
+
+.appHeader .workspaceStatus {
+  grid-column: 3;
+  justify-self: end;
+  height: 32px;
+  box-sizing: border-box;
+}
+
+.appHeader .themeToggle {
+  width: 64px;
+  height: 32px;
+}
+
+.appHeader .themeToggleThumb {
+  width: 24px;
+  height: 24px;
+  transform: translateX(34px);
+}
+
+.workspaceStatus {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  max-width: 280px;
+  padding: 8px 12px;
+  overflow: hidden;
+  border: 1px solid var(--app-line);
+  border-radius: 999px;
+  color: #b8c6be;
+  background: rgba(255,255,255,0.025);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.workspaceStatus .groupStatusIcon {
+  flex: 0 0 auto;
+  width: 15px;
+  height: 15px;
+  color: var(--app-green);
+}
+
+.dashboardIntro {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 36px;
+  margin-bottom: 28px;
+  animation: appRise 0.58s 0.05s ease-out both;
+}
+
+.sectionKicker {
+  color: #70dda6;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+}
+
+.dashboardIntro h1 {
+  margin: 0 0 8px;
+  color: var(--app-text);
+  font-size: 19px;
+  font-weight: 720;
+  letter-spacing: -0.04em;
+  line-height: 1;
+}
+
+.dashboardTitleRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.workspaceStatusMobile {
+  display: none;
+}
+
+.dashboardIntro p {
+  margin: 0;
+  color: var(--app-muted);
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.dashboardStats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(105px, 1fr));
+  gap: 1px;
+  overflow: hidden;
+  border: 1px solid var(--app-line);
+  border-radius: 16px;
+  background: var(--app-line);
+  box-shadow: 0 20px 50px rgba(0,0,0,0.14);
+}
+
+.statsAccordion,
+.statsCollapse {
+  display: contents;
+}
+
+.dashboardStats > div {
+  min-width: 118px;
+  padding: 15px 18px;
+  background: rgba(10, 24, 18, 0.94);
+}
+
+.dashboardStats strong,
+.dashboardStats span {
+  display: block;
+}
+
+.dashboardStats strong {
+  color: #eafff2;
+  font-size: 21px;
+  font-weight: 720;
+  line-height: 1.1;
+}
+
+.dashboardStats span {
+  margin-top: 5px;
+  color: var(--app-muted);
+  font-size: 9px;
+  font-weight: 750;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.appToolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  margin-bottom: 14px;
+  padding: 12px;
+  border: 1px solid var(--app-line);
+  border-radius: 18px;
+  background: linear-gradient(145deg, rgba(17, 38, 28, 0.82), rgba(9, 22, 16, 0.76));
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.035), 0 18px 48px rgba(0,0,0,0.12);
+  backdrop-filter: blur(20px);
+  animation: appRise 0.6s 0.1s ease-out both;
+}
+
+.monthNavigator {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.monthTitle {
+  min-width: 126px;
+  text-align: center;
+}
+
+.monthTitle span,
+.monthTitle strong {
+  display: block;
+}
+
+.monthTitle span {
+  margin-bottom: 2px;
+  color: var(--app-muted);
+  font-size: 8px;
+  font-weight: 800;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+}
+
+.monthTitle strong {
+  color: #f3fbf6;
+  font-size: 16px;
+  font-weight: 720;
+  letter-spacing: -0.02em;
+}
+
+.toolbarActions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.uiIcon {
+  display: block;
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.iconButton,
+.appButton,
+.tripPill {
+  appearance: none;
+  border: 0;
+  font: inherit;
+}
+
+.iconButton {
+  display: inline-grid;
+  width: 40px;
+  height: 40px;
+  flex: 0 0 auto;
+  place-items: center;
+  border: 1px solid var(--app-line);
+  border-radius: 12px;
+  color: #c7d5cd;
+  background: rgba(255,255,255,0.035);
+  cursor: pointer;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.035);
+  transition: color 0.2s ease, border-color 0.2s ease, background 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.iconButton:hover {
+  color: #effff6;
+  border-color: var(--app-line-strong);
+  background: rgba(91, 227, 155, 0.07);
+  box-shadow: 0 10px 24px rgba(0,0,0,0.16);
+}
+
+.appButton {
+  display: inline-flex;
+  min-height: 40px;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 0 15px;
+  border: 1px solid var(--app-line);
+  border-radius: 12px;
+  color: #d7e2dc;
+  background: rgba(255,255,255,0.035);
+  font-size: 12px;
+  font-weight: 720;
+  cursor: pointer;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.035);
+  transition: color 0.2s ease, border-color 0.2s ease, background 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.appButton:hover:not(:disabled) {
+  color: #fff;
+  border-color: var(--app-line-strong);
+  background: rgba(255,255,255,0.065);
+  box-shadow: 0 12px 26px rgba(0,0,0,0.16);
+}
+
+.appButton:active:not(:disabled),
+.iconButton:active {
+  transform: translateY(0) scale(0.98);
+}
+
+.appButton:disabled {
+  opacity: 0.55;
+  cursor: progress;
+}
+
+.appButtonPrimary {
+  color: #06150d;
+  border-color: rgba(121, 244, 176, 0.55);
+  background: linear-gradient(135deg, #72eaaa, #4bd890);
+  box-shadow: 0 12px 28px rgba(43, 190, 111, 0.17), inset 0 1px 0 rgba(255,255,255,0.42);
+}
+
+.appButtonPrimary:hover:not(:disabled) {
+  color: #031109;
+  border-color: #8af2b9;
+  background: linear-gradient(135deg, #83efb5, #55df98);
+  box-shadow: 0 16px 34px rgba(43, 190, 111, 0.24), inset 0 1px 0 rgba(255,255,255,0.5);
+}
+
+.appButtonQuiet {
+  color: #9eaaa3;
+}
+
+.appButtonDanger {
+  color: #ffb3b3;
+  border-color: rgba(255, 125, 125, 0.18);
+  background: rgba(118, 31, 31, 0.12);
+}
+
+.appButtonDanger:hover:not(:disabled) {
+  color: #ffd2d2;
+  border-color: rgba(255, 125, 125, 0.32);
+  background: rgba(142, 39, 39, 0.2);
+}
+
+.appButtonSmall {
+  min-height: 34px;
+  padding: 0 12px;
+  font-size: 11px;
+}
+
+.isSpinning {
+  animation: appSpin 0.8s linear infinite;
+}
+
+.appError {
+  margin: 0 0 14px;
+  padding: 12px 14px;
+  border: 1px solid rgba(255, 120, 120, 0.24);
+  border-radius: 13px;
+  color: #ffc2c2;
+  background: rgba(110, 28, 28, 0.18);
+  font-size: 12px;
+  font-weight: 650;
+  animation: appRise 0.3s ease-out both;
+}
+
+.calendarPanel,
+.summaryCard {
+  border: 1px solid var(--app-line);
+  background: linear-gradient(145deg, rgba(15, 34, 25, 0.88), rgba(8, 20, 15, 0.92));
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.035), 0 28px 70px rgba(0,0,0,0.16);
+  backdrop-filter: blur(22px);
+}
+
+.calendarPanel {
+  padding: 18px;
+  border-radius: 22px;
+  animation: appRise 0.62s 0.15s ease-out both;
+}
+
+.calendarPanelHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  margin-bottom: 18px;
+  padding: 0 2px;
+}
+
+.calendarPanelHeader > div {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+
+.calendarPanelHeader .uiIcon {
+  width: 17px;
+  color: var(--app-green);
+}
+
+.calendarPanelHeader strong {
+  font-size: 13px;
+  font-weight: 720;
+}
+
+.calendarPanelHeader > span {
+  color: var(--app-muted);
+  font-size: 10px;
+  font-weight: 600;
+}
+
+.calendarContainer {
+  overflow: hidden;
+}
+
+.weekHeader,
+.weekRow {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.weekHeader {
+  margin-bottom: 8px;
+}
+
+.weekRow + .weekRow {
+  margin-top: 8px;
+}
+
+.weekHeaderCell {
+  padding: 6px 8px;
+  color: #71827a;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.13em;
+  text-align: left;
+  text-transform: uppercase;
+}
+
+.calendarCell {
+  position: relative;
+  display: flex;
+  min-width: 0;
+  height: 112px;
+  min-height: 112px;
+  max-height: none;
+  flex-direction: column;
+  padding: 12px;
+  overflow: hidden;
+  border: 1px solid rgba(141, 194, 165, 0.1);
+  border-radius: 15px;
+  color: var(--app-text);
+  background: linear-gradient(145deg, rgba(255,255,255,0.035), rgba(255,255,255,0.012));
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.025);
+  cursor: pointer;
+  transition: transform 0.24s ease, border-color 0.24s ease, background 0.24s ease, box-shadow 0.24s ease;
+}
+
+.calendarCell::after {
+  position: absolute;
+  inset: 0;
+  content: "";
+  opacity: 0;
+  background: linear-gradient(125deg, transparent 25%, rgba(255,255,255,0.045), transparent 72%);
+  transform: translateX(-55%);
+  transition: opacity 0.25s ease, transform 0.45s ease;
+  pointer-events: none;
+}
+
+.calendarCell:hover {
+  z-index: 2;
+  transform: translateY(-3px);
+  border-color: rgba(91, 227, 155, 0.24);
+  background: linear-gradient(145deg, rgba(66, 175, 117, 0.09), rgba(255,255,255,0.018));
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.055), 0 16px 32px rgba(0,0,0,0.2);
+}
+
+.calendarCell:hover::after {
+  opacity: 1;
+  transform: translateX(55%);
+}
+
+.calendarCellEmpty {
+  border-style: dashed;
+  opacity: 0.3;
+  cursor: default;
+}
+
+.calendarCellEmpty:hover {
+  transform: none;
+  border-color: rgba(141, 194, 165, 0.1);
+  box-shadow: none;
+}
+
+.calendarCellHasEntry {
+  border-color: rgba(91, 227, 155, 0.3);
+  background:
+    radial-gradient(circle at 90% 10%, rgba(91, 227, 155, 0.14), transparent 44%),
+    linear-gradient(145deg, rgba(42, 130, 83, 0.22), rgba(25, 82, 53, 0.09));
+  box-shadow: inset 0 1px 0 rgba(151, 244, 194, 0.07);
+}
+
+.calendarCellHoliday {
+  border-color: rgba(233, 184, 88, 0.23);
+  background:
+    radial-gradient(circle at 90% 10%, rgba(223, 174, 74, 0.08), transparent 44%),
+    linear-gradient(145deg, rgba(111, 78, 22, 0.12), rgba(255,255,255,0.014));
+}
+
+.calendarCellToday {
+  border-color: rgba(91, 227, 155, 0.44);
+  box-shadow: inset 0 0 0 1px rgba(91, 227, 155, 0.08), 0 0 0 3px rgba(91, 227, 155, 0.035);
 }
 
 .dayTop {
@@ -1913,7 +3312,7 @@ html[data-theme="light"] body {
 
 .tripPill.isActive {
   color: #07130d;
-  background: #4fd28c;
+  background: #67dfa0;
   box-shadow: 0 6px 14px rgba(41, 186, 108, 0.17), inset 0 1px 0 rgba(255,255,255,0.35);
 }
 
@@ -1978,212 +3377,922 @@ html[data-theme="light"] body {
   text-align: center;
 }
 
-/* Compatibility/layout restoration for the authenticated application.
-   Keep these rules after theme/mobile overrides so the shell has stable base geometry. */
-.appShell {
-  --app-bg: #07100d;
-  --app-surface: rgba(10, 24, 17, 0.88);
-  --app-surface-strong: rgba(12, 28,20, 0.96);
-  --app-line: rgba(173, 218, 192, 0.12);
-  --app-text: #eef7f1;
-  --app-muted: #9bb0a4;
-  position: relative;
-  isolation: isolate;
-  width: 100%;
-  min-height: 100svh;
-  overflow-x: hidden;
-  color: var(--app-text);
-  background:
-    radial-gradient(circle at 12% 4%, rgba(57, 217, 138, 0.09), transparent 32%),
-    radial-gradient(circle at 88% 78%, rgba(57, 217, 138, 0.06), transparent 30%),
-    linear-gradient(145deg, #07100d 0%, #08130f 58%, #050b08 100%);
-}
-
-.appGrid {
-  position: fixed;
-  inset: 0;
-  z-index: -2;
-  opacity: 0.045;
-  background-image:
-    linear-gradient(rgba(255,255,255,0.32) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255,255,255,0.32) 1px, transparent 1px);
-  background-size: 48px 48px;
-  pointer-events: none;
-}
-
-.appAmbient { position: fixed; z-index: -1; border-radius: 999px; pointer-events: none; }
-.appAmbientOne { top: -260px; left: -220px; width: 620px; height: 620px; background: radial-gradient(circle, rgba(57,217,138,0.09), transparent 68%); }
-.appAmbientTwo { right: -300px; bottom: -300px; width: 720px; height: 720px; background: radial-gradient(circle, rgba(57,217,138,0.07), transparent 68%); }
-
-.appContent {
-  width: min(1280px, 100%);
-  min-height: 100svh;
-  margin: 0 auto;
-  padding: 38px clamp(18px, 4vw, 48px) 48px;
-}
-
-.appHeader {
+.phoneControl {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  align-items: center;
-  margin-bottom: 24px;
+  grid-template-columns: 112px minmax(0, 1fr);
+  gap: 8px;
 }
 
-.appHeaderActions,
-.toolbarActions,
-.monthNavigator {
+.fieldHint {
+  margin-top: 7px;
+}
+
+.modalFooter {
   display: flex;
   align-items: center;
+  gap: 8px;
+  padding: 14px 24px;
+  border-top: 1px solid rgba(148, 205, 173, 0.09);
+  background: rgba(4, 13, 8, 0.58);
+  backdrop-filter: blur(18px);
 }
 
-.appHeaderActions { grid-column: 2; gap: 10px; }
-.workspaceStatus { display: flex; align-items: center; gap: 7px; }
-.mobileHeaderSignOut,
-.workspaceStatusMobile,
-.mobileRefreshAction,
-.mobileSignOutAction,
-.pullRefreshIndicator { display: none; }
-
-.dashboardIntro {
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: 20px;
-  margin-bottom: 18px;
+.modalFooterSpacer {
+  flex: 1;
 }
 
-.dashboardTitleRow { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
-.dashboardIntro h1 { margin: 0; font-size: 30px; letter-spacing: -0.04em; }
-.dashboardIntro p { margin: 7px 0 0; color: var(--app-muted); }
-.dashboardStats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); overflow: hidden; border: 1px solid var(--app-line); border-radius: 16px; }
-.dashboardStats > div { display: flex; min-width: 150px; flex-direction: column; padding: 14px 18px; }
-.dashboardStats > div + div { border-left: 1px solid var(--app-line); }
-.dashboardStats strong { font-size: 22px; }
-.dashboardStats span { margin-top: 4px; color: var(--app-muted); font-size: 11px; }
-.statsAccordion { min-width: 0; }
-.statsDisclosure { display: none; }
-.statsCollapse { display: block; }
-
-.appToolbar,
-.calendarPanel,
-.summaryCard {
-  border: 1px solid var(--app-line);
-  border-radius: 18px;
-  background: var(--app-surface);
-  box-shadow: 0 20px 50px rgba(0,0,0,0.16), inset 0 1px 0 rgba(255,255,255,0.055);
+@keyframes appRise {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
-.appToolbar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  margin-bottom: 14px;
-  padding: 12px;
+@keyframes appSpin {
+  to { transform: rotate(360deg); }
 }
 
-.monthNavigator { gap: 8px; }
-.monthTitle { display: flex; min-width: 95px; flex-direction: column; align-items: center; }
-.monthTitle span { color: var(--app-muted); font-size: 9px; }
-.monthTitle strong { font-size: 16px; }
-.toolbarActions { gap: 8px; }
-
-.iconButton,
-.appButton {
-  display: inline-flex;
-  min-height: 40px;
-  align-items: center;
-  justify-content: center;
-  gap: 7px;
-  border: 1px solid var(--app-line);
-  border-radius: 11px;
-  color: var(--app-text);
-  background: rgba(255,255,255,0.04);
-  cursor: pointer;
+@keyframes calendarFromLeft {
+  from { opacity: 0; transform: translateX(-18px); }
+  to { opacity: 1; transform: translateX(0); }
 }
-.iconButton { width: 40px; padding: 0; }
-.appButton { padding: 0 13px; }
-.appButtonPrimary { color: #052014; background: linear-gradient(135deg, #5ee4a0, #34ce82); }
-.appButton .uiIcon,
-.iconButton .uiIcon { width: 17px; height: 17px; }
 
-.calendarPanel { overflow: hidden; }
-.calendarPanelHeader {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  min-height: 58px;
-  padding: 0 18px;
-  border-bottom: 1px solid var(--app-line);
+@keyframes calendarFromRight {
+  from { opacity: 0; transform: translateX(18px); }
+  to { opacity: 1; transform: translateX(0); }
 }
-.calendarPanelHeader > div { display: flex; align-items: center; gap: 8px; }
-.calendarPanelHeader > div .uiIcon { width: 18px; height: 18px; }
-.calendarPanelHeader > span { color: var(--app-muted); font-size: 11px; }
-.calendarContainer { overflow: hidden; }
-.weekHeader,
-.weekRow { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); }
-.weekHeader { border-bottom: 1px solid var(--app-line); }
-.weekHeaderCell { padding: 9px 10px; color: var(--app-muted); font-size: 10px; text-align: center; }
-.weekRow + .weekRow { border-top: 1px solid var(--app-line); }
-.calendarCell {
-  position: relative;
-  min-width: 0;
-  min-height: 118px;
-  padding: 10px;
-  border-right: 1px solid var(--app-line);
-  background: rgba(255,255,255,0.018);
-  cursor: pointer;
-}
-.calendarCell:last-child { border-right: 0; }
-.calendarCellEmpty { opacity: 0.28; cursor: default; }
-.calendarCellHasEntry { background: rgba(73, 217, 143, 0.08); }
-.calendarCellToday { box-shadow: inset 0 0 0 1px rgba(91,227,155,0.32); }
-.mobileSummary { display: none; }
 
-.bottomGrid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; margin-top: 16px; }
-.summaryCard { min-width: 0; padding: 18px; }
+@keyframes modalFade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes modalEnter {
+  from { opacity: 0; transform: translateY(16px) scale(0.985); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@media (max-width: 900px) {
+  .dashboardIntro {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 22px;
+  }
+
+  .dashboardStats {
+    width: 100%;
+  }
+
+  .dashboardStats > div {
+    min-width: 0;
+  }
+
+  .appToolbar {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .monthNavigator {
+    justify-content: center;
+  }
+
+  .toolbarActions {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
 
 @media (max-width: 640px) {
-  .appContent { width: 100%; padding: max(14px, env(safe-area-inset-top)) 12px max(28px, env(safe-area-inset-bottom)); }
-  .appHeader { position: sticky; top: max(6px, env(safe-area-inset-top)); z-index: 60; margin-bottom: 12px; padding: 7px 8px; border: 1px solid var(--app-line); border-radius: 15px; background: rgba(7,20,14,0.88); backdrop-filter: blur(18px); }
-  .appHeader .brandSymbol,
-  .appHeader .brandSymbol img { width: 34px; height: 34px; }
-  .appHeader .brandWords strong { font-size: 17px; }
-  .appHeader .brandWords small { display: none; }
-  .mobileHeaderSignOut { display: grid; width: 34px; height: 34px; place-items: center; border: 1px solid var(--app-line); border-radius: 10px; color: var(--app-text); background: rgba(255,255,255,0.04); }
-  .workspaceStatusDesktop { display: none; }
-  .workspaceStatusMobile { display: inline-flex; max-width: 38vw; overflow: hidden; text-overflow: ellipsis; }
+  .appContent {
+    padding: max(30px, calc(env(safe-area-inset-top) + 12px)) 14px max(34px, env(safe-area-inset-bottom));
+  }
 
-  .dashboardIntro { display: block; }
-  .dashboardIntro h1 { font-size: 20px; }
-  .dashboardStats { width: 100%; }
-  .dashboardStats > div { min-width: 0; padding: 10px 8px; }
-  .statsAccordion { margin-top: 10px; }
-  .statsDisclosure { display: flex; width: 100%; min-height: 42px; align-items: center; justify-content: space-between; border: 1px solid var(--app-line); border-radius: 12px; color: var(--app-text); background: var(--app-surface); }
-  .statsDisclosure span { display: flex; flex-direction: column; align-items: flex-start; }
-  .statsCollapse { height: 0; overflow: hidden; }
+  .appHeader {
+    margin-bottom: 34px;
+  }
 
-  .appToolbar { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; padding: 8px; }
-  .monthNavigator { min-width: 0; }
-  .monthNavigator .iconButton { width: 36px; height: 36px; }
-  .toolbarActions { display: block; }
-  .mobileRefreshAction,
-  .mobileSignOutAction { display: none !important; }
+  .appHeader .brandLockup {
+    grid-column: 2;
+  }
 
-  .calendarPanelHeader { min-height: 52px; padding: 0 12px; }
-  .calendarPanelHeader > span { display: none; }
-  .calendarContainer { overflow-x: hidden; }
-  .weekHeaderCell { padding: 8px 4px; }
-  .calendarCell { min-height: 88px; padding: 7px 5px; }
-  .dayTop { margin-bottom: 5px; }
-  .dayNum { font-size: 12px; }
-  .pcDriver,
-  .pcRiders { display: none; }
-  .mobileSummary { display: flex; flex-direction: column; gap: 4px; }
+  .workspaceStatusDesktop {
+    display: none;
+  }
+
+  .workspaceStatusMobile {
+    display: inline-flex;
+    min-width: 0;
+    max-width: min(128px, 34vw);
+    flex: 0 1 auto;
+    justify-content: flex-end;
+    margin-left: auto;
+    padding: 7px 9px;
+    font-size: 9px;
+  }
+
+  .workspaceStatusMobile > span:last-child {
+    min-width: 0;
+    overflow: hidden;
+    text-align: right;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .workspaceStatusMobile .groupStatusIcon {
+    width: 14px;
+    height: 14px;
+    flex: 0 0 auto;
+    color: #65dca0;
+  }
+
+  .appHeader .brandSymbol {
+    width: 44px;
+    height: 44px;
+  }
+
+  .appHeader .brandSymbol img {
+    width: 40px;
+    height: 40px;
+  }
+
+  .dashboardIntro {
+    margin-bottom: 20px;
+  }
+
+  .dashboardIntro > div:first-child {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .dashboardTitleRow {
+    justify-content: space-between;
+    gap: 8px;
+  }
+
+  .dashboardIntro h1 {
+    font-size: 19px;
+  }
+
+  .dashboardIntro p {
+    max-width: none;
+    font-size: clamp(8.5px, 2.55vw, 10px);
+    letter-spacing: -0.015em;
+    white-space: nowrap;
+  }
+
+  .dashboardStats > div {
+    padding: 12px 9px;
+    text-align: center;
+  }
+
+  .dashboardStats strong {
+    font-size: 18px;
+  }
+
+  .dashboardStats span {
+    font-size: 7px;
+    letter-spacing: 0.05em;
+    white-space: normal;
+  }
+
+  .appToolbar {
+    gap: 10px;
+    padding: 10px;
+    border-radius: 16px;
+  }
+
+  .monthNavigator {
+    justify-content: space-between;
+  }
+
+  .monthTitle {
+    flex: 1;
+  }
+
+  .toolbarActions {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 6px;
+  }
+
+  .toolbarActions .appButton {
+    min-width: 0;
+    padding: 0 8px;
+    font-size: 9px;
+  }
+
+  .toolbarActions .uiIcon {
+    width: 15px;
+    height: 15px;
+  }
+
+  .calendarPanel {
+    padding: 11px 8px 9px;
+    border-radius: 18px;
+  }
+
+  .calendarPanelHeader {
+    margin-bottom: 12px;
+    padding: 0 4px;
+  }
+
+  .calendarPanelHeader > span {
+    display: none;
+  }
+
+  .weekHeader,
+  .weekRow {
+    gap: 4px !important;
+  }
+
+  .weekHeader {
+    margin-bottom: 4px;
+  }
+
+  .weekRow + .weekRow {
+    margin-top: 4px;
+  }
+
+  .weekHeaderCell {
+    padding: 4px 3px;
+    font-size: 8px !important;
+    text-align: center;
+  }
+
+  .calendarCell {
+    aspect-ratio: 1 / 1;
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    margin: 0 !important;
+    padding: 7px !important;
+    border-radius: 11px;
+  }
+
+  .calendarCell:hover {
+    transform: none;
+  }
+
+  .dayTop {
+    margin-bottom: 6px;
+  }
+
+  .dayNum {
+    font-size: 12px !important;
+  }
+
+  .todayTag {
+    width: 5px;
+    height: 5px;
+    padding: 0;
+    overflow: hidden;
+    color: transparent;
+    background: var(--app-green);
+    box-shadow: 0 0 8px rgba(91, 227, 155, 0.4);
+  }
+
+  .cellDetails {
+    display: none !important;
+  }
+
+  .mobileSummary {
+    display: flex !important;
+    flex-direction: column;
+    gap: 4px;
+    margin-top: 0;
+  }
+
   .mobileDriver,
-  .mobileRiders { max-width: 100%; overflow: hidden; font-size: 8px; text-overflow: ellipsis; white-space: nowrap; }
+  .mobileRiders {
+    min-height: 0;
+    gap: 2px;
+    font-size: 10px;
+    font-weight: 720;
+    line-height: 1.15;
+  }
 
-  .bottomGrid { grid-template-columns: 1fr; }
-  .summaryCard { padding: 14px; }
+  .mobileDriver { color: #e0ece5; }
+  .mobileRiders { color: #adc0b5; }
+
+  .mobileSummary .uiIcon {
+    width: 11px;
+    height: 11px;
+  }
+
+  .mobileSummary .calendarCarIcon {
+    width: 11px;
+    height: 11px;
+    flex: 0 0 11px;
+    stroke-width: 2.05;
+  }
+
+  .holidayTag {
+    right: 6px !important;
+    bottom: 5px !important;
+    left: 6px !important;
+    max-width: none !important;
+    padding: 0 !important;
+    font-size: 6px !important;
+  }
+
+  .bottomGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 8px !important;
+    margin-top: 12px !important;
+  }
+
+  .summaryCard {
+    margin: 0 !important;
+    padding: 12px !important;
+    border-radius: 16px;
+  }
+
+  .summaryCardHeader {
+    gap: 7px;
+    margin-bottom: 10px;
+  }
+
+  .summaryCardHeader p {
+    display: none;
+  }
+
+  .summaryIcon {
+    width: 30px;
+    height: 30px;
+    border-radius: 9px;
+  }
+
+  .summaryCardHeader h2 {
+    font-size: 12px;
+  }
+
+  .summaryRows {
+    gap: 2px;
+  }
+
+  .summaryRow {
+    min-height: 42px;
+    gap: 6px;
+  }
+
+  .memberIdentity > span {
+    display: none;
+  }
+
+  .memberIdentity strong,
+  .transferRow strong {
+    font-size: 9px;
+  }
+
+  .balanceAmount,
+  .transferAmount {
+    font-size: 9px;
+  }
+
+  .transferRow {
+    align-items: center;
+    flex-direction: row;
+    gap: 4px;
+  }
+
+  .transferRow > div:first-child {
+    width: auto;
+    max-width: calc(100% - 36px);
+    flex: 0 1 auto;
+    gap: 3px;
+    overflow: hidden;
+  }
+
+  .transferRow > div:first-child strong {
+    min-width: 0;
+    max-width: 48px;
+    flex: 0 1 auto;
+  }
+
+  .transferRow > div:first-child span {
+    width: 16px;
+    height: 16px;
+  }
+
+  .transferRow .uiIcon {
+    width: 9px;
+    height: 9px;
+  }
+
+  .emptyState {
+    min-height: 118px;
+  }
+
+  .emptyState p {
+    font-size: 7px;
+  }
+
+  .appShell .modalBackdrop {
+    align-items: flex-end !important;
+    padding: 0;
+  }
+
+  .appShell .modal,
+  .appShell .memberModal {
+    width: 100%;
+    max-width: none;
+    max-height: 92svh !important;
+    border-right: 0;
+    border-bottom: 0;
+    border-left: 0;
+    border-radius: 24px 24px 0 0;
+    animation-name: modalSheetEnter;
+  }
+
+  .modalHeader {
+    padding: 18px 18px 15px;
+  }
+
+  .modalHeader h2 {
+    font-size: 19px;
+  }
+
+  .modalBody {
+    padding: 16px 14px 18px;
+  }
+
+  .formSection {
+    padding: 14px 12px;
+  }
+
+  .formSectionHeader {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 3px;
+  }
+
+  .riderRow {
+    align-items: center;
+    flex-direction: row;
+    gap: 6px;
+    padding: 8px;
+  }
+
+  .riderName {
+    flex: 1 1 auto;
+    gap: 6px;
+  }
+
+  .riderName > span {
+    width: 24px;
+    height: 24px;
+    border-radius: 7px;
+    font-size: 8px;
+  }
+
+  .riderName strong {
+    max-width: 72px;
+    font-size: 9px;
+  }
+
+  .tripSelector {
+    display: grid;
+    grid-template-columns: repeat(3, auto);
+    flex: 0 0 auto;
+    gap: 2px;
+    padding: 2px;
+  }
+
+  .tripPill {
+    min-height: 30px;
+    padding: 0 6px !important;
+    font-size: 8px !important;
+  }
+
+  .phoneControl {
+    grid-template-columns: 102px minmax(0, 1fr);
+  }
+
+  .modalFooter {
+    padding: 12px 14px max(12px, env(safe-area-inset-bottom));
+  }
+
+  .modalFooter .appButton {
+    padding: 0 11px;
+    font-size: 10px;
+  }
+
+  .modalFooter .appButtonDanger {
+    padding: 0 9px;
+  }
+}
+
+@keyframes modalSheetEnter {
+  from { opacity: 0; transform: translateY(32px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .appHeader,
+  .dashboardIntro,
+  .appToolbar,
+  .calendarPanel,
+  .summaryCard,
+  .appShell .modal,
+  .appShell .modalBackdrop {
+    animation: none !important;
+  }
+
+  .calendarCell,
+  .appButton,
+  .iconButton,
+  .tripPill {
+    transition: none !important;
+  }
+}
+
+/* =========================
+   Compact mobile workspace
+   ========================= */
+.authBootPage {
+  display: grid;
+  min-height: 100svh;
+  place-items: center;
+  color: #f2fbf6;
+  background:
+    radial-gradient(circle at 25% 10%, rgba(45, 190, 111, 0.13), transparent 34%),
+    linear-gradient(145deg, #07130d, #030a07);
+}
+
+.authBootPage[data-theme="light"] {
+  color: #183126;
+  background:
+    radial-gradient(circle at 25% 10%, rgba(45, 190, 111, 0.14), transparent 34%),
+    linear-gradient(145deg, #eff7f2, #fbfdfc);
+}
+
+.authBootState {
+  display: grid;
+  justify-items: center;
+  gap: 14px;
+  color: #8fa299;
+  font-size: 11px;
+  font-weight: 720;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.authBootPulse {
+  display: flex;
+  gap: 5px;
+}
+
+.authBootPulse span {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #58de98;
+  animation: calendarLoadingPulse 900ms ease-in-out infinite;
+}
+
+.authBootPulse span:nth-child(2) { animation-delay: 120ms; }
+.authBootPulse span:nth-child(3) { animation-delay: 240ms; }
+
+.mobileHeaderSignOut,
+.statsDisclosure,
+.pullRefreshIndicator {
+  display: none;
+}
+
+/* Higher-contrast light mode while retaining its soft palette. */
+.authPage[data-theme="light"] .authInputWrap input::placeholder { color: #687a70; }
+.authPage[data-theme="light"] .authLabelRow > span { color: #64776c; }
+.authPage[data-theme="light"] .authHelp p { color: #53685d; }
+.authPage[data-theme="light"] .authHelp strong { color: #294638; }
+.authPage[data-theme="light"] .authLegal { color: #586d61; }
+.authPage[data-theme="light"] .authTrust { color: #536a5e; }
+
+.appShell[data-theme="light"] {
+  --app-muted: #52685c;
+}
+
+.appShell[data-theme="light"] .weekHeaderCell { color: #50675b; }
+.appShell[data-theme="light"] .calendarCellEmpty {
+  border-color: rgba(38, 94, 62, 0.18);
+  background: rgba(225, 236, 229, 0.64);
+}
+.appShell[data-theme="light"] .mobileDriver { color: #173d2b; }
+.appShell[data-theme="light"] .mobileRiders { color: #285e42; }
+.appShell[data-theme="light"] .holidayTag { color: #7b520a; }
+.appShell[data-theme="light"] .emptyState p,
+.appShell[data-theme="light"] .summaryCardHeader p,
+.appShell[data-theme="light"] .fieldHint,
+.appShell[data-theme="light"] .inlineAction > span,
+.appShell[data-theme="light"] .formSectionHeader span { color: #586d61; }
+.appShell[data-theme="light"] .appControl::placeholder,
+.appShell[data-theme="light"] .rateInput::placeholder { color: #687a70; }
+
+@media (max-width: 640px) {
+  html,
+  body {
+    height: auto;
+    min-height: 100%;
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior-y: auto;
+  }
+
+  #root {
+    min-height: 100dvh;
+    overflow: visible;
+  }
+
+  .appShell {
+    width: 100%;
+    height: auto;
+    min-height: 100dvh;
+    overflow: clip;
+    overscroll-behavior-y: auto;
+    touch-action: pan-y;
+  }
+
+  .appContent {
+    padding: max(12px, calc(env(safe-area-inset-top) + 8px)) 14px max(20px, env(safe-area-inset-bottom));
+  }
+
+  .appHeader {
+    position: sticky;
+    top: max(6px, env(safe-area-inset-top));
+    z-index: 60;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 10px;
+    margin: 0 0 14px;
+    padding: 7px 8px;
+    border: 1px solid var(--app-line);
+    border-radius: 15px;
+    background: rgba(7, 20, 14, 0.84);
+    box-shadow: 0 12px 32px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.04);
+    backdrop-filter: blur(18px) saturate(120%);
+  }
+
+  .appShell[data-theme="light"] .appHeader {
+    background: rgba(248, 252, 249, 0.88);
+    box-shadow: 0 12px 32px rgba(39, 74, 53, 0.12), inset 0 1px 0 #fff;
+  }
+
+  .appHeader .brandLockup {
+    grid-column: 1;
+    justify-self: start;
+  }
+
+  .appHeaderActions {
+    grid-column: 2;
+    gap: 6px;
+  }
+
+  .appHeader .brandSymbol,
+  .appHeader .brandSymbol img {
+    width: 34px;
+    height: 34px;
+  }
+
+  .appHeader .brandWords strong {
+    font-size: 17px;
+  }
+
+  .appHeader .brandWords small {
+    display: none;
+  }
+
+  .appHeader .themeToggle {
+    width: 56px;
+    height: 32px;
+  }
+
+  .appHeader .themeToggleThumb {
+    width: 24px;
+    height: 24px;
+    transform: translateX(26px);
+  }
+
+  .appHeader .themeToggle.isLight .themeToggleThumb { transform: translateX(0); }
+
+  .mobileHeaderSignOut {
+    display: grid;
+    width: 32px;
+    height: 32px;
+    place-items: center;
+    border: 1px solid var(--app-line);
+    border-radius: 10px;
+    color: #b8c9c0;
+    background: rgba(255,255,255,0.035);
+  }
+
+  .mobileHeaderSignOut .uiIcon {
+    width: 17px;
+    height: 17px;
+  }
+
+  .appShell[data-theme="light"] .mobileHeaderSignOut {
+    color: #3f5d4d;
+    background: rgba(255,255,255,0.72);
+  }
+
+  .dashboardIntro {
+    gap: 8px;
+    margin-bottom: 10px;
+  }
+
+  .dashboardIntro h1 {
+    margin-bottom: 5px;
+    font-size: 18px;
+  }
+
+  .dashboardIntro p {
+    color: #9bada3;
+    line-height: 1.35;
+  }
+
+  .appShell[data-theme="light"] .dashboardIntro p { color: #52695d; }
+
+  .statsAccordion {
+    display: block;
+    width: 100%;
+    overflow: hidden;
+    border: 1px solid var(--app-line);
+    border-radius: 12px;
+    background: rgba(255,255,255,0.025);
+  }
+
+  .statsDisclosure {
+    display: flex;
+    width: 100%;
+    min-height: 42px;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 7px 10px;
+    border: 0;
+    border-radius: 0;
+    color: #c5d5cc;
+    background: transparent;
+  }
+
+  .statsDisclosure > span {
+    display: flex;
+    min-width: 0;
+    align-items: baseline;
+    gap: 8px;
+  }
+
+  .statsDisclosure strong {
+    font-size: 10px;
+    font-weight: 760;
+  }
+
+  .statsDisclosure small {
+    overflow: hidden;
+    color: #80938a;
+    font-size: 8px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .statsDisclosure .uiIcon {
+    width: 14px;
+    height: 14px;
+    flex: 0 0 auto;
+    transform: rotate(90deg);
+    transition: transform 280ms cubic-bezier(.4, 0, .2, 1);
+  }
+
+  .statsDisclosure[aria-expanded="true"] .uiIcon { transform: rotate(-90deg); }
+
+  .appShell[data-theme="light"] .statsDisclosure {
+    color: #284a39;
+    background: transparent;
+  }
+
+  .appShell[data-theme="light"] .statsDisclosure small { color: #586e62; }
+
+  .appShell[data-theme="light"] .statsAccordion {
+    background: rgba(255,255,255,0.68);
+  }
+
+  .statsCollapse {
+    display: block;
+    width: auto;
+    height: 0;
+    margin: 0 10px;
+    overflow: hidden;
+    transition: height 280ms cubic-bezier(.4, 0, .2, 1);
+  }
+
+  .statsCollapse .dashboardStats {
+    width: 100%;
+    border: 0;
+    border-top: 1px solid var(--app-line);
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+  }
+
+  .statsCollapse .dashboardStats > div {
+    padding: 12px 8px;
+    background: transparent;
+  }
+
+  .statsCollapse .dashboardStats > div + div {
+    border-left: 1px solid var(--app-line);
+  }
+
+  .appToolbar {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 10px;
+    padding: 8px;
+  }
+
+  .monthNavigator {
+    min-width: 0;
+    gap: 4px;
+  }
+
+  .monthNavigator .iconButton {
+    width: 36px;
+    height: 36px;
+  }
+
+  .monthTitle {
+    min-width: 0;
+  }
+
+  .monthTitle strong { font-size: 14px; }
+
+  .toolbarActions {
+    display: block;
+  }
+
+  .toolbarActions .appButtonPrimary {
+    min-height: 38px;
+    padding: 0 11px;
+    font-size: 9px;
+    white-space: nowrap;
+  }
+
+  .mobileRefreshAction,
+  .mobileSignOutAction {
+    display: none !important;
+  }
+
+  .pullRefreshIndicator {
+    position: fixed;
+    top: max(58px, calc(env(safe-area-inset-top) + 50px));
+    left: 50%;
+    z-index: 58;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 10px;
+    border: 1px solid rgba(101, 222, 156, 0.24);
+    border-radius: 999px;
+    color: #bcebd1;
+    background: rgba(7, 29, 18, 0.94);
+    box-shadow: 0 10px 24px rgba(0,0,0,0.25);
+    font-size: 9px;
+    font-weight: 740;
+    pointer-events: none;
+    transition: opacity 100ms linear, transform 100ms linear;
+  }
+
+  .pullRefreshIndicator .uiIcon {
+    width: 13px;
+    height: 13px;
+  }
+
+  .pullRefreshIndicator.isReady {
+    color: #07170e;
+    background: #68dfa0;
+  }
+
+  .pullRefreshIndicator.isRefreshing .uiIcon {
+    animation: appSpin 760ms linear infinite;
+  }
+
+  .appShell[data-theme="light"] .pullRefreshIndicator {
+    color: #28533c;
+    border-color: rgba(28, 137, 77, 0.22);
+    background: rgba(255,255,255,0.96);
+    box-shadow: 0 10px 24px rgba(36,70,49,0.16);
+  }
+
+  .appShell[data-theme="light"] .pullRefreshIndicator.isReady {
+    color: #082c19;
+    background: #54d590;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .authBootPulse span,
+  .pullRefreshIndicator,
+  .pullRefreshIndicator .uiIcon,
+  .statsCollapse,
+  .statsDisclosure .uiIcon {
+    animation: none !important;
+    transition: none !important;
+  }
 }
