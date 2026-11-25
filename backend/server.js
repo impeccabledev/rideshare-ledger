@@ -165,55 +165,67 @@ function parseGroupCredentials() {
     const parsed = JSON.parse(raw);
     if (parsed && typeof parsed === "object") {
       return Object.fromEntries(
-        Object.entries(parsed).map(([k, v]) => [normalizeGroupId(k), String(v).trim()])
+        Object.entries(parsed).map(([k, v]) => {
+          const code = typeof v === "object" && v !== null
+            ? v.join_code ?? v.joinCode ?? v.code
+            : v;
+          return [normalizeGroupId(k), String(code ?? "").trim()];
+        }).filter(([, code]) => code)
       );
     }
   } catch {
-    // fall back to comma-separated key=value pairs
+    // fall back to comma-separated or newline-separated key=value pairs
   }
 
   return raw
-    .split(",")
+    .split(/[,\n;]/)
     .map((entry) => entry.trim())
     .filter(Boolean)
     .reduce((acc, entry) => {
-      const [group, code] = entry.split("=").map((part) => part.trim());
-      if (group && code) acc[group] = code;
+      const separator = entry.indexOf("=");
+      if (separator < 0) return acc;
+      const group = entry.slice(0, separator).trim();
+      const code = entry.slice(separator + 1).trim();
+      if (group && code) acc[normalizeGroupId(group)] = code;
       return acc;
     }, {});
 }
 
 function validateGroupCredentials(groupId, joinCode) {
-  const expected = parseGroupCredentials()[normalizeGroupId(groupId)];
-  if (expected) {
-    return String(expected || "").trim() === String(joinCode || "").trim();
+  const credentials = parseGroupCredentials();
+  if (Object.keys(credentials).length > 0) {
+    const expected = credentials[normalizeGroupId(groupId)];
+    return Boolean(expected && String(expected).trim() === String(joinCode || "").trim());
   }
-  return false;
+  return null;
 }
 
 async function validateGroupAccess(groupId, joinCode) {
   if (!groupId || !joinCode) return false;
 
-  if (validateGroupCredentials(groupId, joinCode)) {
-    return true;
-  }
+  const envValidation = validateGroupCredentials(groupId, joinCode);
+  if (envValidation !== null) return envValidation;
 
   try {
     const { rows, idx } = await loadMembersSheetEnsuringColumns();
-    if (rows.length <= 1) {
-      return String(joinCode || "").trim() !== "";
+    if (rows.length <= 1) return false;
+
+    const matchingRows = filterRowsByGroup(rows.slice(1), idx, groupId);
+    if (matchingRows.length === 0) return false;
+
+    const joinCodeIndex = idx["join_code"];
+    if (joinCodeIndex != null) {
+      const configuredCodes = matchingRows
+        .map((row) => String(row[joinCodeIndex] ?? "").trim())
+        .filter(Boolean);
+
+      if (configuredCodes.length > 0) {
+        return configuredCodes.includes(String(joinCode).trim());
+      }
     }
 
-    const found = filterRowsByGroup(rows.slice(1), idx, groupId).some((row) => row && row.length);
-    if (found) return true;
-
-    const fallbackRows = rows.slice(1).filter((row) => row && row.length);
-    const hasAnyGroupId = fallbackRows.some((row) => String(row[idx["group_id"]] ?? "").trim() === "");
-    if (!hasAnyGroupId) {
-      return String(joinCode || "").trim() !== "";
-    }
-
-    return String(joinCode || "").trim() !== "";
+    // Legacy sheets without join_code values remain compatible.
+    return true;
   } catch (e) {
     console.error("Failed to validate group access from sheet", e);
     return false;
@@ -324,6 +336,7 @@ async function loadMembersSheetEnsuringColumns() {
     "one_way_total",
     "two_way_total",
     "group_id",
+    "join_code",
   ]);
 }
 

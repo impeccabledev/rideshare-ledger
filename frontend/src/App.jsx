@@ -1157,7 +1157,7 @@ export default function App() {
               </div>
 
               <button className="authSubmit" type="submit" disabled={authPending}>
-                <span>{authPending ? "Signing in…" : "Sign in"}</span>
+                <span>{authPending ? "Logging in…" : "Login"}</span>
                 {authPending ? <i className="authSpinner" aria-hidden="true" /> : <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 6 6 6-6 6" /></svg>}
               </button>
 
