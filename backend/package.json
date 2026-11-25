@@ -1,21 +1,24 @@
 {
   "name": "rideshare-ledger-backend",
   "version": "1.0.0",
-  "main": "index.js",
+  "main": "server-supabase.js",
   "type": "module",
   "scripts": {
-    "start": "node server.js"
+    "start": "node server-supabase.js",
+    "verify:supabase": "node --input-type=module -e 'import dotenv from \"dotenv\"; import ws from \"ws\"; dotenv.config(); const {createClient}=await import(\"@supabase/supabase-js\"); const db=createClient(process.env.SUPABASE_URL,process.env.SUPABASE_SERVICE_ROLE_KEY,{auth:{persistSession:false},realtime:{transport:ws}}); const {error}=await db.from(\"groups\").select(\"id\").limit(1); if(error){console.error(error.message);process.exit(1)} console.log(\"Supabase OK\")'",
+    "migrate:sheets-csv": "node supabase/migrate-csv.js"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "description": "",
   "dependencies": {
+    "@supabase/supabase-js": "^2.109.0",
     "cors": "^2.8.5",
     "dotenv": "^17.2.3",
     "express": "^5.2.1",
-    "googleapis": "^169.0.0",
     "node-cron": "^3.0.3",
-    "twilio": "^4.23.0"
+    "twilio": "^4.23.0",
+    "ws": "^8.23.0"
   }
 }

@@ -1,0 +1,21 @@
+# Environment and local secrets
+.env
+.env.*
+!.env.example
+**/.env
+**/.env.*
+!**/.env.example
+
+# Dependencies
+node_modules/
+
+# Build output
+frontend/dist/
+frontend/ios/App/App/public/
+
+# macOS / editor
+.DS_Store
+.vscode/
+
+# Supabase migration exports may contain private member and ride data
+backend/supabase/imports/
